@@ -1,75 +1,68 @@
-# RNHT Platform
+# RNHT Platform — Rudra Narayana Hindu Temple
 
-Rudra Narayana Hindu Temple (RNHT) is a temple website and hybrid app for showcasing services, managing bookings, collecting donations, sharing events, and giving devotees a polished digital experience across web and mobile.
+A full-stack web and mobile platform for the Rudra Narayana Hindu Temple. RNHT gives devotees a polished digital home for discovering temple services, booking poojas and homams, making donations, following the panchangam and event calendar, and watching livestreams — across web, iOS, and Android from a single Next.js codebase.
 
 Live site: [https://mukundakatta.github.io/rnht](https://mukundakatta.github.io/rnht)
 
-## Project layout
+## Why RNHT
 
-The repository root is mostly a wrapper. The actual application lives in [`rnht-platform`](./rnht-platform).
+Temples often run on fragmented tools — a WordPress site for news, a PayPal button for donations, a spreadsheet for bookings, a WhatsApp group for announcements. RNHT consolidates that into one branded experience: marketing site, booking flow, donation processor, admin console, and native mobile wrappers, all driven by the same codebase and data model.
 
-```text
-.
-├── README.md
-├── index.html
-├── Procfile
-├── .github/workflows/
-└── rnht-platform/
-    ├── src/app/              # Next.js App Router pages
-    ├── src/components/       # Reusable UI pieces
-    ├── src/store/            # Zustand client stores
-    ├── src/lib/              # Supabase, Stripe, PayPal, Firebase helpers
-    ├── public/               # Static assets
-    ├── supabase/             # SQL migration(s)
-    ├── android/              # Capacitor Android project
-    └── ios/                  # Capacitor iOS project
-```
-
-## What the app includes
+## Features
 
 - Temple marketing site with a rich landing page and branded content
-- Service discovery for poojas, homams, samskaras, weddings, and consultations
-- Panchangam, event calendar, gallery, streaming, education, priest, and community pages
+- Service catalog for poojas, homams, samskaras, weddings, and consultations
+- Panchangam, event calendar, gallery, streaming, education, priest directory, and community pages
 - Cart and checkout flows for service bookings
-- Donation flow with recurring donation options and multiple fund types
+- Donation flow with recurring donations and multiple fund types
 - OTP-based authentication backed by Supabase
-- Devotee profile, bookings, donations, and family-member data in client state
-- Admin screens for bookings, events, services, and slideshow management
+- Devotee profile with bookings, donations, and family-member data
+- Admin screens for bookings, events, services, priests, news, volunteers, and slideshow management
 - Static-export deployment for GitHub Pages and Firebase Hosting
 - Capacitor wrappers for iOS and Android distribution
 - Vitest coverage across stores, pages, utilities, and components
 
-## Stack
+## Tech Stack
 
-- Next.js 14 App Router
+**Frontend**
+- Next.js 14 (App Router)
 - React 18
 - TypeScript
 - Tailwind CSS
-- Zustand
-- Supabase
-- Stripe
-- PayPal
-- Firebase Hosting
-- Capacitor
-- Vitest + Testing Library
+- Zustand (client state)
+- lucide-react, date-fns, class-variance-authority
 
-## How the app currently works
+**Backend / Services**
+- Supabase (auth, Postgres, storage)
+- Stripe + PayPal (payments)
+- Resend (transactional email)
+- Firebase (hosting, optional services)
 
-The public site is built to work even when some backend integrations are missing. A lot of content is sourced from sample data under `src/lib/sample-data.ts`, and the Supabase client is intentionally nullable so static builds do not crash when environment variables are absent.
+**Mobile**
+- Capacitor 8 (iOS + Android wrappers)
 
-That said, the richer features need real credentials and backend services:
+**Tooling**
+- Vitest + Testing Library + jsdom
+- ESLint (eslint-config-next)
+- PostCSS + autoprefixer
 
-- Supabase powers auth and user/bookings profile storage
-- Stripe and PayPal power payment flows
-- API routes under `src/app/api` support checkout, donations, and webhooks during server-backed deployments
+## How It Works
 
-One important deployment detail: the CI workflows remove `src/app/api` before static export builds. That means GitHub Pages and Firebase Hosting get the front end, but not the server routes. If you need live checkout or donation processing in production, you will need a server-capable deployment target or a separate backend for those endpoints.
+The repository root is a wrapper. The runnable application lives in [`rnht-platform/`](./rnht-platform).
 
-## Local development
+- Pages live under `rnht-platform/src/app/` (Next.js App Router). Each top-level folder — `services`, `donate`, `calendar`, `panchangam`, `admin`, etc. — is a route segment.
+- Server routes under `src/app/api/` handle checkout, donations, and payment webhooks when deployed to a server-capable target.
+- Client state is managed with Zustand stores under `src/store/` (auth, cart, language, slideshow).
+- Integration helpers live under `src/lib/`: `supabase.ts`, `stripe.ts` / `stripe-server.ts`, `paypal-server.ts`, `firebase.ts`, `panchangam.ts`, `donation-receipts.ts`, `i18n/`.
+- Sample data under `src/lib/sample-data.ts` lets the site render even without backend credentials — the Supabase client is intentionally nullable so static builds do not crash when env vars are absent.
+- CI workflows strip `src/app/api` before static export so the GitHub Pages and Firebase Hosting builds ship the front end only. Live checkout and donations need a server-capable deployment.
+- Capacitor configs (`capacitor.config.ts`, `android/`, `ios/`) wrap the built web app as native binaries for the App Store and Play Store.
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 20+ recommended
+- Node.js 20+
 - npm
 - Optional: Supabase project, Stripe account, PayPal developer account
 - Optional: Xcode and/or Android Studio for native builds
@@ -81,9 +74,7 @@ cd rnht-platform
 npm install
 ```
 
-### Configure environment variables
-
-Copy the example file and fill in the values you need:
+### Configure environment
 
 ```bash
 cp .env.local.example .env.local
@@ -112,91 +103,19 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_BASE_PATH=
 ```
 
-### Run the app
+### Run
 
 ```bash
-npm run dev
-```
-
-Then open [http://localhost:3000](http://localhost:3000).
-
-## Scripts
-
-Run these from `rnht-platform/`:
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-npm run test
-npm run test:run
+npm run dev        # start the dev server on :3000
+npm run build      # production build
+npm run start      # run the built app
+npm run lint       # ESLint
+npm run test       # Vitest watch
+npm run test:run   # Vitest single run
 npm run test:coverage
 ```
 
-## Main routes
-
-The app already includes these major sections:
-
-- `/` home
-- `/about`
-- `/services`
-- `/calendar`
-- `/donate`
-- `/cart`
-- `/checkout`
-- `/gallery`
-- `/streaming`
-- `/education`
-- `/community`
-- `/priests`
-- `/profile`
-- `/dashboard`
-- `/admin`
-- `/contact`
-- `/privacy`
-- `/terms`
-- `/transparency`
-- `/panchangam`
-
-## Data and backend notes
-
-- Sample catalog and event content currently live in `src/lib/sample-data.ts`
-- Supabase client setup is in `src/lib/supabase.ts`
-- Auth state lives in `src/store/auth.ts`
-- Cart, language, and slideshow state are managed with Zustand stores
-- An initial SQL migration is available at `supabase/migration-001-profiles-and-user-data.sql`
-
-## Deployment
-
-GitHub Actions currently handle two deployment targets on pushes to `main`:
-
-1. Firebase Hosting
-2. GitHub Pages
-
-Both workflows:
-
-- install dependencies in `rnht-platform`
-- remove `src/app/api` before static export
-- run `next build`
-- publish the generated `out/` directory
-
-GitHub Pages also sets:
-
-```bash
-NEXT_PUBLIC_BASE_PATH=/rnht
-```
-
-This matches the live site path under the GitHub Pages repository URL.
-
-## Mobile app notes
-
-The repo includes Capacitor projects for both platforms:
-
-- `rnht-platform/ios`
-- `rnht-platform/android`
-
-Typical flow:
+### Mobile builds
 
 ```bash
 cd rnht-platform
@@ -204,35 +123,56 @@ npm run build
 npx cap sync
 ```
 
-Additional iOS submission notes already exist in [`rnht-platform/APP_STORE_SUBMISSION.md`](./rnht-platform/APP_STORE_SUBMISSION.md).
+See [`rnht-platform/APP_STORE_SUBMISSION.md`](./rnht-platform/APP_STORE_SUBMISSION.md) for iOS submission notes.
 
-## Testing
+## Usage
 
-The codebase includes Vitest tests for:
+Main routes already wired up:
 
-- Zustand stores
-- page rendering
-- utilities and sample data
-- layout and admin screens
-
-To run the suite once:
-
-```bash
-cd rnht-platform
-npm run test:run
+```
+/                 home
+/about            about
+/services         service catalog
+/calendar         event calendar
+/panchangam       daily panchangam
+/donate           donation flow
+/cart             booking cart
+/checkout         checkout
+/gallery          photo gallery
+/streaming        livestreams
+/education        education / resources
+/priests          priest directory
+/community        community pages
+/news             temple news
+/profile          devotee profile
+/dashboard        devotee dashboard
+/admin            admin console (bookings, events, services, etc.)
+/login            OTP login
+/contact          contact form
+/privacy /terms /transparency   legal & transparency pages
 ```
 
-## Known caveats
+Deployment happens automatically from `main` via GitHub Actions — one workflow publishes to Firebase Hosting, another to GitHub Pages with `NEXT_PUBLIC_BASE_PATH=/rnht`.
 
-- The repository root is not the runnable app; `rnht-platform/` is
-- Static-export deployments do not ship Next.js API routes
-- Some admin and dashboard views still use sample/mock data
-- Payment flows require real secrets and a server-capable environment to function end-to-end
-- Supabase-dependent features degrade gracefully, but not every feature is fully production-wired yet
+## Project Structure
 
-## Recommended next steps
-
-- Move placeholder/sample-backed admin data to Supabase
-- Decide on a production backend strategy for checkout and donation APIs
-- Re-enable CI test execution once the MVP is ready
-- Add architecture diagrams and database schema docs if the team will onboard more contributors
+```
+.
+├── index.html                      # root redirect to /rnht
+├── Procfile                        # Heroku-style start hint
+├── .github/workflows/              # Firebase + GitHub Pages deploys
+└── rnht-platform/                  # the actual Next.js app
+    ├── src/app/                    # App Router pages + api/
+    ├── src/components/             # UI pieces (hero, calendar, services, effects, ...)
+    ├── src/store/                  # Zustand client stores
+    ├── src/lib/                    # Supabase, Stripe, PayPal, Firebase, panchangam helpers
+    ├── src/__tests__/              # Vitest tests
+    ├── public/                     # static assets
+    ├── supabase/                   # SQL migrations
+    ├── android/                    # Capacitor Android project
+    ├── ios/                        # Capacitor iOS project
+    ├── capacitor.config.ts
+    ├── firebase.json
+    ├── next.config.mjs
+    └── tailwind.config.ts
+```
