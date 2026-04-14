@@ -1,5 +1,7 @@
 # RNHT Platform — Rudra Narayana Hindu Temple
 
+**Live:** <https://mukundakatta.github.io/rnht/>
+
 A full-stack web and mobile platform for the Rudra Narayana Hindu Temple. RNHT gives devotees a polished digital home for discovering temple services, booking poojas and homams, making donations, following the panchangam and event calendar, and watching livestreams — across web, iOS, and Android from a single Next.js codebase.
 
 Live site: [https://mukundakatta.github.io/rnht](https://mukundakatta.github.io/rnht)
