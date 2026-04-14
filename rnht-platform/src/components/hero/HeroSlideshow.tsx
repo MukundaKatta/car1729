@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Three-panel Ken Burns hero — deity-collage.png (2714 × 1294).
+ * Three-panel Ken Burns hero — deity-collage.jpg (2200 × 1049, optimized).
  *
  * object-position values (viewport-independent):
  *   Left  (Goddess Lakshmi) → 50% center
@@ -116,7 +116,7 @@ export function HeroSlideshow() {
               {/* Ken Burns layer */}
               <div className={`absolute inset-0 ${panel.anim}`}>
                 <Image
-                  src="/deity-collage.png"
+                  src="/deity-collage.jpg"
                   alt={panel.label}
                   fill
                   className="object-cover"
