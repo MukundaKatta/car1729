@@ -13,10 +13,13 @@ type StaticImage = {
   alt: string;
 };
 
+// Uses the existing gallery assets so this section renders even before
+// dedicated hero images are dropped into /public/home/. Swap the paths
+// (e.g. /home/temple-1.jpg) once you have the right hero photography.
 const images: StaticImage[] = [
-  { src: "/home/temple-1.jpg", alt: "Rudra Narayana deity ornament" },
-  { src: "/home/temple-2.jpg", alt: "Temple priests performing homam" },
-  { src: "/home/temple-3.jpg", alt: "Devotees during aarti" },
+  { src: "/gallery/gallery-05.jpg", alt: "Deity adorned with garlands for darshan" },
+  { src: "/gallery/gallery-07.jpg", alt: "RNHT priests with deity idols" },
+  { src: "/gallery/gallery-08.jpg", alt: "Goddess Lakshmi beautifully adorned" },
 ];
 
 export function StaticHeroImages() {
