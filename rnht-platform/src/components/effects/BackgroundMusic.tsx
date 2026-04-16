@@ -3,15 +3,45 @@
 import { useState, useRef, useEffect } from "react";
 import { Music2, VolumeX } from "lucide-react";
 
+const MUSIC_PREFERENCE_KEY = "rnht-background-music";
+
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [userMuted, setUserMuted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const preference = window.localStorage.getItem(MUSIC_PREFERENCE_KEY);
+    setUserMuted(preference === "muted");
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const syncPlayingState = () => {
+      setIsPlaying(!audio.paused);
+    };
+
+    syncPlayingState();
+    audio.addEventListener("play", syncPlayingState);
+    audio.addEventListener("pause", syncPlayingState);
+    audio.addEventListener("ended", syncPlayingState);
+
+    return () => {
+      audio.removeEventListener("play", syncPlayingState);
+      audio.removeEventListener("pause", syncPlayingState);
+      audio.removeEventListener("ended", syncPlayingState);
+    };
+  }, []);
 
   // Auto-play after first user interaction on the page
   useEffect(() => {
     function handleFirstInteraction() {
-      if (!hasInteracted) {
+      if (!hasInteracted && !userMuted) {
         setHasInteracted(true);
         if (audioRef.current) {
           audioRef.current.volume = 0.15;
@@ -30,16 +60,25 @@ export function BackgroundMusic() {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("touchstart", handleFirstInteraction);
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, userMuted]);
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    setHasInteracted(true);
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
+      setUserMuted(true);
+      window.localStorage.setItem(MUSIC_PREFERENCE_KEY, "muted");
       setIsPlaying(false);
     } else {
-      audioRef.current.volume = 0.15;
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.volume = 0.15;
+      audio.play().then(() => {
+        setUserMuted(false);
+        window.localStorage.setItem(MUSIC_PREFERENCE_KEY, "playing");
+        setIsPlaying(true);
+      }).catch(() => {});
     }
   };
 

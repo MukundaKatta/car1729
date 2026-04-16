@@ -10,6 +10,7 @@ vi.mock("lucide-react", () => ({
 describe("BackgroundMusic", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.clear();
   });
 
   it("renders the audio element with the devotional track", () => {
@@ -70,6 +71,29 @@ describe("BackgroundMusic", () => {
     });
 
     expect(audio.play).toHaveBeenCalled();
+  });
+
+  it("does not autoplay again after the user mutes music", async () => {
+    const { container } = render(<BackgroundMusic />);
+    const button = screen.getByRole("button");
+    const audio = container.querySelector("audio") as HTMLAudioElement;
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    vi.clearAllMocks();
+
+    await act(async () => {
+      fireEvent.click(document);
+    });
+
+    expect(audio.play).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Play background music" })).toBeInTheDocument();
   });
 
   it("keeps the floating control pinned to the bottom-right corner", () => {
