@@ -46,22 +46,22 @@ export function StaticHeroImages() {
       className="relative overflow-hidden border-y border-temple-gold/15"
       style={{
         background:
-          "linear-gradient(180deg, #350714 0%, #4A0818 48%, #2D0612 100%)",
+          "linear-gradient(180deg, #2C0611 0%, #3E0816 42%, #22040D 100%)",
       }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(232,213,163,0.08),transparent_36%),linear-gradient(135deg,rgba(255,255,255,0.02),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(232,213,163,0.12),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.03),transparent_52%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="font-accent text-[11px] font-semibold uppercase tracking-[0.28em] text-temple-gold-light sm:text-xs">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="font-accent text-[11px] font-semibold uppercase tracking-[0.28em] text-temple-gold-light/95 sm:text-xs">
             Darshan and Devotion
           </p>
-          <h2 className="mt-3 font-heading text-3xl font-bold text-white sm:text-4xl lg:text-[2.9rem]">
-            A Temple Experience Rooted in Beauty, Ritual, and Blessings
+          <h2 className="mt-3 font-heading text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-[2.7rem]">
+            Beauty, Ritual, and Blessings at the Heart of RNHT
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/78 sm:text-base">
-            From daily darshan to priest-led ceremonies, every moment at RNHT is
-            shaped with reverence, warmth, and care for devotees.
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/72 sm:text-base">
+            Sacred darshan, graceful Lakshmi alankaram, and priest-led guidance
+            woven into one serene temple experience.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export function StaticHeroImages() {
           {images.map((img, index) => (
             <div
               key={img.src}
-              className={`group relative overflow-hidden rounded-[8px] border border-temple-gold/20 bg-black/20 shadow-[0_18px_50px_rgba(18,4,10,0.34)] ${img.className}`}
+              className={`group relative overflow-hidden rounded-[8px] border border-temple-gold/15 bg-black/20 shadow-[0_22px_60px_rgba(10,2,7,0.34)] ${img.className}`}
             >
               <div className={`relative ${img.aspectClass}`}>
                 <Image
@@ -86,14 +86,16 @@ export function StaticHeroImages() {
                     objectPosition: img.objectPosition,
                   }}
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(18,4,10,0.82)_0%,rgba(18,4,10,0.38)_42%,rgba(18,4,10,0.08)_100%)]" />
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                  <p className="font-accent text-[10px] font-semibold uppercase tracking-[0.26em] text-temple-gold-light/90 sm:text-[11px]">
+                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(12,2,7,0.94)_0%,rgba(18,4,10,0.58)_32%,rgba(18,4,10,0.16)_62%,rgba(18,4,10,0.04)_100%)]" />
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                  <div className="rounded-[6px] border border-white/10 bg-[linear-gradient(180deg,rgba(35,8,16,0.16),rgba(17,4,9,0.58))] p-4 backdrop-blur-[3px]">
+                    <p className="font-accent text-[10px] font-semibold uppercase tracking-[0.26em] text-temple-gold-light/95 sm:text-[11px]">
                     {img.title}
-                  </p>
-                  <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-white/88 sm:text-[15px]">
-                    {img.subtitle}
-                  </p>
+                    </p>
+                    <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-white sm:text-[15px]">
+                      {img.subtitle}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
