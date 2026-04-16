@@ -10,6 +10,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "preflight": "npm run test:run && npm run build",
     "release": "npm run test:run && npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
