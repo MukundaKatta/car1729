@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 
 vi.mock("lucide-react", () => ({
@@ -10,6 +10,7 @@ vi.mock("lucide-react", () => ({
 describe("BackgroundMusic", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.useFakeTimers();
     window.localStorage.clear();
   });
 
@@ -35,6 +36,8 @@ describe("BackgroundMusic", () => {
 
     await act(async () => {
       fireEvent.click(button);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     expect(audio.play).toHaveBeenCalled();
@@ -50,15 +53,17 @@ describe("BackgroundMusic", () => {
 
     await act(async () => {
       fireEvent.click(button);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     await act(async () => {
       fireEvent.click(button);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
-    await waitFor(() => {
-      expect(audio.pause).toHaveBeenCalled();
-    });
+    expect(audio.pause).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Play background music" })).toBeInTheDocument();
   });
 
@@ -68,6 +73,8 @@ describe("BackgroundMusic", () => {
 
     await act(async () => {
       fireEvent.click(document);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     expect(audio.play).toHaveBeenCalled();
@@ -80,16 +87,37 @@ describe("BackgroundMusic", () => {
 
     await act(async () => {
       fireEvent.click(button);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     await act(async () => {
       fireEvent.click(button);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     vi.clearAllMocks();
 
     await act(async () => {
       fireEvent.click(document);
+      await Promise.resolve();
+      vi.runAllTimers();
+    });
+
+    expect(audio.play).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Play background music" })).toBeInTheDocument();
+  });
+
+  it("respects a persisted muted preference across reloads", async () => {
+    window.localStorage.setItem("rnht-background-music", "muted");
+    const { container } = render(<BackgroundMusic />);
+    const audio = container.querySelector("audio") as HTMLAudioElement;
+
+    await act(async () => {
+      fireEvent.click(document);
+      await Promise.resolve();
+      vi.runAllTimers();
     });
 
     expect(audio.play).not.toHaveBeenCalled();
@@ -99,6 +127,6 @@ describe("BackgroundMusic", () => {
   it("keeps the floating control pinned to the bottom-right corner", () => {
     render(<BackgroundMusic />);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("fixed", "bottom-4", "right-4", "z-50");
+    expect(button).toHaveClass("fixed", "right-4", "z-50");
   });
 });

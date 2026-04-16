@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Music2, VolumeX } from "lucide-react";
 
 const MUSIC_PREFERENCE_KEY = "rnht-background-music";
+const TARGET_VOLUME = 0.15;
+const FADE_DURATION_MS = 220;
+const FADE_INTERVAL_MS = 20;
 
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const fadeIntervalRef = useRef<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [userMuted, setUserMuted] = useState(false);
@@ -38,18 +42,68 @@ export function BackgroundMusic() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (fadeIntervalRef.current !== null) {
+        window.clearInterval(fadeIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const fadeAudio = useCallback((targetVolume: number, onComplete?: () => void) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (fadeIntervalRef.current !== null) {
+      window.clearInterval(fadeIntervalRef.current);
+    }
+
+    const startVolume = audio.volume;
+    const steps = Math.max(1, Math.round(FADE_DURATION_MS / FADE_INTERVAL_MS));
+    const volumeStep = (targetVolume - startVolume) / steps;
+    let currentStep = 0;
+
+    fadeIntervalRef.current = window.setInterval(() => {
+      currentStep += 1;
+      const nextVolume =
+        currentStep >= steps ? targetVolume : Math.max(0, Math.min(TARGET_VOLUME, audio.volume + volumeStep));
+
+      audio.volume = nextVolume;
+
+      if (currentStep >= steps) {
+        if (fadeIntervalRef.current !== null) {
+          window.clearInterval(fadeIntervalRef.current);
+          fadeIntervalRef.current = null;
+        }
+        onComplete?.();
+      }
+    }, FADE_INTERVAL_MS);
+  }, []);
+
+  const startPlayback = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0;
+    setIsPlaying(true);
+    audio
+      .play()
+      .then(() => {
+        fadeAudio(TARGET_VOLUME);
+      })
+      .catch(() => {
+        audio.volume = TARGET_VOLUME;
+        setIsPlaying(false);
+      });
+  }, [fadeAudio]);
+
   // Auto-play after first user interaction on the page
   useEffect(() => {
     function handleFirstInteraction() {
       if (!hasInteracted && !userMuted) {
         setHasInteracted(true);
         if (audioRef.current) {
-          audioRef.current.volume = 0.15;
-          audioRef.current.play().then(() => {
-            setIsPlaying(true);
-          }).catch(() => {
-            // Browser blocked autoplay — user can click the button
-          });
+          startPlayback();
         }
       }
     }
@@ -60,7 +114,7 @@ export function BackgroundMusic() {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("touchstart", handleFirstInteraction);
     };
-  }, [hasInteracted, userMuted]);
+  }, [hasInteracted, userMuted, startPlayback]);
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -68,17 +122,17 @@ export function BackgroundMusic() {
 
     setHasInteracted(true);
     if (isPlaying) {
-      audio.pause();
+      setIsPlaying(false);
+      fadeAudio(0, () => {
+        audio.pause();
+        audio.volume = TARGET_VOLUME;
+      });
       setUserMuted(true);
       window.localStorage.setItem(MUSIC_PREFERENCE_KEY, "muted");
-      setIsPlaying(false);
     } else {
-      audio.volume = 0.15;
-      audio.play().then(() => {
-        setUserMuted(false);
-        window.localStorage.setItem(MUSIC_PREFERENCE_KEY, "playing");
-        setIsPlaying(true);
-      }).catch(() => {});
+      setUserMuted(false);
+      window.localStorage.setItem(MUSIC_PREFERENCE_KEY, "playing");
+      startPlayback();
     }
   };
 
@@ -87,11 +141,12 @@ export function BackgroundMusic() {
       <audio ref={audioRef} src="/devotional-music.mp3" loop preload="auto" />
       <button
         onClick={toggleMusic}
-        className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-10 h-10 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 sm:h-11 sm:w-11"
         style={{
           background: isPlaying
             ? "linear-gradient(135deg, #C5973E 0%, #E8C34A 50%, #C5973E 100%)"
-            : "rgba(0,0,0,0.5)",
+            : "rgba(17,24,39,0.62)",
+          backdropFilter: "blur(8px)",
         }}
         aria-label={isPlaying ? "Mute background music" : "Play background music"}
         title={isPlaying ? "Mute music" : "Play devotional music"}
