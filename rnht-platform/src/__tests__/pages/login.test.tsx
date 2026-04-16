@@ -56,7 +56,7 @@ describe("LoginPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i }));
     expect(screen.getByRole("heading", { name: "Create Your Devotee Account" })).toBeInTheDocument();
     expect(screen.getByText(/New devotees can create their portal account here/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Continue with Email"));
+    fireEvent.click(screen.getByText("Create Account with Email"));
     expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeInTheDocument();
   });
 
@@ -72,7 +72,6 @@ describe("LoginPage", () => {
     const button = screen.getByRole("button", { name: "Send Verification Code" });
     expect(button).toBeDisabled();
 
-    fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     expect(button).not.toBeDisabled();
   });
@@ -80,12 +79,11 @@ describe("LoginPage", () => {
   it("sends otp and moves to the verification step", async () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByText("Continue with Email"));
-    fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
 
     await waitFor(() => {
-      expect(authState.sendOtp).toHaveBeenCalledWith("test@example.com", "Test User");
+      expect(authState.sendOtp).toHaveBeenCalledWith("test@example.com", "");
     });
     expect(screen.getByText(/enter the 6-digit code sent to/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Verify & Sign In" })).toBeDisabled();
@@ -94,7 +92,7 @@ describe("LoginPage", () => {
   it("shows create-account actions in sign-up mode", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i }));
-    fireEvent.click(screen.getByText("Continue with Email"));
+    fireEvent.click(screen.getByText("Create Account with Email"));
     expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeDisabled();
   });
 
@@ -102,7 +100,6 @@ describe("LoginPage", () => {
     authState.sendOtp.mockResolvedValue({ error: "Invalid email" });
     render(<LoginPage />);
     fireEvent.click(screen.getByText("Continue with Email"));
-    fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "bad@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
 
@@ -112,7 +109,6 @@ describe("LoginPage", () => {
   it("verifies otp and shows the success step", async () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByText("Continue with Email"));
-    fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
 

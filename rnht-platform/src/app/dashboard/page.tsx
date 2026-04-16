@@ -45,7 +45,7 @@ function normalizePhone(input: string): string | null {
 /* ─── Login Form (shown when not authenticated) ─── */
 function LoginForm() {
   const { sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [method, setMethod] = useState<"phone" | "email">("phone");
   const [step, setStep] = useState<"form" | "otp">("form");
   const [name, setName] = useState("");
@@ -58,7 +58,7 @@ function LoginForm() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (authMode === "signup" && !name.trim()) return;
     setLoading(true);
     setError("");
     if (method === "email") {
@@ -66,7 +66,7 @@ function LoginForm() {
         setLoading(false);
         return;
       }
-      const result = await sendOtp(email, name);
+      const result = await sendOtp(email, authMode === "signup" ? name : "");
       setLoading(false);
       if (result.error) setError(result.error);
       else setStep("otp");
@@ -78,7 +78,7 @@ function LoginForm() {
         return;
       }
       setNormalizedPhone(e164);
-      const result = await sendPhoneOtp(e164, name);
+      const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "");
       setLoading(false);
       if (result.error) setError(result.error);
       else setStep("otp");
@@ -185,8 +185,8 @@ function LoginForm() {
                   onClick={() => setMethod("phone")}
                   className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
                     method === "phone"
-                      ? "bg-white text-temple-maroon shadow-sm"
-                      : "text-gray-500 hover:text-temple-maroon"
+                      ? "bg-temple-maroon text-white shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
+                      : "text-gray-500 hover:bg-temple-maroon hover:text-white"
                   }`}
                 >
                   Phone
@@ -196,14 +196,15 @@ function LoginForm() {
                   onClick={() => setMethod("email")}
                   className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
                     method === "email"
-                      ? "bg-white text-temple-maroon shadow-sm"
-                      : "text-gray-500 hover:text-temple-maroon"
+                      ? "bg-temple-maroon text-white shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
+                      : "text-gray-500 hover:bg-temple-maroon hover:text-white"
                   }`}
                 >
                   Email
                 </button>
               </div>
               </div>
+              {authMode === "signup" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Full Name
@@ -217,6 +218,7 @@ function LoginForm() {
                   required
                 />
               </div>
+              )}
               {method === "email" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">

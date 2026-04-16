@@ -54,7 +54,7 @@ export default function LoginPage() {
   const handleSendOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendOtp(email, name);
+    const result = await sendOtp(email, authMode === "signup" ? name : "");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -79,7 +79,7 @@ export default function LoginPage() {
   const handleResendOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendOtp(email, name);
+    const result = await sendOtp(email, authMode === "signup" ? name : "");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -95,7 +95,7 @@ export default function LoginPage() {
     }
     setNormalizedPhone(e164);
     setLoading(true);
-    const result = await sendPhoneOtp(e164, name);
+    const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -120,7 +120,7 @@ export default function LoginPage() {
   const handleResendPhoneOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendPhoneOtp(normalizedPhone, name);
+    const result = await sendPhoneOtp(normalizedPhone, authMode === "signup" ? name : "");
     setLoading(false);
     if (result.error) setError(result.error);
   };
@@ -273,38 +273,42 @@ export default function LoginPage() {
               </div>
               <button
                 onClick={() => setStep("phone")}
-                className="flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-red hover:bg-red-50"
+                className="group flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-maroon hover:bg-temple-maroon hover:text-white"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-colors group-hover:bg-white/15 group-hover:text-white">
                   <PhoneIcon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">
-                    Continue with Phone
+                  <p className="font-semibold text-gray-900 group-hover:text-white">
+                    {authMode === "signup" ? "Create Account with Phone" : "Continue with Phone"}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    We&apos;ll text you a 6-digit code to sign in or create your account
+                  <p className="text-xs text-gray-500 group-hover:text-white/80">
+                    {authMode === "signup"
+                      ? "We&apos;ll text you a 6-digit code to create your devotee account"
+                      : "We&apos;ll text you a 6-digit code to sign in to your account"}
                   </p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400" />
+                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
               </button>
 
               <button
                 onClick={() => setStep("email")}
-                className="flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-red hover:bg-red-50"
+                className="group flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-maroon hover:bg-temple-maroon hover:text-white"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-white/15 group-hover:text-white">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">
-                    Continue with Email
+                  <p className="font-semibold text-gray-900 group-hover:text-white">
+                    {authMode === "signup" ? "Create Account with Email" : "Continue with Email"}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    We&apos;ll send a 6-digit code to sign in or create your account
+                  <p className="text-xs text-gray-500 group-hover:text-white/80">
+                    {authMode === "signup"
+                      ? "We&apos;ll email you a 6-digit code to create your devotee account"
+                      : "We&apos;ll email you a 6-digit code to sign in to your account"}
                   </p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400" />
+                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
               </button>
 
               <div className="relative my-4">
@@ -367,6 +371,11 @@ export default function LoginPage() {
                   autoFocus
                 />
               </div>
+              {authMode === "signin" && (
+                <p className="-mt-2 text-xs text-gray-500">
+                  Name is only needed when creating a new devotee account.
+                </p>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Email Address
@@ -381,7 +390,7 @@ export default function LoginPage() {
               </div>
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={!email || !name.trim() || loading}
+                disabled={!email || (authMode === "signup" && !name.trim()) || loading}
                 onClick={handleSendOtp}
               >
                 {loading ? (
@@ -418,6 +427,11 @@ export default function LoginPage() {
                   autoFocus
                 />
               </div>
+              {authMode === "signin" && (
+                <p className="-mt-2 text-xs text-gray-500">
+                  Name is only needed when creating a new devotee account.
+                </p>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Phone Number
@@ -436,7 +450,7 @@ export default function LoginPage() {
               </div>
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={!phone.trim() || !name.trim() || loading}
+                disabled={!phone.trim() || (authMode === "signup" && !name.trim()) || loading}
                 onClick={handleSendPhoneOtp}
               >
                 {loading ? (

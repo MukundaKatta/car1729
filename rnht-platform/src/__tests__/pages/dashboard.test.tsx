@@ -77,9 +77,10 @@ describe("Dashboard — signed-out sign-in form", () => {
   it("renders the devotee portal headline", () => {
     render(<DashboardPage />);
     expect(screen.getByText("Devotee Portal")).toBeInTheDocument();
-    expect(screen.getByText(/Sign in to manage your services/i)).toBeInTheDocument();
+    expect(screen.getByText(/Create your devotee account to manage services/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sign In/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sign Up/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Create Your Devotee Account" })).toBeInTheDocument();
   });
 
   it("switches to sign-up mode when selected", () => {
@@ -90,11 +91,18 @@ describe("Dashboard — signed-out sign-in form", () => {
     expect(screen.getByRole("button", { name: /Create Account with Phone/i })).toBeInTheDocument();
   });
 
-  it("defaults to the Phone tab and shows a phone input", () => {
+  it("defaults to sign-up on the Phone tab and shows a phone input", () => {
     render(<DashboardPage />);
     expect(screen.getByRole("button", { name: "Phone" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Email" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter your name")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("(512) 555-0123")).toBeInTheDocument();
+  });
+
+  it("hides the name field in sign-in mode", () => {
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Sign In/i }));
+    expect(screen.queryByPlaceholderText("Enter your name")).not.toBeInTheDocument();
   });
 
   it("switches to the Email tab when clicked", () => {
@@ -112,7 +120,7 @@ describe("Dashboard — signed-out sign-in form", () => {
     fireEvent.change(screen.getByPlaceholderText("(512) 555-0123"), {
       target: { value: "(512) 555-0123" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Continue with Phone/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Account with Phone/i }));
     await waitFor(() => {
       expect(authState.sendPhoneOtp).toHaveBeenCalledWith(
         "+15125550123",
@@ -130,12 +138,25 @@ describe("Dashboard — signed-out sign-in form", () => {
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
       target: { value: "rajesh@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Continue with Email/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Account with Email/i }));
     await waitFor(() => {
       expect(authState.sendOtp).toHaveBeenCalledWith(
         "rajesh@example.com",
         "Rajesh"
       );
+    });
+  });
+
+  it("lets existing devotees sign in without entering a name", async () => {
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Sign In/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Email" }));
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "rajesh@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Continue with Email/i }));
+    await waitFor(() => {
+      expect(authState.sendOtp).toHaveBeenCalledWith("rajesh@example.com", "");
     });
   });
 
@@ -147,7 +168,7 @@ describe("Dashboard — signed-out sign-in form", () => {
     fireEvent.change(screen.getByPlaceholderText("(512) 555-0123"), {
       target: { value: "abc" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Continue with Phone/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Create Account with Phone/i }));
     await waitFor(() => {
       expect(
         screen.getByText(/Please enter a valid phone number/i)
