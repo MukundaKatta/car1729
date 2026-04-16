@@ -1,146 +1,62 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 
 vi.mock("next/link", () => ({
-  default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
+  default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
-vi.mock("next/image", () => ({ default: (props: any) => <img {...props} /> }));
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
-  usePathname: () => "/",
-  useSearchParams: () => new URLSearchParams(),
+vi.mock("next/image", () => ({
+  default: (props: any) => <img {...props} alt={props.alt ?? ""} />,
 }));
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      onAuthStateChange: vi.fn(),
-      signInWithOtp: vi.fn(),
-      verifyOtp: vi.fn(),
-      signOut: vi.fn(),
-      signInWithOAuth: vi.fn(),
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          order: () => Promise.resolve({ data: [], error: null }),
-          maybeSingle: () => Promise.resolve({ data: null, error: null }),
-        }),
-        order: () => ({
-          limit: () => Promise.resolve({ data: [], error: null }),
-        }),
-      }),
-    }),
-  },
-}));
-
-vi.mock("@/store/language", () => ({
-  useLanguageStore: (sel: any) => {
-    const s = { locale: "en", setLocale: vi.fn() };
-    return typeof sel === "function" ? sel(s) : s;
-  },
-}));
-
 vi.mock("@/components/hero/HeroSlideshow", () => ({
   HeroSlideshow: () => <div data-testid="hero-slideshow" />,
 }));
-vi.mock("@/components/home/StaticHeroImages", () => ({
-  StaticHeroImages: () => (
-    <section data-testid="static-hero">A Sacred Space for Every Devotee</section>
-  ),
-}));
-vi.mock("@/components/home/HomeTempleCalendar", () => ({
-  HomeTempleCalendar: () => (
-    <section data-testid="temple-calendar">
-      <h2>Upcoming Events & Festivals</h2>
-      <p>Next Up</p>
-    </section>
-  ),
-}));
-vi.mock("@/components/home/NewsAndUpdates", () => ({
-  NewsAndUpdates: () => (
-    <section data-testid="news-updates">
-      <h2>News & Updates</h2>
-    </section>
-  ),
-}));
-vi.mock("@/components/home/ServiceAreas", () => ({
-  ServiceAreas: () => (
-    <section data-testid="service-areas">Serving All of Texas</section>
-  ),
-}));
-vi.mock("@/components/home/ReadyToBookPriests", () => ({
-  ReadyToBookPriests: () => (
-    <div data-testid="ready-to-book-priests">priest cards</div>
-  ),
+vi.mock("@/components/panchangam/PanchangamWidget", () => ({
+  PanchangamWidget: () => <div data-testid="panchangam-widget" />,
 }));
 vi.mock("@/components/services/ServiceCard", () => ({
-  ServiceCard: ({ service }: any) => (
-    <div data-testid="service-card">{service.name}</div>
-  ),
+  ServiceCard: ({ service }: any) => <div data-testid="service-card">{service.name}</div>,
+}));
+vi.mock("@/components/calendar/EventCard", () => ({
+  EventCard: ({ event }: any) => <div data-testid="event-card">{event.title}</div>,
 }));
 
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the hero slideshow", () => {
+  it("renders the hero and panchangam sections", () => {
     render(<HomePage />);
     expect(screen.getByTestId("hero-slideshow")).toBeInTheDocument();
+    expect(screen.getByTestId("panchangam-widget")).toBeInTheDocument();
   });
 
-  it("renders the new static-image sacred-space section", () => {
-    render(<HomePage />);
-    expect(screen.getByTestId("static-hero")).toBeInTheDocument();
-    expect(
-      screen.getByText("A Sacred Space for Every Devotee")
-    ).toBeInTheDocument();
-  });
-
-  it("renders the temple calendar + News & Updates sections", () => {
-    render(<HomePage />);
-    expect(screen.getByTestId("temple-calendar")).toBeInTheDocument();
-    expect(screen.getByText("Upcoming Events & Festivals")).toBeInTheDocument();
-    expect(screen.getByText("Next Up")).toBeInTheDocument();
-    expect(screen.getByTestId("news-updates")).toBeInTheDocument();
-    expect(screen.getByText("News & Updates")).toBeInTheDocument();
-  });
-
-  it("renders the Service Areas section and Ready-to-Book priest cards", () => {
-    render(<HomePage />);
-    expect(screen.getByTestId("service-areas")).toBeInTheDocument();
-    expect(screen.getByText("Serving All of Texas")).toBeInTheDocument();
-    expect(screen.getByTestId("ready-to-book-priests")).toBeInTheDocument();
-  });
-
-  it("renders the Quick Info bar with address + phone (but no temple hours)", () => {
+  it("shows the quick info bar with the current location and phone", () => {
     render(<HomePage />);
     expect(screen.getByText("Georgetown, TX 78628")).toBeInTheDocument();
     expect(screen.getByText("(512) 545-0473")).toBeInTheDocument();
-    // Temple hours were intentionally removed from the home page
-    expect(screen.queryByText(/9 AM . 12 PM/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/9 AM - 12 PM/)).not.toBeInTheDocument();
+    expect(screen.getByText(/9 AM – 12 PM/)).toBeInTheDocument();
   });
 
-  it("does NOT render the falling-petals control or the old PanchangamWidget", () => {
+  it("shows the trust stats section with current values", () => {
     render(<HomePage />);
-    expect(
-      screen.queryByRole("button", { name: /falling petals/i })
-    ).not.toBeInTheDocument();
-    // "Daily Panchangam" would be the widget header; only the footer link
-    // (if any) is outside <main>.
-    expect(screen.queryByTestId("panchangam-widget")).not.toBeInTheDocument();
+    expect(screen.getByText("Est. 2022")).toBeInTheDocument();
+    expect(screen.getByText("50+")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("12+")).toBeInTheDocument();
   });
 
-  it("renders 4 featured service cards", () => {
+  it("renders featured service cards and event cards", () => {
     render(<HomePage />);
-    expect(screen.getAllByTestId("service-card").length).toBe(4);
+    expect(screen.getAllByTestId("service-card")).toHaveLength(4);
+    expect(screen.getAllByTestId("event-card").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the 'Ready to Book a Pooja' CTA section", () => {
+  it("shows the major homepage sections", () => {
     render(<HomePage />);
-    expect(screen.getByText(/Ready to Book a Pooja\?/)).toBeInTheDocument();
+    expect(screen.getByText("Our Sacred Services")).toBeInTheDocument();
+    expect(screen.getByText("Why Choose RNHT")).toBeInTheDocument();
+    expect(screen.getByText("What Devotees Say")).toBeInTheDocument();
+    expect(screen.getByText("Explore RNHT")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming Events")).toBeInTheDocument();
   });
 });

@@ -158,15 +158,17 @@ describe("RootLayout", () => {
     expect(html).toHaveAttribute("lang", "en");
   });
 
-  it("applies font CSS variable classes to the html element", () => {
+  it("applies font CSS variables to the html element", () => {
     const { container } = render(
       <RootLayout>
         <div>Test</div>
       </RootLayout>
     );
     const html = container.querySelector("html");
-    expect(html?.className).toContain("--font-heading");
-    expect(html?.className).toContain("--font-accent");
+    expect(html).toHaveStyle({
+      "--font-heading": '"Playfair Display", Georgia, "Times New Roman", serif',
+      "--font-accent": '"Cormorant Garamond", Georgia, "Times New Roman", serif',
+    });
   });
 
   it("renders a body element with layout classes", () => {

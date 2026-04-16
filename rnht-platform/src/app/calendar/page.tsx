@@ -36,13 +36,9 @@ export default function CalendarPage() {
   const filteredEvents = useMemo(() => {
     return sampleEvents.filter((event) => {
       if (filterType !== "all" && event.event_type !== filterType) return false;
-      if (view === "list") {
-        const [yearStr, monthStr] = event.start_date.split("-");
-        if (parseInt(yearStr, 10) !== selectedYear || parseInt(monthStr, 10) !== selectedMonth + 1) return false;
-      }
       return true;
     });
-  }, [filterType, view, selectedMonth, selectedYear]);
+  }, [filterType]);
 
   // Calendar grid
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();

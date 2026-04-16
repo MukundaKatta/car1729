@@ -458,12 +458,12 @@ describe("AdminSlideshowPage", () => {
     expect(screen.getByText("\u0950")).toBeInTheDocument();
   });
 
-  it("handles image onError fallback by swapping the src to an inline SVG", () => {
+  it("handles image onError fallback", () => {
     render(<AdminSlideshowPage />);
+    // Find the img for slide 1
     const imgs = document.querySelectorAll("img[alt='Test Slide 1']");
     expect(imgs.length).toBeGreaterThan(0);
     fireEvent.error(imgs[0]);
-    // The onError handler swaps to an inline SVG data URL.
     expect((imgs[0] as HTMLImageElement).src).toContain("data:image/svg+xml");
   });
 

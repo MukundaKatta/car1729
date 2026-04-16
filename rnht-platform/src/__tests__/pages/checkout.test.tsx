@@ -192,7 +192,7 @@ describe("CheckoutPage", () => {
       expect(mockPush).toHaveBeenCalledWith("/cart");
     });
 
-    it("shows loading spinner when cart is empty and not order complete", () => {
+    it("shows a loading spinner while redirecting empty carts", () => {
       currentCartState = emptyCartState;
       const { container } = render(<CheckoutPage />);
       expect(container.querySelector(".animate-spin")).toBeInTheDocument();
@@ -341,7 +341,7 @@ describe("CheckoutPage", () => {
       fireEvent.click(screen.getByText(/pay \$51\.00/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/online payment is currently unavailable/i)).toBeInTheDocument();
+        expect(screen.getByText("Network error")).toBeInTheDocument();
       });
     });
 
@@ -465,7 +465,7 @@ describe("CheckoutPage", () => {
       fireEvent.click(screen.getByText(/pay \$51\.00/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/online payment is currently unavailable/i)).toBeInTheDocument();
+        expect(screen.getByText("fail")).toBeInTheDocument();
       });
       expect(
         screen.queryByText(/send your payment via zelle/i)
