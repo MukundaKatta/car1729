@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Privacy policy and cookie information for Rudra Narayana Hindu Temple website.",
+  alternates: {
+    canonical: canonicalPath("/privacy"),
+  },
 };
 
 export default function PrivacyPage() {

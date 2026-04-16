@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
   description: "Terms and conditions for using the Rudra Narayana Hindu Temple website.",
+  alternates: {
+    canonical: canonicalPath("/terms"),
+  },
 };
 
 export default function TermsPage() {

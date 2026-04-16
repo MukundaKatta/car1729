@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Phone, MessageCircle, Users } from "lucide-react";
 import { NewsAndUpdates } from "@/components/home/NewsAndUpdates";
+import { canonicalPath } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
     "Contact Rudra Narayana Hindu Temple priests. Pt. Aditya Sharma: (512) 545-0473 (WhatsApp). Pt. Raghurama Sharma: (512) 998-0112. Serving Austin, Kyle, Manor, Round Rock, TX.",
+  alternates: {
+    canonical: canonicalPath("/contact"),
+  },
 };
 
 export default function ContactPage() {

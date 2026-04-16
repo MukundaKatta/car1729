@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { FallingPetals } from "@/components/effects/FallingPetals";
 import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
+import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -14,6 +15,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: siteMetadataBase,
   title: {
     default: "Rudra Narayana Hindu Temple - Austin, TX | Pooja & Vedic Services",
     template: "%s | Rudra Narayana Hindu Temple",
@@ -42,6 +44,7 @@ export const metadata: Metadata = {
     title: "Rudra Narayana Hindu Temple - Austin, TX",
     description:
       "Traditional Vedic poojas, homams, weddings & spiritual services in Austin, Texas. Book online today.",
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
@@ -54,7 +57,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   alternates: {
-    canonical: "https://rnht-platform.web.app",
+    canonical: "/",
   },
 };
 

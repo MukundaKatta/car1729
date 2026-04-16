@@ -375,8 +375,9 @@ describe("RootLayout metadata exports", () => {
   it("exports metadata with canonical URL", async () => {
     const layoutModule = await import("@/app/layout");
     const metadata = (layoutModule as any).metadata;
-    expect(metadata.alternates.canonical).toBe(
-      "https://rnht-platform.web.app"
+    expect(metadata.metadataBase?.href).toBe(
+      "https://rnht-platform.web.app/"
     );
+    expect(metadata.alternates.canonical).toBe("/");
   });
 });

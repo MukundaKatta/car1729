@@ -7,11 +7,15 @@ import {
   BookOpen,
 } from "lucide-react";
 import Link from "next/link";
+import { canonicalPath } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
   title: "Our Priests",
   description:
     "Meet the priests of Rudra Narayana Hindu Temple. Pt. Aditya Sharma (Founder) and Pt. Raghurama Sharma (Senior Priest) — experienced Vedic scholars serving Austin, TX.",
+  alternates: {
+    canonical: canonicalPath("/priests"),
+  },
 };
 
 const priests = [
