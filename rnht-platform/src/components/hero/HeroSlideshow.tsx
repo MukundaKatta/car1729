@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import type { CSSProperties } from "react";
 
 /**
@@ -35,7 +34,7 @@ const PANELS = [
     } as CSSProperties,
   },
   {
-    objectPos: "50% center",
+    objectPos: "50% 18%",
     label: "Goddess Lakshmi in full regalia",
     style: {
       "--drift-x-start": "0%",
@@ -81,16 +80,6 @@ const CSS = `
     will-change               : transform;
   }
 
-/* ── CTA gold button — gentle outer glow pulse ──────────────────────── */
-  @keyframes cta-glow {
-    0%   { box-shadow: 0 6px 24px rgba(197,151,62,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
-    50%  { box-shadow: 0 6px 40px rgba(197,151,62,0.60), inset 0 1px 0 rgba(255,255,255,0.35); }
-    100% { box-shadow: 0 6px 24px rgba(197,151,62,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
-  }
-  .cta-primary-glow {
-    animation: cta-glow 4s ease-in-out infinite;
-  }
-
   /* ── Top border shimmer ─────────────────────────────────────────────── */
   @keyframes border-shimmer {
     0%   { background-position: -200% center; }
@@ -122,12 +111,6 @@ const CSS = `
       0 0 24px rgba(197, 151, 62, 0.22),
       0 0 1px rgba(255, 255, 255, 0.28);
   }
-
-  .hero-copy {
-    text-shadow:
-      0 2px 12px rgba(25, 6, 14, 0.42),
-      0 10px 32px rgba(25, 6, 14, 0.24);
-  }
 `;
 
 export function HeroSlideshow() {
@@ -135,7 +118,7 @@ export function HeroSlideshow() {
     <>
       <style>{CSS}</style>
 
-      <section className="relative z-[2] w-full h-[75vh] sm:h-screen overflow-hidden bg-[#2A0612]">
+      <section className="relative z-[2] h-[100svh] w-full overflow-hidden bg-[#2A0612] sm:h-screen">
 
         {/* Shimmering gold top border */}
         <div className="border-shimmer absolute top-0 inset-x-0 h-[3px] z-30" />
@@ -199,82 +182,29 @@ export function HeroSlideshow() {
         <div
           className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
           style={{
-            height: "45%",
-            background: "linear-gradient(to top, rgba(42,6,18,0.95) 0%, rgba(42,6,18,0.65) 40%, rgba(42,6,18,0.15) 75%, transparent 100%)",
+            height: "28%",
+            background: "linear-gradient(to top, rgba(42,6,18,0.72) 0%, rgba(42,6,18,0.22) 58%, transparent 100%)",
           }}
         />
 
         {/* Subtle top vignette */}
         <div
           className="absolute inset-x-0 top-0 h-20 z-20 pointer-events-none"
-          style={{ background: "linear-gradient(to bottom, rgba(42,6,18,0.25), transparent)" }}
+          style={{ background: "linear-gradient(to bottom, rgba(42,6,18,0.18), transparent)" }}
         />
 
         {/* Corner vignettes for cinematic depth */}
         <div className="absolute inset-0 z-20 pointer-events-none"
-          style={{ boxShadow: "inset 0 0 120px rgba(42,6,18,0.45)" }}
+          style={{ boxShadow: "inset 0 0 100px rgba(42,6,18,0.32)" }}
         />
 
         <div
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
             background:
-              "radial-gradient(circle at center, rgba(232,213,163,0.08) 0%, rgba(42,6,18,0) 38%), linear-gradient(90deg, rgba(42,6,18,0.28) 0%, rgba(42,6,18,0.08) 22%, rgba(42,6,18,0.02) 50%, rgba(42,6,18,0.08) 78%, rgba(42,6,18,0.28) 100%)",
+              "radial-gradient(circle at center, rgba(232,213,163,0.06) 0%, rgba(42,6,18,0) 38%), linear-gradient(90deg, rgba(42,6,18,0.2) 0%, rgba(42,6,18,0.05) 22%, rgba(42,6,18,0.01) 50%, rgba(42,6,18,0.05) 78%, rgba(42,6,18,0.2) 100%)",
           }}
         />
-
-        <div className="absolute inset-x-0 bottom-10 z-30 sm:bottom-14 lg:bottom-18">
-          <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
-            <div className="hero-copy mx-auto max-w-3xl">
-              <p className="font-accent text-[11px] font-semibold uppercase tracking-[0.32em] text-temple-gold-light/90 sm:text-xs">
-                Rudra Narayana Hindu Temple
-              </p>
-              <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-[4.25rem]">
-                Sacred Darshan, Vedic Guidance, and Temple Blessings
-              </h1>
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/84 sm:text-base lg:text-lg">
-                Traditional poojas, homams, weddings, samskaras, and priest services
-                for families across Austin and the greater Texas community.
-              </p>
-            </div>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6">
-              <Link
-                href="/services"
-                className="cta-primary-glow inline-flex min-w-[198px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:min-w-[220px] sm:px-10 sm:py-4 sm:text-base"
-                style={{
-                  background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
-                  color: "#2A0612",
-                  borderRadius: "4px",
-                }}
-              >
-                Book a Pooja
-              </Link>
-              <Link
-                href="/donate"
-                className="inline-flex min-w-[198px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:min-w-[220px] sm:px-10 sm:py-4 sm:text-base"
-                style={{
-                  background: "rgba(42,6,18,0.32)",
-                  color: "#E8D5A3",
-                  border: "1.5px solid rgba(197,151,62,0.70)",
-                  borderRadius: "4px",
-                  backdropFilter: "blur(10px)",
-                  boxShadow: "0 0 24px rgba(197,151,62,0.15), inset 0 0 24px rgba(197,151,62,0.06)",
-                }}
-              >
-                Support the Temple
-              </Link>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] font-medium tracking-[0.14em] text-white/72 sm:text-xs">
-              <span className="uppercase">Authentic Vedic Rituals</span>
-              <span className="hidden h-1 w-1 rounded-full bg-temple-gold/70 sm:block" />
-              <span className="uppercase">Temple and Home Services</span>
-              <span className="hidden h-1 w-1 rounded-full bg-temple-gold/70 sm:block" />
-              <span className="uppercase">Serving Families Across Texas</span>
-            </div>
-          </div>
-        </div>
 
       </section>
     </>
