@@ -376,7 +376,7 @@ describe("RootLayout metadata exports", () => {
     const layoutModule = await import("@/app/layout");
     const metadata = (layoutModule as any).metadata;
     expect(metadata.alternates.canonical).toBe(
-      "https://mukundakatta.github.io/rnht"
+      "https://rnht-platform.web.app"
     );
   });
 });

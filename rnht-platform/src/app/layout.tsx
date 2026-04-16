@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   alternates: {
-    canonical: "https://mukundakatta.github.io/rnht",
+    canonical: "https://rnht-platform.web.app",
   },
 };
 
@@ -65,7 +65,7 @@ const jsonLd = {
   alternateName: "RNHT",
   description:
     "Traditional Hindu temple serving the Austin, Texas area with Vedic poojas, homams, weddings, and spiritual services.",
-  url: "https://mukundakatta.github.io/rnht",
+  url: "https://rnht-platform.web.app",
   telephone: "+15125450473",
   email: "femtomax.inc@gmail.com",
   address: {

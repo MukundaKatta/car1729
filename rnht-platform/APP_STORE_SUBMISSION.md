@@ -90,9 +90,9 @@ hindu,temple,pooja,vedic,homam,priest,austin,texas,puja,panchangam,donation,spir
 - **Secondary Category:** Reference
 
 ### URLs
-- **Support URL:** `https://rnht-platform.firebaseapp.com/contact`
-- **Privacy Policy URL:** `https://rnht-platform.firebaseapp.com/privacy`
-- **Marketing URL:** `https://rnht-platform.firebaseapp.com`
+- **Support URL:** `https://rnht-platform.web.app/contact`
+- **Privacy Policy URL:** `https://rnht-platform.web.app/privacy`
+- **Marketing URL:** `https://rnht-platform.web.app`
 
 ### Copyright
 ```
@@ -291,8 +291,8 @@ Or manually open: `ios/App/App.xcworkspace`
   - Add demo credentials in **App Review Information** > **Notes**
 
 ### 2. Broken Links
-- Verify privacy policy URL works: `https://rnht-platform.firebaseapp.com/privacy`
-- Verify support URL works: `https://rnht-platform.firebaseapp.com/contact`
+- Verify privacy policy URL works: `https://rnht-platform.web.app/privacy`
+- Verify support URL works: `https://rnht-platform.web.app/contact`
 
 ### 3. Crashes or Bugs
 - Test on multiple device sizes before submission
