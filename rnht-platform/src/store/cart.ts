@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Service, PriceTier, FamilyMember } from "@/types/database";
+import { browserStorage } from "@/store/persistStorage";
 
 export type CartItem = {
   id: string;
@@ -57,6 +58,9 @@ export const useCartStore = create<CartStore>()(
       },
       getItemCount: () => get().items.length,
     }),
-    { name: "rnht-cart" }
+    {
+      name: "rnht-cart",
+      storage: browserStorage,
+    }
   )
 );

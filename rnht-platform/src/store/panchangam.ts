@@ -4,6 +4,7 @@ import {
   DEFAULT_LOCATION,
   type PanchangamLocation,
 } from "@/lib/panchangam";
+import { browserStorage } from "@/store/persistStorage";
 
 /**
  * Persisted user preference for the Panchangam location. Simple cities
@@ -53,7 +54,10 @@ export const usePanchangamStore = create<PanchangamStore>()(
         });
       },
     }),
-    { name: "rnht-panchangam-location" }
+    {
+      name: "rnht-panchangam-location",
+      storage: browserStorage,
+    }
   )
 );
 
