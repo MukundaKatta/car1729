@@ -16,7 +16,7 @@ describe("Footer", () => {
   it("renders both priest contact numbers consistently", () => {
     render(<Footer />);
     expect(screen.getByText(/512.*545.*0473/)).toBeInTheDocument();
-    expect(screen.getByText(/512.*998.*0122/)).toBeInTheDocument();
+    expect(screen.getByText(/512.*998.*0112/)).toBeInTheDocument();
   });
 
   it("renders the main navigation links", () => {

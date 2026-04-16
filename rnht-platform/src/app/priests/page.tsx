@@ -46,7 +46,7 @@ const priests = [
     bio: "Pandit Sri Raghurama Sharma is a distinguished Vedic scholar and priest with a rich background in Krishna Yajurveda and Smartha traditions. Prior to joining the Austin Hindu Temple in 2017, Panditji served as a Veda Pandit at Tirumala Tirupati Devasthanam and as a freelance priest at Srinivasa Swami Devasthanam, Nagole, Hyderabad. With over 15 years of expertise in Panchadasa Karmas, he has performed various rituals and cultural activities. He is passionate about mentoring kids in Purana Stotras, aiming to pass on the rich cultural heritage of Hinduism to the next generation.",
     services: ["All Poojas", "Panchadasa Karmas", "Weddings (Vivaham)", "Homams & Yagnas", "Cultural Activities", "Purana Stotras Mentoring"],
     availability: { atTemple: true, outsideTemple: true, online: false },
-    phone: "(512) 998-0122",
+    phone: "(512) 998-0112",
     email: "femtomax.inc@gmail.com",
     stats: { experience: "15+ yrs", serving: "Since 2017", area: "Texas" },
   },
