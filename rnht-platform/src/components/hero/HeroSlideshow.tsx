@@ -113,6 +113,17 @@ const CSS = `
       0 0 1px rgba(255, 255, 255, 0.28);
   }
 
+  .hero-panel-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,0.02), transparent 18%),
+      linear-gradient(to top, rgba(24, 5, 12, 0.14), transparent 26%);
+    z-index: 11;
+  }
+
   @keyframes cta-glow {
     0%   { box-shadow: 0 6px 24px rgba(197,151,62,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
     50%  { box-shadow: 0 6px 40px rgba(197,151,62,0.60), inset 0 1px 0 rgba(255,255,255,0.35); }
@@ -139,7 +150,7 @@ export function HeroSlideshow() {
           {PANELS.map((panel, i) => (
             <div
               key={i}
-              className={`relative overflow-hidden ${i !== 1 ? "hidden sm:block" : ""}`}
+              className={`hero-panel-shell relative overflow-hidden ${i !== 1 ? "hidden sm:block" : ""}`}
               style={panel.style}
             >
 
@@ -213,15 +224,15 @@ export function HeroSlideshow() {
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
             background:
-              "radial-gradient(circle at center, rgba(232,213,163,0.06) 0%, rgba(42,6,18,0) 38%), linear-gradient(90deg, rgba(42,6,18,0.2) 0%, rgba(42,6,18,0.05) 22%, rgba(42,6,18,0.01) 50%, rgba(42,6,18,0.05) 78%, rgba(42,6,18,0.2) 100%)",
+              "radial-gradient(circle at 50% 42%, rgba(241,214,138,0.18) 0%, rgba(241,214,138,0.06) 18%, rgba(42,6,18,0) 42%), linear-gradient(90deg, rgba(42,6,18,0.24) 0%, rgba(42,6,18,0.06) 22%, rgba(42,6,18,0.015) 50%, rgba(42,6,18,0.06) 78%, rgba(42,6,18,0.24) 100%)",
           }}
         />
 
-        <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-24 sm:px-6 sm:pb-16 lg:px-8 lg:pb-14">
+        <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-32 sm:px-6 sm:pb-20 lg:px-8 lg:pb-16">
           <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-2.5 sm:flex-row sm:gap-4">
             <Link
               href="/services"
-              className="cta-primary-glow inline-flex w-full max-w-[196px] items-center justify-center px-6 py-2.5 text-[13px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
+              className="cta-primary-glow inline-flex w-full max-w-[188px] items-center justify-center px-5 py-2.5 text-[12px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
                 color: "#2A0612",
@@ -232,7 +243,7 @@ export function HeroSlideshow() {
             </Link>
             <Link
               href="/donate"
-              className="inline-flex w-full max-w-[196px] items-center justify-center px-6 py-2.5 text-[13px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
+              className="inline-flex w-full max-w-[188px] items-center justify-center px-5 py-2.5 text-[12px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "rgba(42,6,18,0.34)",
                 color: "#E8D5A3",
