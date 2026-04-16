@@ -28,6 +28,19 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
   },
 ];
 
+const donationFundLabels: Record<string, string> = {
+  general: "General Temple Fund",
+  building: "Building Fund",
+  priest: "Priest Fund",
+  annadanam: "Annadanam Fund",
+  festival: "Festival Fund",
+  education: "Education Fund",
+};
+
+function donationFundLabel(slug: string) {
+  return donationFundLabels[slug] || "Temple Fund";
+}
+
 export default function DonatePage() {
   const [fundTypes, setFundTypes] = useState<DonationType[]>([]);
   const [customAmount, setCustomAmount] = useState("");
@@ -40,7 +53,10 @@ export default function DonatePage() {
   );
   const [submitted, setSubmitted] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [error, setError] = useState("");
+  const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
+  const [confirmedFundName, setConfirmedFundName] = useState<string | null>(null);
   const locale = useLanguageStore((s) => s.locale);
   const searchParams = useSearchParams();
   const authUser = useAuthStore((s) => s.user);
@@ -77,37 +93,80 @@ export default function DonatePage() {
 
   // Handle return from Stripe or PayPal
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
-      const token = searchParams.get("token");
-      if (token && searchParams.get("provider") === "paypal") {
-        setProcessing(true);
-        fetch("/api/webhooks/paypal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: token }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.status === "COMPLETED") {
-              setSubmitted(true);
-            } else {
-              setError("Payment capture failed. Please contact the temple for assistance.");
-            }
-          })
-          .catch(() => {
-            setError("Payment verification failed. Please contact the temple.");
-          })
-          .finally(() => setProcessing(false));
-      } else {
+    if (searchParams.get("success") !== "true") return;
+
+    const token = searchParams.get("token");
+    const provider = searchParams.get("provider");
+    const sessionId = searchParams.get("session_id");
+    let cancelled = false;
+
+    async function verifyDonation() {
+      setVerifyingPayment(true);
+      setProcessing(true);
+      setError("");
+
+      try {
+        if (token && provider === "paypal") {
+          const response = await fetch("/api/webhooks/paypal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: token }),
+          });
+          const data = await response.json();
+
+          if (!response.ok || data.status !== "COMPLETED") {
+            throw new Error("Payment capture failed");
+          }
+
+          if (cancelled) return;
+
+          setConfirmedAmount(typeof data.amount === "number" ? data.amount : null);
+          setConfirmedFundName(data.fundType ? donationFundLabel(data.fundType) : null);
+          setSubmitted(true);
+          return;
+        }
+
+        if (!sessionId) {
+          throw new Error("Missing session ID");
+        }
+
+        const response = await fetch(`/api/donate?session_id=${encodeURIComponent(sessionId)}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.verified) {
+          throw new Error("Payment verification failed");
+        }
+
+        if (cancelled) return;
+
+        setConfirmedAmount(typeof data.amount === "number" ? data.amount : null);
+        setConfirmedFundName(data.fundLabel || null);
         setSubmitted(true);
+      } catch {
+        if (!cancelled) {
+          setError("We couldn't verify your donation yet. Please contact the temple before trying again.");
+        }
+      } finally {
+        if (!cancelled) {
+          setVerifyingPayment(false);
+          setProcessing(false);
+        }
       }
     }
+
+    void verifyDonation();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams]);
 
   const activeFund = fundTypes.find((f) => f.slug === fundTypeSlug) ?? fundTypes[0] ?? null;
   const customFields: DonationTypeCustomField[] = activeFund?.custom_fields ?? [];
   const amount = customAmount ? parseFloat(customAmount) : NaN;
   const effectiveAmount = !isNaN(amount) && amount > 0 ? amount : 0;
+  const displayedAmount = confirmedAmount ?? effectiveAmount;
+  const displayedFundName = confirmedFundName ?? activeFund?.name ?? "Temple Fund";
 
   function setCustomField(key: string, value: string) {
     setCustomFieldValues((prev) => ({ ...prev, [key]: value }));
@@ -157,8 +216,8 @@ export default function DonatePage() {
           {t("donate.thankYou", locale)}
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Your donation of <strong>{formatCurrency(effectiveAmount)}</strong> to
-          the {activeFund?.name ?? "Temple Fund"} has been received.
+          Your donation of <strong>{formatCurrency(displayedAmount)}</strong> to
+          the {displayedFundName} has been received.
         </p>
         <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-800">
           <p>
@@ -167,7 +226,7 @@ export default function DonatePage() {
           </p>
           {paymentMethod === "zelle" && (
             <p className="mt-2 font-semibold">
-              Please send your Zelle payment of {formatCurrency(effectiveAmount)}{" "}
+              Please send your Zelle payment of {formatCurrency(displayedAmount)}{" "}
               to (512) 545-0473
             </p>
           )}
@@ -198,6 +257,11 @@ export default function DonatePage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
         {/* Left column — form */}
         <div className="lg:col-span-3 space-y-6">
+          {error && searchParams.get("success") === "true" && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {error}
+            </div>
+          )}
           {/* Fund */}
           <div className="card p-5">
             <h2 className="font-heading text-lg font-bold text-gray-900">
@@ -372,11 +436,14 @@ export default function DonatePage() {
                 !donorEmail ||
                 !donorEmail.includes("@") ||
                 effectiveAmount <= 0 ||
-                processing
+                processing ||
+                verifyingPayment
               }
             >
               {processing
-                ? "Processing..."
+                ? verifyingPayment
+                  ? "Verifying donation..."
+                  : "Processing..."
                 : `Donate ${formatCurrency(effectiveAmount)}`}
             </button>
 

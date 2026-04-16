@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   FileText,
   Download,
@@ -87,7 +88,7 @@ export default function TransparencyPage() {
           financial statements and see how your donations make a difference.
         </p>
         <p className="mt-2 text-sm text-gray-500">
-          RNHT is a registered 501(c)(3) nonprofit organization. EIN: XX-XXXXXXX
+          RNHT is a registered 501(c)(3) nonprofit organization. Tax ID available upon request.
         </p>
       </div>
 
@@ -166,10 +167,10 @@ export default function TransparencyPage() {
               <h3 className="font-heading text-lg font-bold text-gray-900">
                 Fiscal Year {fy.year}
               </h3>
-              <button className="btn-outline flex items-center gap-2 text-sm">
+              <Link href="/contact" className="btn-outline flex items-center gap-2 text-sm">
                 <Download className="h-4 w-4" />
-                Download PDF
-              </button>
+                Request PDF
+              </Link>
             </div>
             <div className="p-6">
               {/* Summary Cards */}
@@ -283,15 +284,15 @@ export default function TransparencyPage() {
               extent of the law.
             </p>
             <ul className="mt-3 space-y-1 text-sm text-green-700">
-              <li>EIN: XX-XXXXXXX</li>
+              <li>EIN available upon request</li>
               <li>State of Incorporation: Nevada</li>
               <li>Annual Form 990 filed with the IRS</li>
               <li>Tax receipts issued for all donations over $10</li>
             </ul>
-            <button className="btn-outline mt-4 flex items-center gap-2 text-sm border-green-300 text-green-800">
+            <Link href="/contact" className="btn-outline mt-4 flex items-center gap-2 text-sm border-green-300 text-green-800">
               <Download className="h-4 w-4" />
-              Download IRS Determination Letter
-            </button>
+              Request IRS Determination Letter
+            </Link>
           </div>
         </div>
       </section>

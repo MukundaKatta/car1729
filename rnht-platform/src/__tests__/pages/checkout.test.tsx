@@ -4,6 +4,7 @@ import React from "react";
 
 const mockPush = vi.fn();
 const mockClearCart = vi.fn();
+let searchParamsState = new URLSearchParams();
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
@@ -11,7 +12,7 @@ vi.mock("next/link", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/checkout",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParamsState,
 }));
 
 let cartState: any;
@@ -25,6 +26,7 @@ import CheckoutPage from "@/app/checkout/page";
 describe("CheckoutPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    searchParamsState = new URLSearchParams();
     cartState = {
       items: [
         {
@@ -74,5 +76,32 @@ describe("CheckoutPage", () => {
     expect(
       await screen.findByText(/Online payment is currently unavailable/i)
     ).toBeInTheDocument();
+  });
+
+  it("does not trust success without a session id", async () => {
+    searchParamsState = new URLSearchParams("success=true");
+    render(<CheckoutPage />);
+
+    expect(
+      await screen.findByText("Payment Verification Needed")
+    ).toBeInTheDocument();
+    expect(mockClearCart).not.toHaveBeenCalled();
+  });
+
+  it("verifies Stripe success before confirming the order", async () => {
+    searchParamsState = new URLSearchParams("success=true&session_id=cs_test_123");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ verified: true, orderId: "RNHT-ABC12345" }), {
+        status: 200,
+      })
+    );
+
+    render(<CheckoutPage />);
+
+    expect(
+      await screen.findByText(/Booking Confirmed!/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("RNHT-ABC12345")).toBeInTheDocument();
+    expect(mockClearCart).toHaveBeenCalled();
   });
 });

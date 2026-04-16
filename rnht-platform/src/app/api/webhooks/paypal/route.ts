@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         .from("donations")
         .update({ payment_status: "completed" })
         .eq("id", result.donationId)
-        .select("user_id")
+        .select("user_id, amount, fund_type")
         .maybeSingle();
 
       if (error) console.error("Failed to update donation:", error);
@@ -33,6 +33,12 @@ export async function POST(request: Request) {
           console.error("checkAndSendReceipt failed:", e)
         );
       }
+
+      return NextResponse.json({
+        status: result.status,
+        amount: (data as { amount?: number } | null)?.amount ?? null,
+        fundType: (data as { fund_type?: string } | null)?.fund_type ?? null,
+      });
     }
 
     return NextResponse.json({ status: result.status });

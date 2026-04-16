@@ -87,7 +87,7 @@ export async function POST(request: Request) {
         type: "booking",
         booking_ids: JSON.stringify(bookingIds),
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout?success=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/cart`,
     });
 
@@ -96,6 +96,50 @@ export async function POST(request: Request) {
     console.error("Checkout error:", err);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("session_id");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
+
+  try {
+    const session = await getStripeServer().checkout.sessions.retrieve(sessionId);
+    const bookingIds = JSON.parse(session.metadata?.booking_ids || "[]") as string[];
+
+    if (
+      session.metadata?.type !== "booking" ||
+      session.status !== "complete" ||
+      session.payment_status !== "paid" ||
+      bookingIds.length === 0
+    ) {
+      return NextResponse.json({ verified: false }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabase();
+    await supabase
+      .from("bookings")
+      .update({
+        payment_status: "paid",
+        payment_intent_id: session.payment_intent as string,
+        status: "confirmed",
+      })
+      .in("id", bookingIds);
+
+    return NextResponse.json({
+      verified: true,
+      orderId: `RNHT-${bookingIds[0].slice(0, 8).toUpperCase()}`,
+    });
+  } catch (err) {
+    console.error("Checkout verify error:", err);
+    return NextResponse.json(
+      { error: "Failed to verify checkout session" },
       { status: 500 }
     );
   }

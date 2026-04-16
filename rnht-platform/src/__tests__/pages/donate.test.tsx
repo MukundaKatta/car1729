@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+let searchParamsState = new URLSearchParams();
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
@@ -15,7 +16,7 @@ vi.mock("next/image", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/donate",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParamsState,
 }));
 
 const donationTypesMock = [
@@ -98,6 +99,10 @@ import DonatePage from "@/app/donate/page";
 describe("DonatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    searchParamsState = new URLSearchParams();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200 })
+    );
   });
 
   it("renders the donation page heading", async () => {
@@ -189,5 +194,35 @@ describe("DonatePage", () => {
       ?.querySelector("input[type='radio']") as HTMLInputElement;
     fireEvent.click(priestRadio);
     expect(screen.getByText("In honor of")).toBeInTheDocument();
+  });
+
+  it("does not trust success without a payment token or session", async () => {
+    searchParamsState = new URLSearchParams("success=true");
+    render(<DonatePage />);
+
+    const errors = await screen.findAllByText(/We couldn't verify your donation yet/i);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Your donation of/i)).not.toBeInTheDocument();
+  });
+
+  it("verifies Stripe donations before showing success", async () => {
+    searchParamsState = new URLSearchParams("success=true&session_id=cs_test_123");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          verified: true,
+          amount: 108,
+          fundLabel: "General Temple Fund",
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(<DonatePage />);
+
+    expect(
+      await screen.findByText(/Your donation of/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("$108.00")).toBeInTheDocument();
   });
 });

@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         type: "donation",
         donation_id: donation.id,
       },
-      success_url: `${appUrl}/donate?success=true`,
+      success_url: `${appUrl}/donate?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/donate`,
     };
 
@@ -153,6 +153,58 @@ export async function POST(request: Request) {
     console.error("Donate error:", err);
     return NextResponse.json(
       { error: "Failed to create donation session" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("session_id");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
+
+  try {
+    const session = await getStripeServer().checkout.sessions.retrieve(sessionId);
+    const donationId = session.metadata?.donation_id;
+
+    if (
+      session.metadata?.type !== "donation" ||
+      session.status !== "complete" ||
+      session.payment_status !== "paid" ||
+      !donationId
+    ) {
+      return NextResponse.json({ verified: false }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("donations")
+      .update({ payment_status: "completed" })
+      .eq("id", donationId)
+      .select("amount, fund_type")
+      .single();
+
+    if (error) {
+      console.error("Failed to update donation:", error);
+      return NextResponse.json(
+        { error: "Failed to update donation" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      verified: true,
+      amount: data.amount,
+      fundType: data.fund_type,
+      fundLabel: fundLabels[data.fund_type] || "Temple Fund",
+    });
+  } catch (err) {
+    console.error("Donate verify error:", err);
+    return NextResponse.json(
+      { error: "Failed to verify donation session" },
       { status: 500 }
     );
   }

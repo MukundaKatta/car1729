@@ -16,33 +16,78 @@ export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items, getTotal, clearCart } = useCartStore();
+  const success = searchParams.get("success") === "true";
+  const sessionId = searchParams.get("session_id");
   const [paymentMethod, setPaymentMethod] = useState<
     "stripe" | "zelle"
   >("stripe");
   const [processing, setProcessing] = useState(false);
+  const [verifyingSuccess, setVerifyingSuccess] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [error, setError] = useState("");
 
   // Handle return from Stripe
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
-      setOrderId(`RNHT-${Date.now().toString(36).toUpperCase()}`);
-      setOrderComplete(true);
-      clearCart();
+    if (!success) return;
+
+    if (!sessionId) {
+      setError("We couldn't verify your payment yet. Please use the link from your payment confirmation email or contact the temple for assistance.");
+      return;
     }
-  }, [searchParams, clearCart]);
+
+    const verifiedSessionId = sessionId;
+    let cancelled = false;
+
+    async function verifyCheckout() {
+      setVerifyingSuccess(true);
+      setError("");
+      try {
+        const response = await fetch(`/api/checkout?session_id=${encodeURIComponent(verifiedSessionId)}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.verified || !data.orderId) {
+          throw new Error("Unable to verify booking");
+        }
+
+        if (cancelled) return;
+
+        setOrderId(data.orderId);
+        setOrderComplete(true);
+        clearCart();
+      } catch {
+        if (!cancelled) {
+          setError("We couldn't verify your payment yet. Please contact the temple before attempting another booking.");
+        }
+      } finally {
+        if (!cancelled) {
+          setVerifyingSuccess(false);
+        }
+      }
+    }
+
+    void verifyCheckout();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [success, sessionId, clearCart]);
 
   useEffect(() => {
-    if (items.length === 0 && !orderComplete && searchParams.get("success") !== "true") {
+    if (items.length === 0 && !orderComplete && !success) {
       router.push("/cart");
     }
-  }, [items.length, orderComplete, router, searchParams]);
+  }, [items.length, orderComplete, router, success]);
 
-  if (items.length === 0 && !orderComplete) {
+  if ((items.length === 0 && !orderComplete && !error) || verifyingSuccess) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-temple-gold/20 border-t-temple-gold" />
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-temple-gold/20 border-t-temple-gold" />
+          {verifyingSuccess && (
+            <p className="mt-4 text-sm text-gray-600">Verifying your payment confirmation...</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -144,6 +189,27 @@ export default function CheckoutPage() {
           <Link href="/services" className="btn-primary">
             Book Another Service
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && success && !orderComplete) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <h1 className="text-2xl font-heading font-bold text-gray-900">
+            Payment Verification Needed
+          </h1>
+          <p className="mt-3 text-sm text-red-800">{error}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/cart" className="btn-outline">
+              Back to Cart
+            </Link>
+            <Link href="/contact" className="btn-primary">
+              Contact Temple
+            </Link>
+          </div>
         </div>
       </div>
     );
