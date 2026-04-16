@@ -20,14 +20,14 @@ describe("ContactPage", () => {
     const whatsapp = screen.getByRole("link", { name: /\(512\) 545-0473/i });
     const phone = screen.getByRole("link", { name: /\(512\) 998-0112/i });
 
-    expect(whatsapp).toHaveAttribute("href", "https://wa.me/message/55G67NQ6CQENA1");
+    expect(whatsapp).toHaveAttribute("href", "https://wa.me/message/P3YRA2XY3GI7F1");
     expect(phone).toHaveAttribute("href", "tel:+15129980112");
   });
 
   it("links the temple WhatsApp group card to WhatsApp", () => {
     render(<ContactPage />);
     const groupLink = screen.getByRole("link", { name: /join temple whatsapp group/i });
-    expect(groupLink).toHaveAttribute("href", "https://wa.me/message/55G67NQ6CQENA1");
+    expect(groupLink).toHaveAttribute("href", "https://wa.me/message/P3YRA2XY3GI7F1");
     expect(groupLink).toHaveAttribute("target", "_blank");
   });
 

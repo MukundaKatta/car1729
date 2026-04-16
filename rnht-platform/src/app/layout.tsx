@@ -85,7 +85,7 @@ const jsonLd = {
   nonprofitStatus: "Nonprofit501c3",
   openingHours: ["Mo-Su 09:00-12:00", "Mo-Su 17:00-20:00"],
   sameAs: [
-    "https://wa.me/message/55G67NQ6CQENA1",
+    "https://wa.me/message/P3YRA2XY3GI7F1",
   ],
 };
 

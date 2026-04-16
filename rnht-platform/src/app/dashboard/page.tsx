@@ -211,7 +211,7 @@ function LoginForm() {
                 </div>
               </div>
               <a
-                href="https://wa.me/message/55G67NQ6CQENA1"
+                href="https://wa.me/message/P3YRA2XY3GI7F1"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary w-full bg-green-600 hover:bg-green-500"
@@ -461,7 +461,7 @@ function BookingsTab() {
               {(b.status === "confirmed" || b.status === "pending") && (
                 <div className="flex gap-2">
                   <a
-                    href="https://wa.me/message/55G67NQ6CQENA1"
+                    href="https://wa.me/message/P3YRA2XY3GI7F1"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-green-600 font-medium hover:underline flex items-center gap-1"

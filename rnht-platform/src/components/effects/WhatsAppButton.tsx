@@ -11,7 +11,7 @@ function WhatsAppIcon({ className = "" }: { className?: string }) {
 export function WhatsAppButton() {
   return (
     <a
-      href="https://wa.me/message/55G67NQ6CQENA1"
+      href="https://wa.me/message/P3YRA2XY3GI7F1"
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 sm:bottom-20 sm:right-5 sm:h-11 sm:w-11"

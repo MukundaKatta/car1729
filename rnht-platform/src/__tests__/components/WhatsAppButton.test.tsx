@@ -12,7 +12,7 @@ describe("WhatsAppButton", () => {
   it("links to the correct WhatsApp URL", () => {
     render(<WhatsAppButton />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "https://wa.me/message/55G67NQ6CQENA1");
+    expect(link).toHaveAttribute("href", "https://wa.me/message/P3YRA2XY3GI7F1");
   });
 
   it("opens in a new tab", () => {

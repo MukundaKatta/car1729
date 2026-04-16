@@ -33,7 +33,7 @@ const priests = [
     services: ["All Poojas", "Weddings (Vivaham)", "Homams & Yagnas", "Gruhapravesam", "Upanayanam", "Vastu Consultation", "Jyotisham", "Muhoortham", "Stotra Classes for Kids"],
     availability: { atTemple: true, outsideTemple: true, online: true },
     phone: "(512) 545-0473",
-    whatsapp: "https://wa.me/message/55G67NQ6CQENA1",
+    whatsapp: "https://wa.me/message/P3YRA2XY3GI7F1",
     email: "femtomax.inc@gmail.com",
     stats: { experience: "20+ yrs", serving: "Since 2013", area: "Austin, TX" },
   },
