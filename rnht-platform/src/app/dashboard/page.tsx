@@ -45,6 +45,7 @@ function normalizePhone(input: string): string | null {
 /* ─── Login Form (shown when not authenticated) ─── */
 function LoginForm() {
   const { sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [method, setMethod] = useState<"phone" | "email">("phone");
   const [step, setStep] = useState<"form" | "otp">("form");
   const [name, setName] = useState("");
@@ -110,7 +111,9 @@ function LoginForm() {
             Devotee Portal
           </h1>
           <p className="mt-2 text-gray-500 font-accent text-lg">
-            Sign in or create your devotee account to manage services, donations &amp; more
+            {authMode === "signup"
+              ? "Create your devotee account to manage services, donations & more"
+              : "Sign in to manage your services, donations & more"}
           </p>
         </div>
 
@@ -122,8 +125,34 @@ function LoginForm() {
           )}
           {step === "form" ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
+              <div className="flex rounded-lg border border-gray-200 p-1">
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("signin")}
+                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                    authMode === "signin"
+                      ? "bg-temple-maroon text-white"
+                      : "text-gray-600 hover:text-temple-maroon"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("signup")}
+                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                    authMode === "signup"
+                      ? "bg-temple-maroon text-white"
+                      : "text-gray-600 hover:text-temple-maroon"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
-                First-time devotees can create their portal account here with a one-time code.
+                {authMode === "signup"
+                  ? "First-time devotees can create their portal account here with a one-time code."
+                  : "Already have a devotee account? Use your email or phone to receive a one-time code."}
               </div>
               <div className="flex rounded-lg border border-gray-200 p-1">
                 <button
@@ -201,9 +230,13 @@ function LoginForm() {
               >
                 {loading
                   ? "Sending Code..."
-                  : method === "email"
-                    ? "Continue with Email"
-                    : "Continue with Phone"}
+                  : authMode === "signup"
+                    ? method === "email"
+                      ? "Create Account with Email"
+                      : "Create Account with Phone"
+                    : method === "email"
+                      ? "Continue with Email"
+                      : "Continue with Phone"}
               </button>
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
@@ -248,7 +281,11 @@ function LoginForm() {
                 disabled={loading || otp.length < 6}
                 className="btn-primary w-full"
               >
-                {loading ? "Verifying..." : "Verify & Continue"}
+                {loading
+                  ? "Verifying..."
+                  : authMode === "signup"
+                    ? "Verify & Create Account"
+                    : "Verify & Sign In"}
               </button>
               <button
                 type="button"

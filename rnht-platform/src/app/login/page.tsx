@@ -30,6 +30,7 @@ function normalizePhone(input: string): string | null {
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<AuthStep>("method");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -203,7 +204,9 @@ export default function LoginPage() {
             Devotee Sign In / Sign Up
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Access your devotee profile, booking history, or create a new devotee account
+            {authMode === "signup"
+              ? "Create your devotee account with a one-time code"
+              : "Access your devotee profile, booking history, and more"}
           </p>
         </div>
 
@@ -218,8 +221,34 @@ export default function LoginPage() {
           {/* Step: Choose method */}
           {step === "method" && (
             <div className="space-y-4">
+              <div className="flex rounded-lg border border-gray-200 p-1">
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("signin")}
+                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                    authMode === "signin"
+                      ? "bg-temple-maroon text-white"
+                      : "text-gray-600 hover:text-temple-maroon"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("signup")}
+                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                    authMode === "signup"
+                      ? "bg-temple-maroon text-white"
+                      : "text-gray-600 hover:text-temple-maroon"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
-                New devotees can create their portal account here using phone, email, or Google.
+                {authMode === "signup"
+                  ? "New devotees can create their portal account here using phone, email, or Google."
+                  : "Returning devotees can sign in here using phone, email, or Google."}
               </div>
               <button
                 onClick={() => setStep("phone")}
@@ -340,7 +369,7 @@ export default function LoginPage() {
                     Sending Code...
                   </>
                 ) : (
-                  "Send Verification Code"
+                  authMode === "signup" ? "Create Account with Email" : "Send Verification Code"
                 )}
               </button>
             </div>
@@ -395,7 +424,7 @@ export default function LoginPage() {
                     Sending Code...
                   </>
                 ) : (
-                  "Send Verification Code"
+                  authMode === "signup" ? "Create Account with Phone" : "Send Verification Code"
                 )}
               </button>
             </div>
@@ -449,7 +478,7 @@ export default function LoginPage() {
                     Verifying...
                   </>
                 ) : (
-                  "Verify & Sign In"
+                  authMode === "signup" ? "Verify & Create Account" : "Verify & Sign In"
                 )}
               </button>
               <button
@@ -506,7 +535,7 @@ export default function LoginPage() {
                     Verifying...
                   </>
                 ) : (
-                  "Verify & Sign In"
+                  authMode === "signup" ? "Verify & Create Account" : "Verify & Sign In"
                 )}
               </button>
               <button

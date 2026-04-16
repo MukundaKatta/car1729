@@ -77,8 +77,17 @@ describe("Dashboard — signed-out sign-in form", () => {
   it("renders the devotee portal headline", () => {
     render(<DashboardPage />);
     expect(screen.getByText("Devotee Portal")).toBeInTheDocument();
-    expect(screen.getByText(/Sign in or create your devotee account/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sign in to manage your services/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign Up" })).toBeInTheDocument();
+  });
+
+  it("switches to sign-up mode when selected", () => {
+    render(<DashboardPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+    expect(screen.getByText(/Create your devotee account/i)).toBeInTheDocument();
     expect(screen.getByText(/First-time devotees can create their portal account here/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create Account with Phone/i })).toBeInTheDocument();
   });
 
   it("defaults to the Phone tab and shows a phone input", () => {
