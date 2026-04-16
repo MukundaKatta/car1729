@@ -87,11 +87,11 @@ export function StaticHeroImages() {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 columns-1 gap-4 sm:columns-2 lg:columns-3">
           {images.map((img) => (
             <article
               key={img.src}
-              className="overflow-hidden rounded-[8px] border border-temple-gold/15 bg-[rgba(31,5,12,0.86)] shadow-[0_18px_48px_rgba(10,2,7,0.28)]"
+              className="mb-4 break-inside-avoid overflow-hidden rounded-[8px] border border-temple-gold/15 bg-[rgba(31,5,12,0.86)] shadow-[0_18px_48px_rgba(10,2,7,0.28)]"
             >
               <div className="flex items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3 py-3">
                 <Image
