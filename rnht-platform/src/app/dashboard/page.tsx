@@ -183,10 +183,10 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setMethod("phone")}
-                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-all ${
+                  className={`flex-1 rounded-xl border py-3 text-sm font-semibold transition-all ${
                     method === "phone"
-                      ? "bg-temple-maroon text-white shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
-                      : "text-gray-500 hover:bg-temple-maroon hover:text-white hover:shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
+                      ? "border-temple-maroon bg-temple-maroon text-white shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
+                      : "border-transparent bg-transparent text-gray-500 hover:border-temple-maroon hover:bg-temple-maroon hover:text-white hover:shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
                   }`}
                 >
                   Phone
@@ -194,10 +194,10 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setMethod("email")}
-                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-all ${
+                  className={`flex-1 rounded-xl border py-3 text-sm font-semibold transition-all ${
                     method === "email"
-                      ? "bg-temple-maroon text-white shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
-                      : "text-gray-500 hover:bg-temple-maroon hover:text-white hover:shadow-[0_10px_24px_rgba(96,10,31,0.14)]"
+                      ? "border-temple-maroon bg-temple-maroon text-white shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
+                      : "border-transparent bg-transparent text-gray-500 hover:border-temple-maroon hover:bg-temple-maroon hover:text-white hover:shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
                   }`}
                 >
                   Email
