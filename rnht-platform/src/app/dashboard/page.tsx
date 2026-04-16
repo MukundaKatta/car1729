@@ -125,43 +125,68 @@ function LoginForm() {
           )}
           {step === "form" ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
-              <div className="flex rounded-lg border border-gray-200 p-1">
+              <div className="space-y-3">
+                <div className="text-center">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-temple-gold-dark">
+                    Account Access
+                  </p>
+                  <h2 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
+                    {authMode === "signup" ? "Create Your Devotee Account" : "Welcome Back"}
+                  </h2>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {authMode === "signup"
+                      ? "New devotees can start their portal with a secure one-time code."
+                      : "Sign in to view bookings, donations, and your family details."}
+                  </p>
+                </div>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setAuthMode("signin")}
-                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-all ${
                     authMode === "signin"
-                      ? "bg-temple-maroon text-white"
-                      : "text-gray-600 hover:text-temple-maroon"
+                      ? "border-temple-maroon bg-temple-maroon text-white shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-temple-gold/40 hover:bg-temple-cream/40"
                   }`}
                 >
-                  Sign In
+                  <div className="text-base font-bold">Sign In</div>
+                  <div className={`mt-1 text-xs ${authMode === "signin" ? "text-white/80" : "text-gray-500"}`}>
+                    For existing devotees
+                  </div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAuthMode("signup")}
-                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                  className={`rounded-2xl border px-4 py-4 text-left transition-all ${
                     authMode === "signup"
-                      ? "bg-temple-maroon text-white"
-                      : "text-gray-600 hover:text-temple-maroon"
+                      ? "border-temple-maroon bg-temple-maroon text-white shadow-[0_12px_30px_rgba(96,10,31,0.16)]"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-temple-gold/40 hover:bg-temple-cream/40"
                   }`}
                 >
-                  Sign Up
+                  <div className="text-base font-bold">Sign Up</div>
+                  <div className={`mt-1 text-xs ${authMode === "signup" ? "text-white/80" : "text-gray-500"}`}>
+                    For first-time devotees
+                  </div>
                 </button>
+              </div>
               </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
                 {authMode === "signup"
                   ? "First-time devotees can create their portal account here with a one-time code."
                   : "Already have a devotee account? Use your email or phone to receive a one-time code."}
               </div>
-              <div className="flex rounded-lg border border-gray-200 p-1">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                  Choose Verification Method
+                </p>
+              <div className="flex rounded-2xl border border-gray-200 bg-gray-50/80 p-1.5">
                 <button
                   type="button"
                   onClick={() => setMethod("phone")}
-                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
                     method === "phone"
-                      ? "bg-temple-maroon text-white"
-                      : "text-gray-600 hover:text-temple-maroon"
+                      ? "bg-white text-temple-maroon shadow-sm"
+                      : "text-gray-500 hover:text-temple-maroon"
                   }`}
                 >
                   Phone
@@ -169,14 +194,15 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setMethod("email")}
-                  className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
+                  className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors ${
                     method === "email"
-                      ? "bg-temple-maroon text-white"
-                      : "text-gray-600 hover:text-temple-maroon"
+                      ? "bg-white text-temple-maroon shadow-sm"
+                      : "text-gray-500 hover:text-temple-maroon"
                   }`}
                 >
                   Email
                 </button>
+              </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">

@@ -45,15 +45,16 @@ describe("LoginPage", () => {
     expect(screen.getByText("Devotee Sign In / Sign Up")).toBeInTheDocument();
     expect(screen.getByText("Continue with Email")).toBeInTheDocument();
     expect(screen.getByText("Continue with Google")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign Up" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sign In.*Existing devotees/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome Back" })).toBeInTheDocument();
     expect(authState.initialize).toHaveBeenCalled();
   });
 
   it("switches to sign-up mode explicitly", () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
-    expect(screen.getByText(/Create your devotee account with a one-time code/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i }));
+    expect(screen.getByRole("heading", { name: "Create Your Devotee Account" })).toBeInTheDocument();
     expect(screen.getByText(/New devotees can create their portal account here/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText("Continue with Email"));
     expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeInTheDocument();
@@ -92,7 +93,7 @@ describe("LoginPage", () => {
 
   it("shows create-account actions in sign-up mode", () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+    fireEvent.click(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i }));
     fireEvent.click(screen.getByText("Continue with Email"));
     expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeDisabled();
   });
