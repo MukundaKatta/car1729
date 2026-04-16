@@ -42,9 +42,10 @@ describe("LoginPage", () => {
 
   it("renders the method selection step by default", () => {
     render(<LoginPage />);
-    expect(screen.getByText("Devotee Sign In")).toBeInTheDocument();
-    expect(screen.getByText("Sign in with Email")).toBeInTheDocument();
+    expect(screen.getByText("Devotee Sign In / Sign Up")).toBeInTheDocument();
+    expect(screen.getByText("Continue with Email")).toBeInTheDocument();
     expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+    expect(screen.getByText(/New devotees can create their portal account here/i)).toBeInTheDocument();
     expect(authState.initialize).toHaveBeenCalled();
   });
 
@@ -56,7 +57,7 @@ describe("LoginPage", () => {
 
   it("moves to the email step and requires both name and email", () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Sign in with Email"));
+    fireEvent.click(screen.getByText("Continue with Email"));
     const button = screen.getByRole("button", { name: "Send Verification Code" });
     expect(button).toBeDisabled();
 
@@ -67,7 +68,7 @@ describe("LoginPage", () => {
 
   it("sends otp and moves to the verification step", async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Sign in with Email"));
+    fireEvent.click(screen.getByText("Continue with Email"));
     fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
@@ -82,7 +83,7 @@ describe("LoginPage", () => {
   it("shows a send otp error inline", async () => {
     authState.sendOtp.mockResolvedValue({ error: "Invalid email" });
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Sign in with Email"));
+    fireEvent.click(screen.getByText("Continue with Email"));
     fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "bad@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
@@ -92,7 +93,7 @@ describe("LoginPage", () => {
 
   it("verifies otp and shows the success step", async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Sign in with Email"));
+    fireEvent.click(screen.getByText("Continue with Email"));
     fireEvent.change(screen.getByPlaceholderText("Enter your name"), { target: { value: "Test User" } });
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));

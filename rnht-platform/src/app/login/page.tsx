@@ -200,10 +200,10 @@ export default function LoginPage() {
             R
           </div>
           <h1 className="mt-4 font-heading text-2xl font-bold text-gray-900">
-            Devotee Sign In
+            Devotee Sign In / Sign Up
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Access your devotee profile, booking history, and more
+            Access your devotee profile, booking history, or create a new devotee account
           </p>
         </div>
 
@@ -218,6 +218,9 @@ export default function LoginPage() {
           {/* Step: Choose method */}
           {step === "method" && (
             <div className="space-y-4">
+              <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
+                New devotees can create their portal account here using phone, email, or Google.
+              </div>
               <button
                 onClick={() => setStep("phone")}
                 className="flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-red hover:bg-red-50"
@@ -227,10 +230,10 @@ export default function LoginPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">
-                    Sign in with Phone
+                    Continue with Phone
                   </p>
                   <p className="text-xs text-gray-500">
-                    We&apos;ll text you a 6-digit code
+                    We&apos;ll text you a 6-digit code to sign in or create your account
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />
@@ -245,10 +248,10 @@ export default function LoginPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">
-                    Sign in with Email
+                    Continue with Email
                   </p>
                   <p className="text-xs text-gray-500">
-                    We&apos;ll send a 6-digit code to your email
+                    We&apos;ll send a 6-digit code to sign in or create your account
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />

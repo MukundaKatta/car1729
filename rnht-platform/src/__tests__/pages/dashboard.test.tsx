@@ -77,6 +77,8 @@ describe("Dashboard — signed-out sign-in form", () => {
   it("renders the devotee portal headline", () => {
     render(<DashboardPage />);
     expect(screen.getByText("Devotee Portal")).toBeInTheDocument();
+    expect(screen.getByText(/Sign in or create your devotee account/i)).toBeInTheDocument();
+    expect(screen.getByText(/First-time devotees can create their portal account here/i)).toBeInTheDocument();
   });
 
   it("defaults to the Phone tab and shows a phone input", () => {

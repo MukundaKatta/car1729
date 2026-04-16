@@ -110,7 +110,7 @@ function LoginForm() {
             Devotee Portal
           </h1>
           <p className="mt-2 text-gray-500 font-accent text-lg">
-            Sign in to manage your services, donations &amp; more
+            Sign in or create your devotee account to manage services, donations &amp; more
           </p>
         </div>
 
@@ -122,6 +122,9 @@ function LoginForm() {
           )}
           {step === "form" ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
+              <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
+                First-time devotees can create their portal account here with a one-time code.
+              </div>
               <div className="flex rounded-lg border border-gray-200 p-1">
                 <button
                   type="button"
@@ -245,7 +248,7 @@ function LoginForm() {
                 disabled={loading || otp.length < 6}
                 className="btn-primary w-full"
               >
-                {loading ? "Verifying..." : "Verify & Sign In"}
+                {loading ? "Verifying..." : "Verify & Continue"}
               </button>
               <button
                 type="button"
