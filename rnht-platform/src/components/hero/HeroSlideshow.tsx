@@ -58,55 +58,6 @@ const PANELS = [
   },
 ] as const;
 
-const HERO_BELLS = [
-  { pct: 12, size: "sm", anim: "bell-swing-slow" },
-  { pct: 28, size: "md", anim: "bell-swing-delayed" },
-  { pct: 50, size: "lg", anim: "bell-swing" },
-  { pct: 72, size: "md", anim: "bell-swing-delayed" },
-  { pct: 88, size: "sm", anim: "bell-swing-slow" },
-] as const;
-
-function TempleBell({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const dims = { sm: { w: 16, h: 28 }, md: { w: 20, h: 36 }, lg: { w: 24, h: 42 } };
-  const { w, h } = dims[size];
-
-  return (
-    <svg width={w} height={h} viewBox="0 0 24 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <line x1="12" y1="0" x2="12" y2="10" stroke="url(#chainGrad)" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="12" cy="10" r="1.5" fill="#C5972C" />
-      <path d="M4 24C4 17 6 12 12 12C18 12 20 17 20 24L22 28H2L4 24Z" fill="url(#bellGold)" stroke="#A67C10" strokeWidth="0.5" />
-      <rect x="1" y="28" width="22" height="3" rx="1.5" fill="url(#rimGold)" />
-      <line x1="12" y1="25" x2="12" y2="33" stroke="#8B6914" strokeWidth="1.2" strokeLinecap="round" />
-      <circle cx="12" cy="34" r="2" fill="url(#clapperGold)" />
-      <ellipse cx="9" cy="19" rx="2.5" ry="4" fill="white" opacity="0.18" />
-      <path d="M6 20H18" stroke="#A67C10" strokeWidth="0.4" opacity="0.5" />
-      <path d="M5 23H19" stroke="#A67C10" strokeWidth="0.4" opacity="0.5" />
-      <circle cx="12" cy="11.5" r="2.5" fill="url(#bellGold)" stroke="#A67C10" strokeWidth="0.4" />
-      <defs>
-        <linearGradient id="chainGrad" x1="12" y1="0" x2="12" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#D4A843" />
-          <stop offset="100%" stopColor="#B8912A" />
-        </linearGradient>
-        <linearGradient id="bellGold" x1="4" y1="12" x2="20" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#F0D060" />
-          <stop offset="30%" stopColor="#D4A843" />
-          <stop offset="70%" stopColor="#C5972C" />
-          <stop offset="100%" stopColor="#A67C10" />
-        </linearGradient>
-        <linearGradient id="rimGold" x1="1" y1="28" x2="23" y2="31" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5972C" />
-          <stop offset="50%" stopColor="#E8C34A" />
-          <stop offset="100%" stopColor="#C5972C" />
-        </linearGradient>
-        <radialGradient id="clapperGold" cx="12" cy="34" r="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#E8C34A" />
-          <stop offset="100%" stopColor="#8B6914" />
-        </radialGradient>
-      </defs>
-    </svg>
-  );
-}
-
 const CSS = `
   /* ── Shared timing ─────────────────────────────────────────────────── */
   :root {
@@ -182,21 +133,6 @@ export function HeroSlideshow() {
 
         {/* Shimmering gold top border */}
         <div className="border-shimmer absolute top-0 inset-x-0 h-[3px] z-30" />
-
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-20 overflow-visible" aria-hidden="true">
-          {HERO_BELLS.map((bell, index) => (
-            <div
-              key={index}
-              className={`absolute -top-1 ${bell.anim} hidden opacity-80 sm:block`}
-              style={{ left: `${bell.pct}%`, transformOrigin: "top center" }}
-            >
-              <TempleBell size={bell.size} />
-            </div>
-          ))}
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 opacity-85 sm:hidden bell-swing">
-            <TempleBell size="md" />
-          </div>
-        </div>
 
         {/* ── Three panels — all on sm+, center only on mobile ─────── */}
         <div className="absolute inset-0 grid grid-cols-1 sm:grid-cols-3">
@@ -281,11 +217,14 @@ export function HeroSlideshow() {
           }}
         />
 
-        <div className="absolute inset-x-0 bottom-10 z-30 sm:bottom-12">
+        <div
+          className="absolute inset-x-0 z-30"
+          style={{ bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 24px), 24px)" }}
+        >
           <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-3 px-4 sm:flex-row sm:gap-5 sm:px-6 lg:px-8">
             <Link
               href="/services"
-              className="cta-primary-glow inline-flex min-w-[190px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:min-w-[210px] sm:px-10 sm:text-base"
+              className="cta-primary-glow inline-flex min-w-[190px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
                 color: "#2A0612",
@@ -296,7 +235,7 @@ export function HeroSlideshow() {
             </Link>
             <Link
               href="/donate"
-              className="inline-flex min-w-[190px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:min-w-[210px] sm:px-10 sm:text-base"
+              className="inline-flex min-w-[190px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "rgba(42,6,18,0.34)",
                 color: "#E8D5A3",
