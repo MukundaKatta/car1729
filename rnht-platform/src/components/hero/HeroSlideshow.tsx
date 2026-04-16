@@ -7,8 +7,8 @@ import Link from "next/link";
  * Three-panel Ken Burns hero — deity-collage.jpg (2200 × 1049, optimized).
  *
  * object-position values (viewport-independent):
- *   Left  (Goddess Lakshmi) → 50% center
- *   Mid   (Shiva lingam)    →  5% center
+ *   Left  (Shiva lingam)    →  5% center
+ *   Mid   (Goddess Lakshmi) → 50% center
  *   Right (Narayana)        → 95% center
  *
  * Animation philosophy — "Sacred Convergence":
@@ -23,8 +23,8 @@ import Link from "next/link";
  */
 
 const PANELS = [
-  { objectPos: "50% center", anim: "sacred-left",   label: "Goddess Lakshmi in full regalia"   },
-  { objectPos: "5%  20%",    anim: "sacred-center",  label: "Shiva lingam adorned with flowers" },
+  { objectPos: "5%  20%",    anim: "sacred-left",    label: "Shiva lingam adorned with flowers" },
+  { objectPos: "50% center", anim: "sacred-center",  label: "Goddess Lakshmi in full regalia"   },
   { objectPos: "95% 30%",    anim: "sacred-right",   label: "Narayana with garlands"            },
 ] as const;
 
