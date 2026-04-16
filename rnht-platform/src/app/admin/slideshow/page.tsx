@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   Plus,
@@ -120,7 +121,14 @@ function FileUploader({
               {mediaType === "video" ? (
                 <video src={currentUrl} className="h-32 w-full object-cover" muted playsInline />
               ) : (
-                <img src={currentUrl} alt="Current" className="h-32 w-full object-cover" />
+                <Image
+                  src={currentUrl}
+                  alt="Current"
+                  width={512}
+                  height={256}
+                  unoptimized
+                  className="h-32 w-full object-cover"
+                />
               )}
             </div>
             <p className="text-xs text-gray-500">Click or drag to replace</p>
@@ -422,9 +430,12 @@ export default function AdminSlideshowPage() {
                       <Video className="h-8 w-8 text-white/60" />
                     </div>
                   ) : (
-                    <img
+                    <Image
                       src={slide.url}
                       alt={slide.title}
+                      width={400}
+                      height={300}
+                      unoptimized
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23e5e7eb'%3E%3Crect width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' fill='%239ca3af' font-size='14' text-anchor='middle' dy='.3em'%3EImage not found%3C/text%3E%3C/svg%3E";
