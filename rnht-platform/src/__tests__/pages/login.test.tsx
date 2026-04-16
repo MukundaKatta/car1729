@@ -3,8 +3,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 
 const mockReplace = vi.fn();
-const { mockSignInWithOAuth } = vi.hoisted(() => ({
+const { mockSignInWithOAuth, mockGetSession } = vi.hoisted(() => ({
   mockSignInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+  mockGetSession: vi.fn().mockResolvedValue({ data: { session: null } }),
 }));
 
 vi.mock("next/link", () => ({
@@ -17,6 +18,7 @@ vi.mock("@/lib/supabase", () => ({
   supabase: {
     auth: {
       signInWithOAuth: mockSignInWithOAuth,
+      getSession: mockGetSession,
     },
   },
 }));
@@ -36,14 +38,15 @@ describe("LoginPage", () => {
       isAuthenticated: false,
       initialize: vi.fn(),
       sendOtp: vi.fn().mockResolvedValue({}),
-      verifyOtp: vi.fn().mockResolvedValue({}),
+      sendPhoneOtp: vi.fn().mockResolvedValue({}),
+      verifyPhoneOtp: vi.fn().mockResolvedValue({}),
     };
   });
 
   it("renders the method selection step by default", () => {
     render(<LoginPage />);
     expect(screen.getByText("Devotee Sign In / Sign Up")).toBeInTheDocument();
-    expect(screen.getByText("Continue with Email")).toBeInTheDocument();
+    expect(screen.getByText("Sign In with Email")).toBeInTheDocument();
     expect(screen.getByText("Continue with Google")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sign In.*Existing devotees/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i })).toBeInTheDocument();
@@ -57,7 +60,7 @@ describe("LoginPage", () => {
     expect(screen.getByRole("heading", { name: "Create Your Devotee Account" })).toBeInTheDocument();
     expect(screen.getByText(/New devotees can create their portal account here/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText("Create Account with Email"));
-    expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send Email Confirmation Link" })).toBeInTheDocument();
   });
 
   it("redirects authenticated users to the dashboard", () => {
@@ -68,8 +71,8 @@ describe("LoginPage", () => {
 
   it("moves to the email step and requires both name and email", () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Continue with Email"));
-    const button = screen.getByRole("button", { name: "Send Verification Code" });
+    fireEvent.click(screen.getByText("Sign In with Email"));
+    const button = screen.getByRole("button", { name: "Send Sign-In Link" });
     expect(button).toBeDisabled();
 
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
@@ -78,51 +81,47 @@ describe("LoginPage", () => {
 
   it("sends otp and moves to the verification step", async () => {
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Continue with Email"));
+    fireEvent.click(screen.getByText("Sign In with Email"));
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Sign-In Link" }));
 
     await waitFor(() => {
       expect(authState.sendOtp).toHaveBeenCalledWith("test@example.com", "");
     });
-    expect(screen.getByText(/enter the 6-digit code sent to/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Verify & Sign In" })).toBeDisabled();
+    expect(screen.getByText(/we sent a confirmation link to/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "I Clicked the Sign-In Link" })).toBeInTheDocument();
   });
 
   it("shows create-account actions in sign-up mode", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i }));
     fireEvent.click(screen.getByText("Create Account with Email"));
-    expect(screen.getByRole("button", { name: "Create Account with Email" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send Email Confirmation Link" })).toBeDisabled();
   });
 
   it("shows a send otp error inline", async () => {
     authState.sendOtp.mockResolvedValue({ error: "Invalid email" });
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Continue with Email"));
+    fireEvent.click(screen.getByText("Sign In with Email"));
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "bad@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Sign-In Link" }));
 
     expect(await screen.findByText("Invalid email")).toBeInTheDocument();
   });
 
-  it("verifies otp and shows the success step", async () => {
+  it("checks for a confirmed email session and redirects", async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: "u-1" } } } });
     render(<LoginPage />);
-    fireEvent.click(screen.getByText("Continue with Email"));
+    fireEvent.click(screen.getByText("Sign In with Email"));
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send Verification Code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Sign-In Link" }));
 
-    await screen.findByText(/enter the 6-digit code sent to/i);
-    for (let i = 0; i < 6; i += 1) {
-      fireEvent.change(document.getElementById(`otp-${i}`)!, { target: { value: String(i + 1) } });
-    }
-
-    fireEvent.click(screen.getByRole("button", { name: "Verify & Sign In" }));
+    await screen.findByText(/we sent a confirmation link to/i);
+    fireEvent.click(screen.getByRole("button", { name: "I Clicked the Sign-In Link" }));
 
     await waitFor(() => {
-      expect(authState.verifyOtp).toHaveBeenCalledWith("test@example.com", "123456");
+      expect(mockReplace).toHaveBeenCalledWith("/dashboard");
     });
-    expect(screen.getByText("Welcome to RNHT!")).toBeInTheDocument();
   });
 
   it("starts Google sign-in", async () => {

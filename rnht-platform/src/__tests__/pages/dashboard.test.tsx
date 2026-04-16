@@ -19,6 +19,7 @@ vi.mock("@/lib/supabase", () => ({
     auth: {
       onAuthStateChange: vi.fn(),
       signOut: vi.fn().mockResolvedValue({}),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
     },
   },
 }));
@@ -138,13 +139,14 @@ describe("Dashboard — signed-out sign-in form", () => {
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
       target: { value: "rajesh@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Create Account with Email/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Send Email Confirmation Link/i }));
     await waitFor(() => {
       expect(authState.sendOtp).toHaveBeenCalledWith(
         "rajesh@example.com",
         "Rajesh"
       );
     });
+    expect(screen.getByText(/we sent a confirmation email to/i)).toBeInTheDocument();
   });
 
   it("lets existing devotees sign in without entering a name", async () => {
@@ -154,7 +156,7 @@ describe("Dashboard — signed-out sign-in form", () => {
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
       target: { value: "rajesh@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Continue with Email/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Send Sign-In Link/i }));
     await waitFor(() => {
       expect(authState.sendOtp).toHaveBeenCalledWith("rajesh@example.com", "");
     });

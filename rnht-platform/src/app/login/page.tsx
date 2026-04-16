@@ -7,7 +7,7 @@ import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
 
-type AuthStep = "method" | "email" | "otp" | "phone" | "phone_otp" | "success";
+type AuthStep = "method" | "email" | "email_sent" | "phone" | "phone_otp" | "success";
 
 /**
  * Normalize a user-entered phone number to E.164 format.
@@ -29,7 +29,7 @@ function normalizePhone(input: string): string | null {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
+  const { isAuthenticated, sendOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<AuthStep>("method");
   const [email, setEmail] = useState("");
@@ -51,6 +51,32 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
+  useEffect(() => {
+    if (step !== "email_sent" || !supabase) return;
+
+    let cancelled = false;
+
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) {
+        router.replace("/dashboard");
+      }
+    };
+
+    const timeout = window.setTimeout(checkSession, 1500);
+    const handleFocus = () => {
+      void checkSession();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [router, step]);
+
   const handleSendOtp = async () => {
     setError("");
     setLoading(true);
@@ -59,20 +85,7 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      setStep("otp");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setError("");
-    setLoading(true);
-    const token = otp.join("");
-    const result = await verifyOtp(email, token);
-    setLoading(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setStep("success");
+      setStep("email_sent");
     }
   };
 
@@ -84,6 +97,22 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
     }
+  };
+
+  const handleEmailConfirmed = async () => {
+    if (!supabase) {
+      setError("Authentication is not configured");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    setLoading(false);
+    if (session?.user) {
+      router.replace("/dashboard");
+      return;
+    }
+    setError("We do not see an active session yet. Please open the latest email and click the confirmation link in the same browser.");
   };
 
   const handleSendPhoneOtp = async () => {
@@ -205,7 +234,7 @@ export default function LoginPage() {
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             {authMode === "signup"
-              ? "Create your devotee account with a one-time code"
+              ? "Create your devotee account with a secure email link or phone code"
               : "Access your devotee profile, booking history, and more"}
           </p>
         </div>
@@ -231,7 +260,7 @@ export default function LoginPage() {
                   </h2>
                   <p className="mt-2 text-sm text-gray-500">
                     {authMode === "signup"
-                      ? "Choose a secure one-time code option to create your portal."
+                      ? "Choose phone or email to create your devotee portal."
                       : "Choose how you would like to sign in to your devotee portal."}
                   </p>
                 </div>
@@ -300,12 +329,12 @@ export default function LoginPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900 group-hover:text-white">
-                    {authMode === "signup" ? "Create Account with Email" : "Continue with Email"}
+                    {authMode === "signup" ? "Create Account with Email" : "Sign In with Email"}
                   </p>
                   <p className="text-xs text-gray-500 group-hover:text-white/80">
                     {authMode === "signup"
-                      ? "We&apos;ll email you a 6-digit code to create your devotee account"
-                      : "We&apos;ll email you a 6-digit code to sign in to your account"}
+                      ? "We&apos;ll email you a confirmation link to create your devotee account"
+                      : "We&apos;ll email you a sign-in link for your devotee portal"}
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
@@ -399,7 +428,7 @@ export default function LoginPage() {
                     Sending Code...
                   </>
                 ) : (
-                  authMode === "signup" ? "Create Account with Email" : "Send Verification Code"
+                  authMode === "signup" ? "Send Email Confirmation Link" : "Send Sign-In Link"
                 )}
               </button>
             </div>
@@ -526,51 +555,44 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Step: OTP verification */}
-          {step === "otp" && (
+          {/* Step: Email confirmation */}
+          {step === "email_sent" && (
             <div className="space-y-4 text-center">
               <button
-                onClick={() => { setStep("email"); setError(""); setOtp(["", "", "", "", "", ""]); }}
+                onClick={() => {
+                  setStep("email");
+                  setError("");
+                }}
                 className="text-sm text-gray-500 hover:text-gray-700"
               >
                 &larr; Back
               </button>
               <div>
                 <p className="text-sm text-gray-600">
-                  Enter the 6-digit code sent to
+                  We sent a confirmation link to
                 </p>
                 <p className="font-semibold text-gray-900">{email}</p>
               </div>
-              <div className="flex justify-center gap-2">
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    id={`otp-${i}`}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    className="h-12 w-12 rounded-lg border border-gray-300 text-center text-lg font-semibold focus:border-temple-red focus:outline-none focus:ring-2 focus:ring-temple-red/20"
-                    value={digit}
-                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                    onPaste={i === 0 ? handleOtpPaste : undefined}
-                    autoFocus={i === 0}
-                    aria-label={`Digit ${i + 1}`}
-                  />
-                ))}
+              <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-4 text-left text-sm text-gray-700">
+                <p className="font-medium text-temple-maroon">
+                  Open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
+                </p>
+                <p className="mt-2 text-gray-600">
+                  After you confirm, come back here and tap the button below. We will also check again automatically when this page regains focus.
+                </p>
               </div>
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={otp.some((d) => !d) || loading}
-                onClick={handleVerifyOtp}
+                disabled={loading}
+                onClick={handleEmailConfirmed}
               >
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Verifying...
+                    Checking Confirmation...
                   </>
                 ) : (
-                  authMode === "signup" ? "Verify & Create Account" : "Verify & Sign In"
+                  authMode === "signup" ? "I Confirmed My Email" : "I Clicked the Sign-In Link"
                 )}
               </button>
               <button
@@ -578,7 +600,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="text-sm text-temple-red hover:underline disabled:opacity-50"
               >
-                Resend Code
+                Resend Email
               </button>
             </div>
           )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth";
 import {
   User,
@@ -44,10 +45,10 @@ function normalizePhone(input: string): string | null {
 
 /* ─── Login Form (shown when not authenticated) ─── */
 function LoginForm() {
-  const { sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
+  const { sendOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [method, setMethod] = useState<"phone" | "email">("phone");
-  const [step, setStep] = useState<"form" | "otp">("form");
+  const [step, setStep] = useState<"form" | "phone_otp" | "email_sent">("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -69,7 +70,7 @@ function LoginForm() {
       const result = await sendOtp(email, authMode === "signup" ? name : "");
       setLoading(false);
       if (result.error) setError(result.error);
-      else setStep("otp");
+      else setStep("email_sent");
     } else {
       const e164 = normalizePhone(phone);
       if (!e164) {
@@ -81,7 +82,7 @@ function LoginForm() {
       const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "");
       setLoading(false);
       if (result.error) setError(result.error);
-      else setStep("otp");
+      else setStep("phone_otp");
     }
   };
 
@@ -90,14 +91,51 @@ function LoginForm() {
     if (otp.length < 6) return;
     setLoading(true);
     setError("");
-    const result = method === "email"
-      ? await verifyOtp(email, otp)
-      : await verifyPhoneOtp(normalizedPhone, otp);
+    const result = await verifyPhoneOtp(normalizedPhone, otp);
     setLoading(false);
     if (result.error) {
       setError(result.error);
     }
     // On success, auth state change listener in the store handles the rest
+  };
+
+  useEffect(() => {
+    if (step !== "email_sent" || !supabase) return;
+
+    let cancelled = false;
+
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) {
+        window.location.reload();
+      }
+    };
+
+    const timeout = window.setTimeout(checkSession, 1500);
+    const handleFocus = () => {
+      void checkSession();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [step]);
+
+  const handleEmailConfirmed = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    setError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    setLoading(false);
+    if (session?.user) {
+      window.location.reload();
+      return;
+    }
+    setError("We do not see an active session yet. Please open the latest email and click the confirmation link in the same browser.");
   };
 
   return (
@@ -135,7 +173,7 @@ function LoginForm() {
                   </h2>
                   <p className="mt-2 text-sm text-gray-500">
                     {authMode === "signup"
-                      ? "New devotees can start their portal with a secure one-time code."
+                      ? "New devotees can start their portal with a secure email link or phone code."
                       : "Sign in to view bookings, donations, and your family details."}
                   </p>
                 </div>
@@ -172,12 +210,12 @@ function LoginForm() {
               </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-3 text-sm text-gray-700">
                 {authMode === "signup"
-                  ? "First-time devotees can create their portal account here with a one-time code."
-                  : "Already have a devotee account? Use your email or phone to receive a one-time code."}
+                  ? "First-time devotees can create their portal account here using a phone verification code or an email confirmation link."
+                  : "Already have a devotee account? Use your phone verification code or email sign-in link."}
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                  Choose Verification Method
+                  Choose Sign-In Method
                 </p>
               <div className="flex rounded-2xl border border-gray-200 bg-gray-50/80 p-1.5">
                 <button
@@ -260,10 +298,10 @@ function LoginForm() {
                   ? "Sending Code..."
                   : authMode === "signup"
                     ? method === "email"
-                      ? "Create Account with Email"
+                      ? "Send Email Confirmation Link"
                       : "Create Account with Phone"
                     : method === "email"
-                      ? "Continue with Email"
+                      ? "Send Sign-In Link"
                       : "Continue with Phone"}
               </button>
               <div className="relative my-4">
@@ -284,11 +322,10 @@ function LoginForm() {
                 Contact via WhatsApp
               </a>
             </form>
-          ) : (
+          ) : step === "phone_otp" ? (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <p className="text-sm text-gray-600 text-center font-accent">
-                We sent a verification code to{" "}
-                <strong>{method === "email" ? email : normalizedPhone}</strong>
+                We sent a verification code to <strong>{normalizedPhone}</strong>
               </p>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -320,9 +357,59 @@ function LoginForm() {
                 onClick={() => setStep("form")}
                 className="w-full text-sm text-gray-500 hover:text-temple-red transition-colors"
               >
-                {method === "email" ? "Use a different email" : "Use a different number"}
+                Use a different number
               </button>
             </form>
+          ) : (
+            <div className="space-y-5 text-center">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600 font-accent">
+                  We sent a confirmation email to
+                </p>
+                <p className="text-xl font-semibold text-gray-900 break-all">{email}</p>
+              </div>
+              <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-4 text-left text-sm text-gray-700">
+                <p className="font-medium text-temple-maroon">
+                  Open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
+                </p>
+                <p className="mt-2 text-gray-600">
+                  After you confirm, come back here and tap the button below. We will refresh your devotee portal automatically when the session is ready.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleEmailConfirmed}
+                disabled={loading}
+                className="btn-primary w-full"
+              >
+                {loading
+                  ? "Checking Confirmation..."
+                  : authMode === "signup"
+                    ? "I Confirmed My Email"
+                    : "I Clicked the Sign-In Link"}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  setError("");
+                  const result = await sendOtp(email, authMode === "signup" ? name : "");
+                  setLoading(false);
+                  if (result.error) setError(result.error);
+                }}
+                disabled={loading}
+                className="w-full text-sm font-medium text-temple-red hover:underline"
+              >
+                Resend Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="w-full text-sm text-gray-500 hover:text-temple-red transition-colors"
+              >
+                Use a different email
+              </button>
+            </div>
           )}
         </div>
 
