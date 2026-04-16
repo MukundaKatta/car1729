@@ -56,42 +56,49 @@ export default function HomePage() {
       <HeroSlideshow />
 
       {/* Stats Bar — below hero */}
-      <section className="bg-[#2A0612] border-b border-temple-gold/20">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-8 sm:grid-cols-4 sm:gap-6 sm:px-6 lg:px-8">
+      <section className="border-b border-temple-gold/15 bg-[#25050F]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-7 sm:grid-cols-4 sm:gap-5 sm:px-6 lg:px-8">
           {[
             { value: "Est. 2022", label: "Serving the Community", icon: "🙏" },
             { value: "50+", label: "Vedic Services Offered", icon: "🪔" },
             { value: "2", label: "Experienced Priests", icon: "📿" },
             { value: "12+", label: "Texas Cities Served", icon: "📍" },
           ].map((stat) => (
-            <div key={stat.label} className="text-center group">
-              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-temple-gold/10 border border-temple-gold/20 text-lg">
+            <div
+              key={stat.label}
+              className="group rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+            >
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-temple-gold/20 bg-temple-gold/10 text-lg">
                 {stat.icon}
               </div>
-              <p className="font-heading text-lg font-bold text-temple-gold-light sm:text-2xl">{stat.value}</p>
-              <p className="mt-1 text-xs font-accent text-gray-300 tracking-wide font-medium sm:text-sm">{stat.label}</p>
+              <p className="font-heading text-lg font-bold text-temple-gold-light sm:text-2xl">
+                {stat.value}
+              </p>
+              <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
+                {stat.label}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Quick Info Bar */}
-      <section className="bg-[#2A0612] text-white border-b border-temple-gold/20">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 px-4 py-3 text-sm sm:gap-14 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
+      <section className="border-b border-temple-gold/15 bg-[#25050F] text-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-4 text-sm sm:gap-4 sm:px-6 lg:flex-nowrap lg:justify-between lg:px-8">
+          <div className="flex items-center gap-2 rounded-full border border-temple-gold/12 bg-white/[0.02] px-4 py-2.5">
             <MapPin className="h-4 w-4 text-temple-gold-light" />
             <span className="font-medium">Georgetown, TX 78628</span>
           </div>
           <a
             href="tel:+15125450473"
-            className="flex items-center gap-2 transition-colors hover:text-temple-gold-light"
+            className="flex items-center gap-2 rounded-full border border-temple-gold/12 bg-white/[0.02] px-4 py-2.5 transition-colors hover:text-temple-gold-light"
           >
             <Phone className="h-4 w-4 text-temple-gold-light" />
             <span className="font-medium">(512) 545-0473</span>
           </a>
           <Link
             href="/donate"
-            className="hidden sm:flex items-center gap-2 rounded-full bg-temple-gold/20 px-4 py-1 font-semibold text-temple-gold-light transition-colors hover:bg-temple-gold/30"
+            className="flex items-center gap-2 rounded-full border border-temple-gold/20 bg-temple-gold/18 px-4 py-2.5 font-semibold text-temple-gold-light transition-colors hover:bg-temple-gold/28"
           >
             <HeartHandshake className="h-4 w-4" />
             <span>Support the Temple</span>

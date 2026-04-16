@@ -1,65 +1,101 @@
 import Image from "next/image";
 
-/**
- * Static image collage for the home page. Replaces the animated
- * FallingPetals layer and gives the temple a calm, devotional feel.
- *
- * Drop images into /public/home/ and update the `images` list below.
- * Missing files fall back to a burgundy gradient block.
- */
-
 type StaticImage = {
   src: string;
   alt: string;
+  title: string;
+  subtitle: string;
+  objectPosition?: string;
+  className: string;
+  aspectClass: string;
 };
 
-// Uses the existing gallery assets so this section renders even before
-// dedicated hero images are dropped into /public/home/. Swap the paths
-// (e.g. /home/temple-1.jpg) once you have the right hero photography.
 const images: StaticImage[] = [
-  { src: "/gallery/gallery-05.jpg", alt: "Deity adorned with garlands for darshan" },
-  { src: "/gallery/gallery-07.jpg", alt: "RNHT priests with deity idols" },
-  { src: "/gallery/gallery-08.jpg", alt: "Goddess Lakshmi beautifully adorned" },
+  {
+    src: "/gallery/gallery-05.jpg",
+    alt: "Shiva lingam adorned with flowers and temple offerings",
+    title: "Temple Rituals",
+    subtitle: "Daily darshan and sacred offerings",
+    objectPosition: "22% center",
+    className: "lg:col-span-3",
+    aspectClass: "aspect-[4/5]",
+  },
+  {
+    src: "/gallery/gallery-08.jpg",
+    alt: "Goddess Lakshmi beautifully adorned with jewelry and flowers",
+    title: "Goddess Lakshmi",
+    subtitle: "Grace, abundance, and blessings at the heart of the temple",
+    objectPosition: "50% 26%",
+    className: "lg:col-span-6",
+    aspectClass: "aspect-[5/4] sm:aspect-[16/10]",
+  },
+  {
+    src: "/gallery/gallery-07.jpg",
+    alt: "RNHT priests standing beside deity idols",
+    title: "Priest Guidance",
+    subtitle: "Experienced Vedic priests serving families across Texas",
+    objectPosition: "60% center",
+    className: "lg:col-span-3",
+    aspectClass: "aspect-[4/5]",
+  },
 ];
 
 export function StaticHeroImages() {
   return (
     <section
-      className="relative overflow-hidden"
+      className="relative overflow-hidden border-y border-temple-gold/15"
       style={{
         background:
-          "linear-gradient(135deg, #4A0818 0%, #5E0A1F 40%, #4A0818 100%)",
+          "linear-gradient(180deg, #350714 0%, #4A0818 48%, #2D0612 100%)",
       }}
     >
-      <div className="absolute inset-0 opacity-[0.06] bg-gold-shimmer" />
-      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold-light">
-            Rudra Narayana Hindu Temple
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(232,213,163,0.08),transparent_36%),linear-gradient(135deg,rgba(255,255,255,0.02),transparent_50%)]" />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-accent text-[11px] font-semibold uppercase tracking-[0.28em] text-temple-gold-light sm:text-xs">
+            Darshan and Devotion
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl">
-            A Sacred Space for Every Devotee
+          <h2 className="mt-3 font-heading text-3xl font-bold text-white sm:text-4xl lg:text-[2.9rem]">
+            A Temple Experience Rooted in Beauty, Ritual, and Blessings
           </h2>
-          <div className="mt-3 flex items-center justify-center gap-3" aria-hidden="true">
-            <span className="h-px w-12 bg-gradient-to-r from-transparent to-temple-gold/60" />
-            <span className="text-temple-gold text-sm">&#x0950;</span>
-            <span className="h-px w-12 bg-gradient-to-l from-transparent to-temple-gold/60" />
-          </div>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/78 sm:text-base">
+            From daily darshan to priest-led ceremonies, every moment at RNHT is
+            shaped with reverence, warmth, and care for devotees.
+          </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {images.map((img) => (
+        <div className="mt-10 grid gap-4 sm:gap-5 lg:grid-cols-12">
+          {images.map((img, index) => (
             <div
               key={img.src}
-              className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-temple-gold/30 bg-temple-maroon/40"
+              className={`group relative overflow-hidden rounded-[8px] border border-temple-gold/20 bg-black/20 shadow-[0_18px_50px_rgba(18,4,10,0.34)] ${img.className}`}
             >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 33vw, 100vw"
-                className="object-cover"
-              />
+              <div className={`relative ${img.aspectClass}`}>
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  sizes={
+                    index === 1
+                      ? "(min-width: 1024px) 50vw, 100vw"
+                      : "(min-width: 1024px) 25vw, 100vw"
+                  }
+                  className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                  style={{
+                    objectPosition: img.objectPosition,
+                  }}
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(18,4,10,0.82)_0%,rgba(18,4,10,0.38)_42%,rgba(18,4,10,0.08)_100%)]" />
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                  <p className="font-accent text-[10px] font-semibold uppercase tracking-[0.26em] text-temple-gold-light/90 sm:text-[11px]">
+                    {img.title}
+                  </p>
+                  <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-white/88 sm:text-[15px]">
+                    {img.subtitle}
+                  </p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

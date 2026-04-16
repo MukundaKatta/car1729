@@ -122,6 +122,12 @@ const CSS = `
       0 0 24px rgba(197, 151, 62, 0.22),
       0 0 1px rgba(255, 255, 255, 0.28);
   }
+
+  .hero-copy {
+    text-shadow:
+      0 2px 12px rgba(25, 6, 14, 0.42),
+      0 10px 32px rgba(25, 6, 14, 0.24);
+  }
 `;
 
 export function HeroSlideshow() {
@@ -217,34 +223,56 @@ export function HeroSlideshow() {
           }}
         />
 
-        {/* ── CTA Buttons ───────────────────────────────────────────── */}
-        <div className="absolute inset-x-0 bottom-10 sm:bottom-16 lg:bottom-20 z-30">
-          <div className="flex justify-center gap-3 sm:gap-8">
-            <Link
-              href="/services"
-              className="cta-primary-glow px-6 sm:px-14 py-3.5 sm:py-4 text-sm sm:text-lg font-bold tracking-wide transition-all duration-300 hover:scale-[1.04] hover:brightness-110"
-              style={{
-                background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
-                color: "#2A0612",
-                borderRadius: "4px",
-              }}
-            >
-              Book a Pooja
-            </Link>
-            <Link
-              href="/donate"
-              className="px-6 sm:px-14 py-3.5 sm:py-4 text-sm sm:text-lg font-bold tracking-wide transition-all duration-300 hover:scale-[1.04]"
-              style={{
-                background: "rgba(42,6,18,0.35)",
-                color: "#E8D5A3",
-                border: "1.5px solid rgba(197,151,62,0.70)",
-                borderRadius: "4px",
-                backdropFilter: "blur(10px)",
-                boxShadow: "0 0 24px rgba(197,151,62,0.15), inset 0 0 24px rgba(197,151,62,0.06)",
-              }}
-            >
-              Donate
-            </Link>
+        <div className="absolute inset-x-0 bottom-10 z-30 sm:bottom-14 lg:bottom-18">
+          <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
+            <div className="hero-copy mx-auto max-w-3xl">
+              <p className="font-accent text-[11px] font-semibold uppercase tracking-[0.32em] text-temple-gold-light/90 sm:text-xs">
+                Rudra Narayana Hindu Temple
+              </p>
+              <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-[4.25rem]">
+                Sacred Darshan, Vedic Guidance, and Temple Blessings
+              </h1>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/84 sm:text-base lg:text-lg">
+                Traditional poojas, homams, weddings, samskaras, and priest services
+                for families across Austin and the greater Texas community.
+              </p>
+            </div>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-6">
+              <Link
+                href="/services"
+                className="cta-primary-glow inline-flex min-w-[198px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:min-w-[220px] sm:px-10 sm:py-4 sm:text-base"
+                style={{
+                  background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
+                  color: "#2A0612",
+                  borderRadius: "4px",
+                }}
+              >
+                Book a Pooja
+              </Link>
+              <Link
+                href="/donate"
+                className="inline-flex min-w-[198px] items-center justify-center px-8 py-3.5 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:min-w-[220px] sm:px-10 sm:py-4 sm:text-base"
+                style={{
+                  background: "rgba(42,6,18,0.32)",
+                  color: "#E8D5A3",
+                  border: "1.5px solid rgba(197,151,62,0.70)",
+                  borderRadius: "4px",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 0 24px rgba(197,151,62,0.15), inset 0 0 24px rgba(197,151,62,0.06)",
+                }}
+              >
+                Support the Temple
+              </Link>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] font-medium tracking-[0.14em] text-white/72 sm:text-xs">
+              <span className="uppercase">Authentic Vedic Rituals</span>
+              <span className="hidden h-1 w-1 rounded-full bg-temple-gold/70 sm:block" />
+              <span className="uppercase">Temple and Home Services</span>
+              <span className="hidden h-1 w-1 rounded-full bg-temple-gold/70 sm:block" />
+              <span className="uppercase">Serving Families Across Texas</span>
+            </div>
           </div>
         </div>
 
