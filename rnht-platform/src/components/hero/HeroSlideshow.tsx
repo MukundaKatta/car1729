@@ -217,14 +217,11 @@ export function HeroSlideshow() {
           }}
         />
 
-        <div
-          className="absolute inset-x-0 z-30"
-          style={{ bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 24px), 24px)" }}
-        >
-          <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-3 px-4 sm:flex-row sm:gap-5 sm:px-6 lg:px-8">
+        <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-14 sm:px-6 sm:pb-10 lg:px-8">
+          <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
             <Link
               href="/services"
-              className="cta-primary-glow inline-flex min-w-[190px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
+              className="cta-primary-glow inline-flex w-full max-w-[220px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
                 color: "#2A0612",
@@ -235,7 +232,7 @@ export function HeroSlideshow() {
             </Link>
             <Link
               href="/donate"
-              className="inline-flex min-w-[190px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
+              className="inline-flex w-full max-w-[220px] items-center justify-center px-8 py-3 text-sm font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
               style={{
                 background: "rgba(42,6,18,0.34)",
                 color: "#E8D5A3",
