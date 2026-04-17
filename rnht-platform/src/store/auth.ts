@@ -75,10 +75,10 @@ type AuthStore = {
   initialized: boolean;
 
   // Auth actions
-  sendOtp: (email: string, name: string) => Promise<{ error?: string }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error?: string }>;
-  sendPhoneOtp: (phone: string, name: string) => Promise<{ error?: string }>;
-  verifyPhoneOtp: (phone: string, token: string) => Promise<{ error?: string }>;
+  sendOtp: (email: string, name: string) => Promise<AuthResult>;
+  verifyOtp: (email: string, token: string) => Promise<AuthResult>;
+  sendPhoneOtp: (phone: string, name: string) => Promise<AuthResult>;
+  verifyPhoneOtp: (phone: string, token: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
 
@@ -91,6 +91,35 @@ type AuthStore = {
   addActivity: (activity: ActivityItem) => void;
   fetchUserData: () => Promise<void>;
 };
+
+export type AuthResult = {
+  error?: string;
+  retryAfterSeconds?: number;
+  channelSuggestion?: "phone" | "email";
+};
+
+function normalizeAuthError(message: string, channel: "email" | "phone"): AuthResult {
+  const lower = message.toLowerCase();
+
+  if (channel === "email" && (lower.includes("email rate limit exceeded") || lower.includes("rate limit"))) {
+    return {
+      error:
+        "Too many email requests were sent recently. Please wait a minute and try again, or use phone verification right now.",
+      retryAfterSeconds: 60,
+      channelSuggestion: "phone",
+    };
+  }
+
+  if (channel === "phone" && lower.includes("rate limit")) {
+    return {
+      error:
+        "Too many phone verification requests were sent recently. Please wait a minute before requesting another code.",
+      retryAfterSeconds: 60,
+    };
+  }
+
+  return { error: message };
+}
 
 function profileRowToUserProfile(row: any): UserProfile {
   return {
@@ -165,7 +194,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       },
     });
     set({ loading: false });
-    if (error) return { error: error.message };
+    if (error) return normalizeAuthError(error.message, "email");
     return {};
   },
 
@@ -178,7 +207,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       type: "email",
     });
     set({ loading: false });
-    if (error) return { error: error.message };
+    if (error) return normalizeAuthError(error.message, "email");
     return {};
   },
 
@@ -194,7 +223,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       },
     });
     set({ loading: false });
-    if (error) return { error: error.message };
+    if (error) return normalizeAuthError(error.message, "phone");
     return {};
   },
 
@@ -207,7 +236,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       type: "sms",
     });
     set({ loading: false });
-    if (error) return { error: error.message };
+    if (error) return normalizeAuthError(error.message, "phone");
     return {};
   },
 

@@ -205,7 +205,12 @@ describe("useAuthStore", () => {
 
       const result = await useAuthStore.getState().sendOtp("bad@example.com", "X");
 
-      expect(result).toEqual({ error: "Rate limit exceeded" });
+      expect(result).toEqual({
+        error:
+          "Too many email requests were sent recently. Please wait a minute and try again, or use phone verification right now.",
+        retryAfterSeconds: 60,
+        channelSuggestion: "phone",
+      });
       expect(useAuthStore.getState().loading).toBe(false);
     });
   });

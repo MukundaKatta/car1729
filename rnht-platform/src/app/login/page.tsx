@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
+import {
+  getEmailAuthCooldownSeconds,
+  readEmailAuthCooldownUntil,
+  writeEmailAuthCooldownUntil,
+} from "@/lib/email-auth-cooldown";
 
 type AuthStep = "method" | "email" | "email_sent" | "phone" | "phone_otp" | "success";
 
@@ -39,10 +44,39 @@ export default function LoginPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState(0);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    const until = readEmailAuthCooldownUntil();
+    setEmailCooldownUntil(until);
+    setNow(Date.now());
+  }, []);
+
+  useEffect(() => {
+    writeEmailAuthCooldownUntil(emailCooldownUntil);
+  }, [emailCooldownUntil]);
+
+  useEffect(() => {
+    if (emailCooldownUntil <= Date.now()) {
+      if (emailCooldownUntil !== 0) setEmailCooldownUntil(0);
+      return;
+    }
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [emailCooldownUntil]);
+
+  const emailCooldownSeconds = getEmailAuthCooldownSeconds(emailCooldownUntil, now);
+  const startEmailCooldown = (seconds: number) => {
+    setNow(Date.now());
+    setEmailCooldownUntil(Date.now() + seconds * 1000);
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -84,7 +118,9 @@ export default function LoginPage() {
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      if (result.retryAfterSeconds) startEmailCooldown(result.retryAfterSeconds);
     } else {
+      startEmailCooldown(60);
       setStep("email_sent");
     }
   };
@@ -96,6 +132,7 @@ export default function LoginPage() {
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      if (result.retryAfterSeconds) startEmailCooldown(result.retryAfterSeconds);
     }
   };
 
@@ -417,9 +454,14 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
+              {emailCooldownSeconds > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Please wait {emailCooldownSeconds}s before sending another email. Phone verification is available right away.
+                </div>
+              )}
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={!email || (authMode === "signup" && !name.trim()) || loading}
+                disabled={!email || (authMode === "signup" && !name.trim()) || loading || emailCooldownSeconds > 0}
                 onClick={handleSendOtp}
               >
                 {loading ? (
@@ -428,9 +470,25 @@ export default function LoginPage() {
                     Sending Code...
                   </>
                 ) : (
-                  authMode === "signup" ? "Send Email Confirmation Link" : "Send Sign-In Link"
+                  emailCooldownSeconds > 0
+                    ? `Try Email Again in ${emailCooldownSeconds}s`
+                    : authMode === "signup"
+                      ? "Send Email Confirmation Link"
+                      : "Send Sign-In Link"
                 )}
               </button>
+              {emailCooldownSeconds > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("phone");
+                    setError("");
+                  }}
+                  className="w-full text-sm font-medium text-temple-red hover:underline"
+                >
+                  Use Phone Instead
+                </button>
+              )}
             </div>
           )}
 
@@ -597,10 +655,20 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={handleResendOtp}
-                disabled={loading}
+                disabled={loading || emailCooldownSeconds > 0}
                 className="text-sm text-temple-red hover:underline disabled:opacity-50"
               >
-                Resend Email
+                {emailCooldownSeconds > 0 ? `Resend Email in ${emailCooldownSeconds}s` : "Resend Email"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("phone");
+                  setError("");
+                }}
+                className="text-sm text-gray-500 hover:text-temple-red"
+              >
+                Use Phone Instead
               </button>
             </div>
           )}

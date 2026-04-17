@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import {
+  getEmailAuthCooldownSeconds,
+  readEmailAuthCooldownUntil,
+  writeEmailAuthCooldownUntil,
+} from "@/lib/email-auth-cooldown";
 import { useAuthStore } from "@/store/auth";
 import {
   User,
@@ -56,6 +61,35 @@ function LoginForm() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailCooldownUntil, setEmailCooldownUntil] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const until = readEmailAuthCooldownUntil();
+    setEmailCooldownUntil(until);
+    setNow(Date.now());
+  }, []);
+
+  useEffect(() => {
+    writeEmailAuthCooldownUntil(emailCooldownUntil);
+  }, [emailCooldownUntil]);
+
+  useEffect(() => {
+    if (emailCooldownUntil <= Date.now()) {
+      if (emailCooldownUntil !== 0) setEmailCooldownUntil(0);
+      return;
+    }
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [emailCooldownUntil]);
+
+  const emailCooldownSeconds = getEmailAuthCooldownSeconds(emailCooldownUntil, now);
+  const startEmailCooldown = (seconds: number) => {
+    setNow(Date.now());
+    setEmailCooldownUntil(Date.now() + seconds * 1000);
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,8 +103,13 @@ function LoginForm() {
       }
       const result = await sendOtp(email, authMode === "signup" ? name : "");
       setLoading(false);
-      if (result.error) setError(result.error);
-      else setStep("email_sent");
+      if (result.error) {
+        setError(result.error);
+        if (result.retryAfterSeconds) startEmailCooldown(result.retryAfterSeconds);
+      } else {
+        startEmailCooldown(60);
+        setStep("email_sent");
+      }
     } else {
       const e164 = normalizePhone(phone);
       if (!e164) {
@@ -289,13 +328,20 @@ function LoginForm() {
                   </p>
                 </div>
               )}
+              {method === "email" && emailCooldownSeconds > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Please wait {emailCooldownSeconds}s before sending another email. Phone verification is available right away.
+                </div>
+              )}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (method === "email" && emailCooldownSeconds > 0)}
                 className="btn-primary w-full"
               >
                 {loading
                   ? "Sending Code..."
+                  : method === "email" && emailCooldownSeconds > 0
+                    ? `Try Email Again in ${emailCooldownSeconds}s`
                   : authMode === "signup"
                     ? method === "email"
                       ? "Send Email Confirmation Link"
@@ -304,6 +350,18 @@ function LoginForm() {
                       ? "Send Sign-In Link"
                       : "Continue with Phone"}
               </button>
+              {method === "email" && emailCooldownSeconds > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMethod("phone");
+                    setError("");
+                  }}
+                  className="w-full text-sm font-medium text-temple-red hover:underline"
+                >
+                  Use Phone Instead
+                </button>
+              )}
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200" />
@@ -395,12 +453,28 @@ function LoginForm() {
                   setError("");
                   const result = await sendOtp(email, authMode === "signup" ? name : "");
                   setLoading(false);
-                  if (result.error) setError(result.error);
+                  if (result.error) {
+                    setError(result.error);
+                    if (result.retryAfterSeconds) startEmailCooldown(result.retryAfterSeconds);
+                  } else {
+                    startEmailCooldown(60);
+                  }
                 }}
-                disabled={loading}
+                disabled={loading || emailCooldownSeconds > 0}
                 className="w-full text-sm font-medium text-temple-red hover:underline"
               >
-                Resend Email
+                {emailCooldownSeconds > 0 ? `Resend Email in ${emailCooldownSeconds}s` : "Resend Email"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMethod("phone");
+                  setStep("form");
+                  setError("");
+                }}
+                className="w-full text-sm text-gray-500 hover:text-temple-red transition-colors"
+              >
+                Use Phone Instead
               </button>
               <button
                 type="button"
