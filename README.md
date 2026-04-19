@@ -1,13 +1,12 @@
 # RNHT Platform
 
-**Rudra Narayana Hindu Temple — full-stack web + mobile platform.**
+**Rudra Narayana Hindu Temple — full-stack community platform for web and mobile.**
 
 **Live:** <https://mukundakatta.github.io/rnht/>
 
-A polished digital home for devotees: discover and book poojas / homams,
-make donations, follow the panchangam and event calendar, watch
-livestreams, and hold a community presence — all from one Next.js
-codebase that ships to **web, iOS, and Android**.
+RNHT is a full-stack platform built for a real community organization, not just a template app. It gives devotees a single digital home for temple services, donations, event discovery, priest booking, educational content, livestreams, and community participation, all from one shared Next.js codebase that ships to **web, iOS, and Android**.
+
+This repo is one of the strongest examples of product depth in my portfolio because it combines user-facing experience, payments, content, administration, and multi-platform delivery in one system.
 
 ```
         ┌──────────────────────────────────────┐
@@ -21,7 +20,7 @@ codebase that ships to **web, iOS, and Android**.
         └──────────────────────────────────────┘
 ```
 
-## Features
+## What It Includes
 
 | Section | What devotees can do |
 |---------|----------------------|
@@ -34,9 +33,16 @@ codebase that ships to **web, iOS, and Android**.
 | **News & Gallery** | Festival recaps, photo / video galleries |
 | **Community** | Discussion threads, classifieds, satsang RSVPs |
 | **Auth & Dashboard** | Email magic-link auth; per-user booking + donation history |
-| **Admin** | Service catalog editor, role-based admin dashboard |
+| **Admin** | Service catalog editor, event management, slideshow tools, role-based dashboards |
 
-## Tech
+## Why This Project Matters
+
+- It shows how one product can serve both public users and temple administrators.
+- It demonstrates multi-platform delivery from a shared codebase.
+- It combines real operational workflows like bookings, donations, content, and scheduling.
+- It is built around a specific community use case rather than a generic starter template.
+
+## Tech Stack
 
 - **Web:** Next.js 14 (App Router), TypeScript, Tailwind, lucide-react,
   Vitest for tests.
@@ -49,7 +55,7 @@ codebase that ships to **web, iOS, and Android**.
 - **Deployment:** GitHub Pages for the marketing entry; the app itself
   deploys to Vercel/Heroku (`Procfile` included).
 
-## Run it
+## Run It Locally
 
 ```bash
 cd rnht-platform
@@ -69,7 +75,7 @@ npx cap open ios       # opens Xcode
 npx cap open android   # opens Android Studio
 ```
 
-## Repo layout
+## Repo Layout
 
 ```
 rnht-platform/
@@ -87,7 +93,7 @@ rnht-platform/
 └── capacitor.config.ts   # Capacitor app id, web dir, plugins
 ```
 
-## Operational notes
+## Operational Notes
 
 - **Multi-platform from one codebase.** Skills/plugins that work in
   the browser also work inside the native shells via Capacitor, so the
