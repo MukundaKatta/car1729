@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Edit2, Trash2, Newspaper, Eye, EyeOff } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth";
 import type { NewsPost } from "@/types/database";
 
 type Category = NewsPost["category"];
@@ -46,6 +48,9 @@ const emptyForm: FormState = {
 };
 
 export default function AdminNewsPage() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -122,21 +127,38 @@ export default function AdminNewsPage() {
   async function togglePublish(post: NewsPost) {
     if (!supabase) return;
     const nextPublished = !post.is_published;
-    await supabase
-      .from("news_posts")
-      .update({
-        is_published: nextPublished,
-        published_at: nextPublished ? new Date().toISOString() : null,
-      })
-      .eq("id", post.id);
-    refresh();
+    await confirmOrQueue({
+      action: "publish_news_post",
+      resourceLabel: post.title,
+      confirmMessage: nextPublished
+        ? `Publish "${post.title}" now?`
+        : `Unpublish "${post.title}" and remove it from the public feed?`,
+      approvalReason: `${nextPublished ? "Publish" : "Unpublish"} news post "${post.title}"`,
+      run: async () => {
+        await supabase
+          .from("news_posts")
+          .update({
+            is_published: nextPublished,
+            published_at: nextPublished ? new Date().toISOString() : null,
+          })
+          .eq("id", post.id);
+        await refresh();
+      },
+    });
   }
 
   async function remove(post: NewsPost) {
     if (!supabase) return;
-    if (!confirm(`Delete "${post.title}"? This can't be undone.`)) return;
-    await supabase.from("news_posts").delete().eq("id", post.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_news_post",
+      resourceLabel: post.title,
+      confirmMessage: `Delete "${post.title}"? This can't be undone.`,
+      approvalReason: `Delete news post "${post.title}"`,
+      run: async () => {
+        await supabase.from("news_posts").delete().eq("id", post.id);
+        await refresh();
+      },
+    });
   }
 
   return (
@@ -155,6 +177,30 @@ export default function AdminNewsPage() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
