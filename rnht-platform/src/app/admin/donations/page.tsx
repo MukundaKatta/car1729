@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { DollarSign, Plus, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth";
 import type { DonationType, DonationTypeCustomField } from "@/types/database";
 
 type Tab = "inflow" | "types";
@@ -40,6 +42,9 @@ const emptyTypeForm: TypeForm = {
 };
 
 function DonationTypesTab() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [types, setTypes] = useState<DonationType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -111,19 +116,36 @@ function DonationTypesTab() {
 
   async function toggleActive(type: DonationType) {
     if (!supabase) return;
-    await supabase
-      .from("donation_types")
-      .update({ is_active: !type.is_active })
-      .eq("id", type.id);
-    refresh();
+    const nextActive = !type.is_active;
+    await confirmOrQueue({
+      action: nextActive ? "activate_donation_type" : "deactivate_donation_type",
+      resourceLabel: type.name,
+      confirmMessage: nextActive
+        ? `Restore "${type.name}" to the donation form?`
+        : `Deactivate "${type.name}" from the donation form?`,
+      approvalReason: `${nextActive ? "Restore" : "Deactivate"} donation type "${type.name}"`,
+      run: async () => {
+        await supabase
+          .from("donation_types")
+          .update({ is_active: nextActive })
+          .eq("id", type.id);
+        await refresh();
+      },
+    });
   }
 
   async function remove(type: DonationType) {
     if (!supabase) return;
-    if (!confirm(`Delete "${type.name}"? Donations already tagged with this fund won't be deleted.`))
-      return;
-    await supabase.from("donation_types").delete().eq("id", type.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_donation_type",
+      resourceLabel: type.name,
+      confirmMessage: `Delete "${type.name}"? Donations already tagged with this fund won't be deleted.`,
+      approvalReason: `Delete donation type "${type.name}"`,
+      run: async () => {
+        await supabase.from("donation_types").delete().eq("id", type.id);
+        await refresh();
+      },
+    });
   }
 
   function addCustomField() {
@@ -164,6 +186,30 @@ function DonationTypesTab() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

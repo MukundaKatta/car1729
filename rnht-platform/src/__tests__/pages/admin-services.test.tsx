@@ -47,6 +47,15 @@ vi.mock("@/lib/supabase", () => ({
     from: mockFrom,
   },
 }));
+vi.mock("@/store/auth", () => ({
+  useAuthStore: (selector: any) => {
+    const state = {
+      authUser: { email: "approver@rnht.org" },
+      user: { email: "approver@rnht.org" },
+    };
+    return typeof selector === "function" ? selector(state) : state;
+  },
+}));
 
 import AdminServicesPage from "@/app/admin/services/page";
 

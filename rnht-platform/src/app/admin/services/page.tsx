@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, Upload } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth";
 import type { Service, ServiceCategory } from "@/types/database";
 
 /**
@@ -49,6 +51,9 @@ const emptyForm: FormState = {
 };
 
 export default function AdminServicesPage() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,18 +135,37 @@ export default function AdminServicesPage() {
 
   async function toggleActive(service: Service) {
     if (!supabase) return;
-    await supabase
-      .from("services")
-      .update({ is_active: !service.is_active })
-      .eq("id", service.id);
-    refresh();
+    const nextActive = !service.is_active;
+    const result = await confirmOrQueue({
+      action: nextActive ? "activate_service" : "deactivate_service",
+      resourceLabel: service.name,
+      confirmMessage: nextActive
+        ? `Restore "${service.name}" to the live services list?`
+        : `Deactivate "${service.name}" from the live services list?`,
+      approvalReason: `${nextActive ? "Restore" : "Deactivate"} service "${service.name}"`,
+      run: async () => {
+        await supabase
+          .from("services")
+          .update({ is_active: nextActive })
+          .eq("id", service.id);
+        await refresh();
+      },
+    });
+    if (result.executed) return;
   }
 
   async function remove(service: Service) {
     if (!supabase) return;
-    if (!confirm(`Delete "${service.name}"? This can't be undone.`)) return;
-    await supabase.from("services").delete().eq("id", service.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_service",
+      resourceLabel: service.name,
+      confirmMessage: `Delete "${service.name}"? This can't be undone.`,
+      approvalReason: `Delete service "${service.name}"`,
+      run: async () => {
+        await supabase.from("services").delete().eq("id", service.id);
+        await refresh();
+      },
+    });
   }
 
   const categoryName = (id: string) =>
@@ -172,6 +196,30 @@ export default function AdminServicesPage() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
