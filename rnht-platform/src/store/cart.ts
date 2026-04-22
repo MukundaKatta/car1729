@@ -61,6 +61,10 @@ export const useCartStore = create<CartStore>()(
     {
       name: "rnht-cart",
       storage: browserStorage,
+      // Rehydrate manually after mount via <StoreRehydrator />. Auto-rehydrate
+      // would replace the empty cart (SSR default) with stored items during
+      // the first client render, breaking hydration on the Header badge.
+      skipHydration: true,
     }
   )
 );

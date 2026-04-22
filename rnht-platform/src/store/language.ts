@@ -17,6 +17,11 @@ export const useLanguageStore = create<LanguageStore>()(
     {
       name: "rnht-language",
       storage: browserStorage,
+      // Rehydrate manually after mount via <StoreRehydrator />. Auto-rehydrate
+      // would replace `locale: "en"` (SSR default) with whatever is in
+      // localStorage during the first client render, which breaks hydration
+      // on any Header text keyed off locale.
+      skipHydration: true,
     }
   )
 );
