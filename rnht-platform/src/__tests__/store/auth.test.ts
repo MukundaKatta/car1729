@@ -44,7 +44,7 @@ function getBuilder(table: string) {
   return queryBuilders[table];
 }
 
-const mockFrom = vi.fn((table: string) => getBuilder(table));
+const mockFrom = vi.fn((...args: any[]) => getBuilder(args[0] as string));
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {

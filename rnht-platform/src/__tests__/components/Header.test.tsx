@@ -446,7 +446,7 @@ describe("Header", () => {
     fireEvent.click(screen.getByLabelText("Open menu"));
     const langSection = screen.getByText("Language").closest("div.border-t");
     expect(langSection).toBeTruthy();
-    const englishBtns = within(langSection!).getAllByRole("button", { name: /english/i });
+    const englishBtns = within(langSection as HTMLElement).getAllByRole("button", { name: /english/i });
     expect(englishBtns.length).toBeGreaterThanOrEqual(1);
     fireEvent.click(englishBtns[0]);
     expect(mockSetLocale).toHaveBeenCalledWith("en");

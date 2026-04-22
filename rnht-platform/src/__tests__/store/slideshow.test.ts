@@ -20,14 +20,14 @@ vi.mock("@/lib/supabase", () => ({
       },
       insert: (row: any) => {
         mockInsert(row);
-        return { error: mockInsert._error ?? null };
+        return { error: (mockInsert as any)._error ?? null };
       },
       update: (row: any) => {
         mockUpdate(row);
         return {
           eq: (...eqArgs: any[]) => {
             mockUpdateEq(...eqArgs);
-            return { error: mockUpdate._error ?? null };
+            return { error: (mockUpdate as any)._error ?? null };
           },
         };
       },
@@ -36,7 +36,7 @@ vi.mock("@/lib/supabase", () => ({
         return {
           eq: (...eqArgs: any[]) => {
             mockEq(...eqArgs);
-            return { error: mockDelete._error ?? null };
+            return { error: (mockDelete as any)._error ?? null };
           },
         };
       },

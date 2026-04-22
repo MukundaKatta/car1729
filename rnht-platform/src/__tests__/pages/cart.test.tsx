@@ -80,7 +80,7 @@ const mockRemoveItem = vi.fn();
 
 // Default empty cart mock
 const emptyCartState = {
-  items: [],
+  items: [] as any[],
   removeItem: mockRemoveItem,
   getTotal: () => 0,
   addItem: vi.fn(),
