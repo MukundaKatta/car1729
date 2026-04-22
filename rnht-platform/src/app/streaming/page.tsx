@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Video, Calendar, Clock, Bell, MessageSquare, Play } from "lucide-react";
 
 const liveStreams = [
@@ -40,6 +40,14 @@ const upcomingStreamsData = [
   { id: "up-3", title: "Hanuman Jayanti Celebrations", date: "2026-04-13", displayDate: "April 13, 2026", time: "6:00 AM CST" },
 ];
 
+// Drop streams whose scheduled date is already in the past so the "Upcoming
+// Streams" panel never labels stale events as "in past event".
+function futureOnly(streams: typeof upcomingStreamsData): typeof upcomingStreamsData {
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return streams.filter((s) => new Date(s.date + "T00:00:00") >= todayMidnight);
+}
+
 const pastRecordings = [
   { id: "rec-1", title: "Maha Shivaratri 2026 — Full Night Program", date: "Feb 27, 2026", duration: "6:45:00", views: 1240 },
   { id: "rec-2", title: "Pongal / Makar Sankranti 2026", date: "Jan 14, 2026", duration: "3:20:00", views: 890 },
@@ -49,6 +57,8 @@ const pastRecordings = [
 ];
 
 export default function StreamingPage() {
+  // Compute after mount so SSR and client agree on which streams are upcoming.
+  const [upcomingStreams, setUpcomingStreams] = useState<typeof upcomingStreamsData>([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([
@@ -57,6 +67,10 @@ export default function StreamingPage() {
     { user: "VenkatK", color: "text-purple-600", text: "Har Har Mahadev!" },
     { user: "MeeraJ", color: "text-red-600", text: "Jai Sri Ram" },
   ]);
+
+  useEffect(() => {
+    setUpcomingStreams(futureOnly(upcomingStreamsData));
+  }, []);
 
   const handleSendChat = () => {
     if (!chatMessage.trim()) return;
@@ -168,20 +182,26 @@ export default function StreamingPage() {
               Upcoming Streams
             </h3>
             <div className="mt-4 space-y-4">
-              {upcomingStreamsData.map((stream) => (
-                <div key={stream.id} className="border-b border-gray-100 pb-3 last:border-0">
-                  <h4 className="text-sm font-semibold text-gray-900">{stream.title}</h4>
-                  <p className="text-xs text-gray-500">{stream.displayDate} at {stream.time}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                      in {computeCountdown(stream.date)}
-                    </span>
-                    <button className="flex items-center gap-1 text-xs text-temple-red hover:underline" onClick={() => alert("Reminder set! We'll notify you before the stream begins.")}>
-                      <Bell className="h-3 w-3" /> Remind me
-                    </button>
+              {upcomingStreams.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No streams on the schedule right now. Subscribe on YouTube to be notified when we go live.
+                </p>
+              ) : (
+                upcomingStreams.map((stream) => (
+                  <div key={stream.id} className="border-b border-gray-100 pb-3 last:border-0">
+                    <h4 className="text-sm font-semibold text-gray-900">{stream.title}</h4>
+                    <p className="text-xs text-gray-500">{stream.displayDate} at {stream.time}</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        in {computeCountdown(stream.date)}
+                      </span>
+                      <button className="flex items-center gap-1 text-xs text-temple-red hover:underline" onClick={() => alert("Reminder set! We'll notify you before the stream begins.")}>
+                        <Bell className="h-3 w-3" /> Remind me
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

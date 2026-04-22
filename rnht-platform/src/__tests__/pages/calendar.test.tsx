@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 
@@ -18,6 +18,17 @@ vi.mock("next/navigation", () => ({
 import CalendarPage from "@/app/calendar/page";
 
 describe("CalendarPage", () => {
+  // List view filters out past non-recurring events. The sampleEvents fixture
+  // uses March/April 2026 dates, so pin the clock to 2026-03-01 for these
+  // tests to see them as upcoming.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-01T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("renders the heading and subtitle", () => {
     render(<CalendarPage />);
     expect(screen.getByRole("heading", { name: /temple calendar/i })).toBeInTheDocument();
