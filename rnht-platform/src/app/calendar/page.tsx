@@ -27,22 +27,39 @@ const months = [
   "December",
 ];
 
+// "Today" in YYYY-MM-DD format, using the same local-date math as event
+// start_date strings. Comparing strings is safe because event.start_date is
+// always "YYYY-MM-DD" and lexicographic order matches chronological order.
+function todayYmd(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function CalendarPage() {
   const [filterType, setFilterType] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [view, setView] = useState<"list" | "calendar">("list");
 
+  // List view shows upcoming events (today onward) + recurring series
+  // (weekly bhajans, monthly vratams, etc.) since those remain active
+  // regardless of the seed's original start_date. Calendar view keeps
+  // the month-grid behavior for historical browsing.
   const filteredEvents = useMemo(() => {
-    return sampleEvents.filter((event) => {
-      if (filterType !== "all" && event.event_type !== filterType) return false;
-      if (view === "list") {
-        const [yearStr, monthStr] = event.start_date.split("-");
-        if (parseInt(yearStr, 10) !== selectedYear || parseInt(monthStr, 10) !== selectedMonth + 1) return false;
-      }
-      return true;
-    });
-  }, [filterType, view, selectedMonth, selectedYear]);
+    const today = todayYmd();
+    return sampleEvents
+      .filter((event) => {
+        if (filterType !== "all" && event.event_type !== filterType) return false;
+        if (view === "list") {
+          if (!event.is_recurring && event.start_date < today) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => a.start_date.localeCompare(b.start_date));
+  }, [filterType, view]);
 
   // Calendar grid
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();

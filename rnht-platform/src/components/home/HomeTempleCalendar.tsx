@@ -21,6 +21,22 @@ function ymd(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * "Today" in the temple's timezone (America/Chicago). A devotee viewing
+ * from India otherwise sees their local today as highlighted, which can
+ * be a day ahead of the temple and off-by-one for festival highlighting.
+ */
+function todayInTempleTz(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  // en-CA emits YYYY-MM-DD, matching our event date format exactly.
+  return fmt.format(new Date());
+}
+
 function monthLabel(d: Date): string {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
@@ -36,14 +52,21 @@ function eventsByDate(events: EventRow[]): Record<string, EventRow[]> {
 export function HomeTempleCalendar() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cursor, setCursor] = useState(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-  });
+  // Date-dependent state is initialized after mount so SSR HTML (which uses
+  // build-time "today") always matches the client's first render. See React
+  // error #425 — cursor/monthLabel previously diverged when the client
+  // viewed a build from a prior month.
+  const [cursor, setCursor] = useState<Date | null>(null);
 
   useEffect(() => {
+    const d = new Date();
+    setCursor(new Date(d.getFullYear(), d.getMonth(), 1));
+  }, []);
+
+  useEffect(() => {
+    if (!cursor) return;
     async function load() {
-      if (!supabase) {
+      if (!supabase || !cursor) {
         setLoading(false);
         return;
       }
@@ -63,6 +86,22 @@ export function HomeTempleCalendar() {
     load();
   }, [cursor]);
 
+  if (!cursor) {
+    return (
+      <section className="bg-temple-cream py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold">
+              Temple Calendar
+            </p>
+            <h2 className="mt-2 section-heading">Upcoming Events &amp; Festivals</h2>
+            <div className="ornament-divider"><span>&#x2733;</span></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const map = eventsByDate(events);
   const firstOfMonth = new Date(cursor);
   const lastOfMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
@@ -76,7 +115,7 @@ export function HomeTempleCalendar() {
   }
   while (cells.length % 7 !== 0) cells.push({ day: null, dateStr: null });
 
-  const todayStr = ymd(new Date());
+  const todayStr = todayInTempleTz();
 
   // Next 5 upcoming events (today or later).
   const upcoming = events

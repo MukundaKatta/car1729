@@ -60,7 +60,7 @@ describe("LoginPage", () => {
     it("shows BOTH sign-in options (phone and email)", () => {
       render(<LoginPage />);
       expect(screen.getByText("Sign in with Phone")).toBeInTheDocument();
-      expect(screen.getByText("Sign in with Email")).toBeInTheDocument();
+      expect(screen.getByText("Email with 6-digit code")).toBeInTheDocument();
     });
 
     it("shows a Google OAuth option", () => {
@@ -80,7 +80,7 @@ describe("LoginPage", () => {
   describe("email flow", () => {
     it("advances to the email step when Sign in with Email is clicked", () => {
       render(<LoginPage />);
-      fireEvent.click(screen.getByText("Sign in with Email"));
+      fireEvent.click(screen.getByText("Email with 6-digit code"));
       expect(screen.getByText("Your Name")).toBeInTheDocument();
       expect(screen.getByText("Email Address")).toBeInTheDocument();
       expect(screen.getByText("Send Verification Code")).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("LoginPage", () => {
 
     it("enables Send Verification Code when both name + email are filled", () => {
       render(<LoginPage />);
-      fireEvent.click(screen.getByText("Sign in with Email"));
+      fireEvent.click(screen.getByText("Email with 6-digit code"));
       fireEvent.change(screen.getByPlaceholderText("Enter your name"), {
         target: { value: "Rajesh" },
       });
@@ -100,7 +100,7 @@ describe("LoginPage", () => {
 
     it("calls sendOtp and moves to the OTP step on success", async () => {
       render(<LoginPage />);
-      fireEvent.click(screen.getByText("Sign in with Email"));
+      fireEvent.click(screen.getByText("Email with 6-digit code"));
       fireEvent.change(screen.getByPlaceholderText("Enter your name"), {
         target: { value: "Rajesh" },
       });
@@ -122,7 +122,7 @@ describe("LoginPage", () => {
     it("displays an error when sendOtp returns an error", async () => {
       mockAuthState.sendOtp = vi.fn().mockResolvedValue({ error: "Bad email" });
       render(<LoginPage />);
-      fireEvent.click(screen.getByText("Sign in with Email"));
+      fireEvent.click(screen.getByText("Email with 6-digit code"));
       fireEvent.change(screen.getByPlaceholderText("Enter your name"), {
         target: { value: "Rajesh" },
       });
@@ -184,9 +184,9 @@ describe("LoginPage", () => {
   });
 
   describe("OTP step shared behavior", () => {
-    it("shows 6 input boxes and Verify & Sign In button", async () => {
+    it("shows the verification-code input and Verify & Sign In button", async () => {
       render(<LoginPage />);
-      fireEvent.click(screen.getByText("Sign in with Email"));
+      fireEvent.click(screen.getByText("Email with 6-digit code"));
       fireEvent.change(screen.getByPlaceholderText("Enter your name"), {
         target: { value: "Rajesh" },
       });
@@ -199,8 +199,7 @@ describe("LoginPage", () => {
           screen.getByText(/Enter the 6-digit code sent to/)
         ).toBeInTheDocument();
       });
-      const digitInputs = screen.getAllByRole("textbox", { name: /digit/i });
-      expect(digitInputs.length).toBe(6);
+      expect(screen.getByLabelText(/verification code/i)).toBeInTheDocument();
       expect(screen.getByText("Verify & Sign In")).toBeInTheDocument();
     });
   });

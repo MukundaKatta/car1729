@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 vi.mock("next/link", () => ({
@@ -114,16 +114,11 @@ describe("StreamingPage", () => {
       expect(screen.getByText("LIVE")).toBeInTheDocument();
     });
 
-    it("shows viewer count for live streams", () => {
-      render(<StreamingPage />);
-      expect(screen.getByText("34 watching")).toBeInTheDocument();
-    });
-
-    it("shows placeholder text for the video embed", () => {
+    it("shows a link to watch the live stream on YouTube", () => {
       render(<StreamingPage />);
       expect(
-        screen.getByText("YouTube Live / Vimeo embed placeholder")
-      ).toBeInTheDocument();
+        screen.getAllByRole("link", { name: /watch live on youtube/i }).length
+      ).toBeGreaterThan(0);
     });
 
     it("shows next stream info for offline streams", () => {
@@ -205,8 +200,18 @@ describe("StreamingPage", () => {
     });
   });
 
-  // Upcoming Streams section
+  // Upcoming Streams section. The page filters out past-dated streams so the
+  // fixture dates (2026-03/04) must be "future" for these assertions to hold.
+  // Pin the clock to a pre-fixture date inside this block.
   describe("Upcoming Streams", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-03-01T12:00:00Z"));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("renders the Upcoming Streams heading", () => {
       render(<StreamingPage />);
       expect(screen.getByText("Upcoming Streams")).toBeInTheDocument();
@@ -248,25 +253,12 @@ describe("StreamingPage", () => {
     });
   });
 
-  // Multi-Camera Views section
-  describe("Multi-Camera Views section", () => {
-    it("renders Coming Soon heading", () => {
+  // YouTube CTA section (replaced the old Multi-Camera "Coming Soon" stub).
+  describe("YouTube CTA section", () => {
+    it("renders a Subscribe on YouTube call-to-action", () => {
       render(<StreamingPage />);
       expect(
-        screen.getByText("Multi-Camera Views (Coming Soon)")
-      ).toBeInTheDocument();
-    });
-
-    it("renders all camera view options", () => {
-      render(<StreamingPage />);
-      expect(
-        screen.getByText("Main Sanctum — Deity Darshan")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("Mandapam — Ceremony View")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("Havan Kund — Fire Ritual")
+        screen.getByRole("link", { name: /subscribe on youtube/i })
       ).toBeInTheDocument();
     });
   });
