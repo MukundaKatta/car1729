@@ -138,7 +138,12 @@ const CSS = `
 export function HeroSlideshow() {
   return (
     <>
-      <style>{CSS}</style>
+      {/* dangerouslySetInnerHTML avoids JSX text-serialization: a plain
+          `<style>{CSS}</style>` encodes `"` as `&quot;` in SSR HTML, which
+          the browser decodes back on parse, producing a text-content
+          mismatch (React hydration error #425). Inlining via __html
+          emits the CSS verbatim so SSR and client agree. */}
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <section className="relative z-[2] h-[100svh] w-full overflow-hidden bg-[#2A0612] sm:h-screen">
 
