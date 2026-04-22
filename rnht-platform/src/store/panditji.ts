@@ -19,35 +19,48 @@ type PanditjiStore = {
   load: () => Promise<void>;
 };
 
+// Dedupe concurrent load() calls. Without this, every component that mounts
+// in the same paint (Header + ServiceCards + Footer + ...) fires its own
+// query before any of them finishes setting `loaded: true`.
+let inFlight: Promise<void> | null = null;
+
 export const usePanditjiStore = create<PanditjiStore>((set, get) => ({
   whatsappUrl: FALLBACK_WHATSAPP,
   loaded: false,
 
   load: async () => {
     if (get().loaded) return;
+    if (inFlight) return inFlight;
     if (!supabase) {
       set({ loaded: true });
       return;
     }
-    try {
-      const { data, error } = await supabase
-        .from("panditji_routing")
-        .select("priest_id, priests(whatsapp_url)")
-        .eq("id", 1)
-        .maybeSingle();
-      if (!error && data) {
-        const rel = (data as unknown as {
-          priests: { whatsapp_url: string | null } | { whatsapp_url: string | null }[] | null;
-        }).priests;
-        const url = Array.isArray(rel)
-          ? rel[0]?.whatsapp_url ?? null
-          : rel?.whatsapp_url ?? null;
-        if (url) set({ whatsappUrl: url });
+    inFlight = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("panditji_routing")
+          .select("priest_id, priests(whatsapp_url)")
+          .eq("id", 1)
+          .maybeSingle();
+        if (!error && data) {
+          const rel = (data as unknown as {
+            priests: { whatsapp_url: string | null } | { whatsapp_url: string | null }[] | null;
+          }).priests;
+          const url = Array.isArray(rel)
+            ? rel[0]?.whatsapp_url ?? null
+            : rel?.whatsapp_url ?? null;
+          if (url) set({ whatsappUrl: url });
+        }
+      } catch {
+        /* fall through to fallback */
       }
-    } catch {
-      /* fall through to fallback */
+      set({ loaded: true });
+    })();
+    try {
+      await inFlight;
+    } finally {
+      inFlight = null;
     }
-    set({ loaded: true });
   },
 }));
 

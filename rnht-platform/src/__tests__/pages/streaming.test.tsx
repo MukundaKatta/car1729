@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 vi.mock("next/link", () => ({
@@ -206,8 +206,18 @@ describe("StreamingPage", () => {
     });
   });
 
-  // Upcoming Streams section
+  // Upcoming Streams section. The page filters out past-dated streams so the
+  // fixture dates (2026-03/04) must be "future" for these assertions to hold.
+  // Pin the clock to a pre-fixture date inside this block.
   describe("Upcoming Streams", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-03-01T12:00:00Z"));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("renders the Upcoming Streams heading", () => {
       render(<StreamingPage />);
       expect(screen.getByText("Upcoming Streams")).toBeInTheDocument();
