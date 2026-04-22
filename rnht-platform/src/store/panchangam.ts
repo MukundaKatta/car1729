@@ -57,6 +57,10 @@ export const usePanchangamStore = create<PanchangamStore>()(
     {
       name: "rnht-panchangam-location",
       storage: browserStorage,
+      // Rehydrate manually via <StoreRehydrator />. The panchangam page
+      // renders `location.label` on first paint, so auto-rehydrate would
+      // flip the label from the default to the stored city mid-hydration.
+      skipHydration: true,
     }
   )
 );
