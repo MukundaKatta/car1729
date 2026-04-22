@@ -6,6 +6,7 @@ import { FallingPetals } from "@/components/effects/FallingPetals";
 import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
 import { StartupValidationNotice } from "@/components/system/StartupValidationNotice";
+import { StoreRehydrator } from "@/components/system/StoreRehydrator";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -119,6 +120,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <StartupValidationNotice />
+        <StoreRehydrator />
         <Header />
         <FallingPetals />
         <main id="main-content" className="flex-1">{children}</main>
