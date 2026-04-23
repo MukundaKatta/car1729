@@ -204,6 +204,23 @@ export default function LoginPage() {
     }
   };
 
+  // Apple's guideline 4.8 requires that any app offering a third-party or
+  // social login (Google, Facebook, etc.) must also offer Sign in with Apple
+  // as an equivalent option on iOS. Supabase supports Apple as an OAuth
+  // provider once configured (Supabase dashboard > Auth > Apple).
+  const handleAppleSignIn = async () => {
+    setError("");
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH || ""}/auth/callback`,
+      },
+    });
+    if (err) {
+      setError(err.message);
+    }
+  };
+
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return;
     const newOtp = [...otp];
@@ -411,6 +428,17 @@ export default function LoginPage() {
                   />
                 </svg>
                 Continue with Google
+              </button>
+
+              <button
+                onClick={handleAppleSignIn}
+                className="mt-3 flex w-full items-center justify-center gap-3 rounded-xl bg-black py-3.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+                aria-label="Continue with Apple"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.53-3.2 0-1.39.68-2.12.55-3-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.78 1.18-.2 2.3-.92 3.57-.82 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.3 2.99-2.54 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                Continue with Apple
               </button>
             </div>
           )}
