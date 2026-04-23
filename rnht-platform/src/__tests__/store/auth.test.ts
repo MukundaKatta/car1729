@@ -54,7 +54,7 @@ vi.mock("@/lib/supabase", () => ({
       signOut: (...args: any[]) => mockSignOut(...args),
       onAuthStateChange: (...args: any[]) => mockOnAuthStateChange(...args),
     },
-    from: (...args: any[]) => mockFrom(...args),
+    from: (table: string) => mockFrom(table),
   },
 }));
 
