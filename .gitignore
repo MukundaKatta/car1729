@@ -1,5 +1,5 @@
-# WordPress exports
-*.xml
+# WordPress exports (root only — do not match Android/iOS/Capacitor XML)
+/*.xml
 
 # Root-level image copies (originals in rnht-platform/public/)
 RNHT_Homepage_Hero_1920x560_112.png
