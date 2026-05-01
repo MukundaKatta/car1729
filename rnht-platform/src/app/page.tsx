@@ -1,32 +1,13 @@
 import Link from "next/link";
-import {
-  sampleCategories,
-  sampleServices,
-} from "@/lib/sample-data";
-import { ServiceCard } from "@/components/services/ServiceCard";
 import Image from "next/image";
 import { HeroSlideshow } from "@/components/hero/HeroSlideshow";
 import { StaticHeroImages } from "@/components/home/StaticHeroImages";
-import { HomeTempleCalendar } from "@/components/home/HomeTempleCalendar";
-import { NewsAndUpdates } from "@/components/home/NewsAndUpdates";
-import { ServiceAreas } from "@/components/home/ServiceAreas";
+import { HomePanchangamScroll } from "@/components/home/HomePanchangamScroll";
 import { ReadyToBookPriests } from "@/components/home/ReadyToBookPriests";
 import {
-  BookOpen,
-  HeartHandshake,
-  Video,
-  Users,
-  Camera,
-  FileText,
-  Gift,
-  Star,
   Phone,
-  MessageCircle,
-  MapPin,
   Quote,
   CheckCircle,
-  ArrowRight,
-  Sparkles,
 } from "lucide-react";
 
 const testimonials = [
@@ -48,8 +29,6 @@ const testimonials = [
 ];
 
 export default function HomePage() {
-  const featuredServices = sampleServices.slice(0, 4);
-
   return (
     <div className="bg-temple-ivory">
       {/* Hero — Three-panel animated slideshow with Ken Burns effect */}
@@ -84,11 +63,7 @@ export default function HomePage() {
 
       {/* Quick Info Bar */}
       <section className="border-b border-temple-gold/15 bg-[#25050F] text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-4 text-sm sm:gap-4 sm:px-6 lg:flex-nowrap lg:justify-between lg:px-8">
-          <div className="flex items-center gap-2 rounded-full border border-temple-gold/12 bg-white/[0.02] px-4 py-2.5">
-            <MapPin className="h-4 w-4 text-temple-gold-light" />
-            <span className="font-medium">Georgetown, TX 78628</span>
-          </div>
+        <div className="mx-auto flex max-w-7xl items-center justify-center px-4 py-4 text-sm sm:px-6 lg:px-8">
           <a
             href="tel:+15125450473"
             className="flex items-center gap-2 rounded-full border border-temple-gold/12 bg-white/[0.02] px-4 py-2.5 transition-colors hover:text-temple-gold-light"
@@ -96,75 +71,14 @@ export default function HomePage() {
             <Phone className="h-4 w-4 text-temple-gold-light" />
             <span className="font-medium">(512) 545-0473</span>
           </a>
-          <Link
-            href="/donate"
-            className="flex items-center gap-2 rounded-full border border-temple-gold/20 bg-temple-gold/18 px-4 py-2.5 font-semibold text-temple-gold-light transition-colors hover:bg-temple-gold/28"
-          >
-            <HeartHandshake className="h-4 w-4" />
-            <span>Support the Temple</span>
-          </Link>
         </div>
       </section>
 
       {/* Static image collage */}
       <StaticHeroImages />
 
-      {/* Temple Calendar (mini grid + upcoming) */}
-      <HomeTempleCalendar />
-
-      {/* News & Updates */}
-      <NewsAndUpdates limit={3} />
-
-      {/* Service Categories */}
-      <section className="relative py-20 overflow-hidden section-gold-border">
-        {/* Subtle bg pattern */}
-        <div className="absolute inset-0 bg-gradient-to-b from-temple-cream via-[#FFF8E7]/50 to-white" />
-        <div className="gold-particles" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold">Pooja &amp; Rituals</p>
-            <h2 className="mt-2 section-heading">Our Sacred Services</h2>
-            <div className="ornament-divider"><span>&#x2733;</span></div>
-            <p className="mx-auto max-w-xl text-gray-600 font-accent text-lg">
-              Book authentic Vedic poojas, homams, and spiritual services
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-2 gap-2 sm:gap-5 sm:grid-cols-3 lg:grid-cols-6">
-            {sampleCategories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/services?category=${category.slug}`}
-                className="card flex flex-col items-center gap-3 p-6 text-center hover:border-temple-gold/30 group"
-              >
-                <span className="text-3xl transition-transform duration-300 group-hover:scale-110">
-                  {category.icon}
-                </span>
-                <span className="text-sm font-semibold text-gray-800 group-hover:text-temple-maroon transition-colors">
-                  {category.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-14">
-            <h3 className="text-xl font-heading font-bold text-temple-maroon mb-8">
-              Popular Services
-            </h3>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
-            <div className="mt-10 text-center">
-              <Link href="/services" className="btn-secondary inline-flex items-center gap-2">
-                View All Services
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Panchangam scroll */}
+      <HomePanchangamScroll />
 
       {/* Why Choose RNHT */}
       <section className="relative py-20 bg-white overflow-hidden">
@@ -247,102 +161,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Links */}
-      <section className="relative py-20 bg-white overflow-hidden">
-        {/* Floating Om watermark */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20rem] font-serif text-temple-gold/[0.03] pointer-events-none select-none animate-rotate-slow" aria-hidden="true">&#x0950;</div>
-        <div className="gold-particles" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold">Discover More</p>
-            <h2 className="mt-2 section-heading">Explore RNHT</h2>
-            <div className="ornament-divider"><span>&#x2733;</span></div>
-            <p className="mx-auto max-w-xl text-gray-600 font-accent text-lg">
-              Everything our temple community has to offer
-            </p>
-          </div>
-          <div className="mt-12 grid gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: Video,
-                label: "Live Darshan",
-                desc: "Watch daily aarti and special ceremonies",
-                href: "/streaming",
-                color: "bg-red-50 text-red-600 group-hover:bg-red-100",
-              },
-              {
-                icon: Camera,
-                label: "Gallery",
-                desc: "Photos & videos from temple events",
-                href: "/gallery",
-                color: "bg-purple-50 text-purple-600 group-hover:bg-purple-100",
-              },
-              {
-                icon: BookOpen,
-                label: "Education",
-                desc: "Vedic school, dance, music, and yoga",
-                href: "/education",
-                color: "bg-blue-50 text-blue-600 group-hover:bg-blue-100",
-              },
-              {
-                icon: HeartHandshake,
-                label: "Volunteer",
-                desc: "Seva opportunities and Annadanam",
-                href: "/community",
-                color: "bg-green-50 text-green-600 group-hover:bg-green-100",
-              },
-              {
-                icon: Users,
-                label: "Our Priests",
-                desc: "Meet our learned priests",
-                href: "/priests",
-                color: "bg-amber-50 text-amber-600 group-hover:bg-amber-100",
-              },
-              {
-                icon: Gift,
-                label: "Sponsorship",
-                desc: "Festival & deity ornament sponsorship",
-                href: "/sponsorship",
-                color: "bg-pink-50 text-pink-600 group-hover:bg-pink-100",
-              },
-              {
-                icon: Star,
-                label: "Dollar A Day",
-                desc: "Support the temple daily for just $1",
-                href: "/donate",
-                color: "bg-yellow-50 text-yellow-600 group-hover:bg-yellow-100",
-              },
-              {
-                icon: FileText,
-                label: "Transparency",
-                desc: "Financial statements and donor wall",
-                href: "/transparency",
-                color: "bg-teal-50 text-teal-600 group-hover:bg-teal-100",
-              },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="card flex items-start gap-4 p-6 hover:border-temple-gold/20 group"
-              >
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.color} transition-all duration-300`}
-                >
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-heading font-semibold text-temple-maroon">{item.label}</p>
-                  <p className="mt-1 text-sm text-gray-500">{item.desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Service Areas */}
-      <ServiceAreas />
-
       {/* Nitya Pooja Seva */}
       <section className="relative py-20 bg-[#2A0612] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(197,151,62,0.08)_0%,transparent_70%)]" />
@@ -403,36 +221,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Dollar A Day CTA */}
-      <section className="relative py-20 overflow-hidden section-gold-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFF8E7] via-temple-gold/8 to-[#FFF3D6]" />
-        <div className="absolute inset-0 bg-gold-shimmer animate-gold-shimmer" />
-        <div className="gold-particles" />
-        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-temple-gold/15 border border-temple-gold/30 animate-pulse-glow">
-            <Sparkles className="h-8 w-8 text-temple-gold" />
-          </div>
-          <h2 className="mt-4 section-heading">Dollar A Day</h2>
-          <div className="ornament-divider"><span>&#x2733;</span></div>
-          <p className="mx-auto mt-2 max-w-2xl text-gray-600 font-accent text-lg">
-            Make a lasting impact with just $1 a day. Your recurring donation
-            helps maintain daily temple operations, support priests, and serve
-            the community.
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href="/donate" className="btn-primary text-base px-8 py-4">
-              $31/month — Join Now
-            </Link>
-            <Link href="/donate" className="btn-secondary text-base px-8 py-4">
-              $365/year — Save $7
-            </Link>
-          </div>
-          <p className="mt-5 text-xs text-gray-500 font-accent">
-            All donations are tax-deductible under 501(c)(3). Cancel anytime.
-          </p>
         </div>
       </section>
 
