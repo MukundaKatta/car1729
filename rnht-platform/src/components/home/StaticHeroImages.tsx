@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 type StaticImage = {
   src: string;
@@ -89,9 +90,11 @@ export function StaticHeroImages() {
 
         <div className="mt-8 columns-1 gap-4 sm:columns-2 lg:columns-3">
           {images.map((img) => (
-            <article
+            <Link
               key={img.src}
-              className="mb-4 break-inside-avoid overflow-hidden rounded-[8px] border border-temple-gold/15 bg-[rgba(31,5,12,0.86)] shadow-[0_18px_48px_rgba(10,2,7,0.28)]"
+              href="/gallery"
+              className="group mb-4 block break-inside-avoid overflow-hidden rounded-[8px] border border-temple-gold/15 bg-[rgba(31,5,12,0.86)] shadow-[0_18px_48px_rgba(10,2,7,0.28)] transition-transform duration-300 hover:-translate-y-1 hover:border-temple-gold/35 hover:shadow-[0_24px_60px_rgba(10,2,7,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2C0611]"
+              aria-label={`Open gallery from ${img.title}`}
             >
               <div className="flex items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3 py-3">
                 <Image
@@ -100,7 +103,7 @@ export function StaticHeroImages() {
                   width={900}
                   height={1100}
                   sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                  className={`h-auto max-h-[28rem] w-full rounded-[6px] object-contain ${img.imageClassName ?? "object-center"}`}
+                  className={`h-auto max-h-[28rem] w-full rounded-[6px] object-contain transition-transform duration-500 group-hover:scale-[1.02] ${img.imageClassName ?? "object-center"}`}
                 />
               </div>
               <div className="border-t border-white/8 bg-[linear-gradient(180deg,rgba(34,6,13,0.98),rgba(20,4,10,0.98))] px-4 py-4 sm:px-5">
@@ -116,9 +119,24 @@ export function StaticHeroImages() {
                 >
                   {img.subtitle}
                 </p>
+                <p
+                  className="mt-3 text-[11px] font-semibold uppercase tracking-[0.24em] transition-colors group-hover:text-[#f5d790]"
+                  style={{ color: "rgba(230, 202, 135, 0.84)" }}
+                >
+                  View in Gallery
+                </p>
               </div>
-            </article>
+            </Link>
           ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link
+            href="/gallery"
+            className="inline-flex items-center gap-3 rounded-full border border-temple-gold/30 bg-[rgba(255,255,255,0.05)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#fff7ef] transition-colors hover:border-temple-gold/60 hover:bg-[rgba(255,255,255,0.08)]"
+          >
+            Explore Full Gallery
+          </Link>
         </div>
       </div>
     </section>
