@@ -44,8 +44,9 @@ export default function ServicesPage() {
       <div className="text-center">
         <h1 className="section-heading">{t("services.title", locale)}</h1>
         <p className="mt-3 text-gray-600">
-          We offer daily pujas, special occasion pujas, Sodash Samskaras, Homams,
-          remedial yagnas, and more. Serving the Austin, Texas area.
+          Current catalog offerings include shanti pujas, sacred parayanams,
+          ancestral rites, divine kalyanams, and elaborate Rudrabhishekam
+          services from Pandit Aditya Sharma.
         </p>
         <p className="mt-2 text-xs text-gray-500">
           Service areas: Kyle, Manor, Austin, Dallas, Houston, Lakeway, Bee Cave,

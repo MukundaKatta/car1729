@@ -7,12 +7,11 @@ import { ServiceDetailModal } from "./ServiceDetailModal";
 import { usePanditjiWhatsApp } from "@/store/panditji";
 
 const categoryIcons: Record<string, string> = {
-  "cat-1": "🔥", // Homam / Havan
-  "cat-2": "🙏", // Pooja & Samskaras
-  "cat-3": "💒", // Kalyanotsavam & Vivaham
-  "cat-4": "📿", // Paaraayana & Vratams
-  "cat-5": "⭐", // Jyotisham & Vastu
-  "cat-6": "🪔", // Sharadham & Remedial
+  "cat-1": "🙏", // Puja & Shanti
+  "cat-2": "📿", // Parayanam & Devotion
+  "cat-3": "🪔", // Shraddham & Ancestor Rites
+  "cat-4": "💒", // Kalyanam & Weddings
+  "cat-5": "🔥", // Rudrabhishekam & Abhishekam
 };
 
 export function ServiceCard({ service }: { service: Service }) {
