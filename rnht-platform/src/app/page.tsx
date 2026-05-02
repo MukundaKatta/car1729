@@ -3,9 +3,9 @@ import Image from "next/image";
 import { HeroSlideshow } from "@/components/hero/HeroSlideshow";
 import { HomePanchangamScroll } from "@/components/home/HomePanchangamScroll";
 import { ReadyToBookPriests } from "@/components/home/ReadyToBookPriests";
+import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import {
   Phone,
-  Quote,
   CheckCircle,
 } from "lucide-react";
 
@@ -24,6 +24,61 @@ const testimonials = [
     name: "Venkat K.",
     location: "Austin, TX",
     text: "The Navagraha Homam was performed with proper Vedic procedures. Pandit Raghurama Sharma's knowledge of mantras is exceptional. Very professional and punctual.",
+  },
+  {
+    name: "Madhavi S.",
+    location: "Cedar Park, TX",
+    text: "Our Satyanarayana Vratham was conducted with such grace and patience. Every mantra felt meaningful, and our relatives kept praising how beautifully the pooja was organized.",
+  },
+  {
+    name: "Prakash M.",
+    location: "Georgetown, TX",
+    text: "RNHT helped us with a housewarming ceremony on short notice and still made everything feel deeply traditional and well prepared. The guidance before the event was excellent too.",
+  },
+  {
+    name: "Anitha V.",
+    location: "Leander, TX",
+    text: "Pandit ji explained each ritual in simple language so even our children could follow along. It felt spiritual, warm, and very personal to our family.",
+  },
+  {
+    name: "Harish G.",
+    location: "Plano, TX",
+    text: "We invited RNHT for a Ganapathi Homam and were impressed by the punctuality, clarity, and authenticity. Everything was systematic from booking to completion.",
+  },
+  {
+    name: "Deepa N.",
+    location: "Houston, TX",
+    text: "Their support during our naming ceremony was wonderful. The priests were calm, respectful, and gave our family the confidence that every step was being done properly.",
+  },
+  {
+    name: "Rohit B.",
+    location: "Frisco, TX",
+    text: "From the first call to the final aashirvadam, the experience was seamless. RNHT brought a true temple atmosphere into our home for the ceremony.",
+  },
+  {
+    name: "Supriya T.",
+    location: "Sugar Land, TX",
+    text: "The Rudrabhishekam was powerful and uplifting. We especially appreciated how carefully the priests honored our family customs while maintaining strict Vedic discipline.",
+  },
+  {
+    name: "Kiran P.",
+    location: "San Antonio, TX",
+    text: "We have now booked multiple services through RNHT, and the consistency is what stands out most. Every ceremony feels sincere, disciplined, and spiritually elevating.",
+  },
+  {
+    name: "Bhavana R.",
+    location: "Irving, TX",
+    text: "The baby shower pooja was beautifully performed and thoughtfully explained for our guests. Many of them asked for RNHT's number immediately after the ceremony.",
+  },
+  {
+    name: "Naveen C.",
+    location: "McKinney, TX",
+    text: "RNHT priests brought both scholarship and kindness to our family event. They answered questions patiently and made the whole day feel blessed from beginning to end.",
+  },
+  {
+    name: "Shilpa D.",
+    location: "Pearland, TX",
+    text: "What stood out most was the devotion. This did not feel rushed or transactional at all. The pooja felt sacred, intentional, and deeply rooted in tradition.",
   },
 ];
 
@@ -140,20 +195,7 @@ export default function HomePage() {
               Hear from families who have experienced our services
             </p>
           </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {testimonials.map((t) => (
-              <div key={t.name} className="gold-corners rounded-2xl bg-white/5 backdrop-blur border border-temple-gold/10 p-8 transition-all duration-300 hover:bg-white/10 hover:border-temple-gold/40 hover:shadow-[0_0_30px_rgba(197,151,62,0.15)]">
-                <Quote className="h-8 w-8 text-temple-gold/70" />
-                <p className="mt-4 text-[15px] text-gray-200 leading-relaxed font-accent italic">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="mt-6 border-t border-white/10 pt-5">
-                  <p className="font-heading font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-temple-gold-light mt-0.5">{t.location}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialsCarousel testimonials={testimonials} />
         </div>
       </section>
 
