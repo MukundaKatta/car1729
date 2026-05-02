@@ -1,17 +1,62 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Navigation } from "lucide-react";
+import { getLivePanchangam } from "@/app/actions/panchangam";
 import { PanchangamWidget } from "@/components/panchangam/PanchangamWidget";
-import { computePanchangam } from "@/lib/panchangam";
+import {
+  createPanchangamLoadingState,
+  type ComputedPanchangam,
+} from "@/lib/panchangam";
 import { usePanchangamStore, PRESET_LOCATIONS } from "@/store/panchangam";
 
 export default function PanchangamPage() {
   const location = usePanchangamStore((s) => s.location);
   const setLocation = usePanchangamStore((s) => s.setLocation);
   const detectCurrentLocation = usePanchangamStore((s) => s.detectCurrentLocation);
+  const [computed, setComputed] = useState<ComputedPanchangam>(() =>
+    createPanchangamLoadingState(location)
+  );
+  const [loading, setLoading] = useState(true);
 
-  const computed = useMemo(() => computePanchangam(location), [location]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const sessionKey = "rnht-panchangam-location-requested";
+    if (window.sessionStorage.getItem(sessionKey)) return;
+
+    window.sessionStorage.setItem(sessionKey, "1");
+    void detectCurrentLocation();
+  }, [detectCurrentLocation]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPanchangam() {
+      setLoading(true);
+      setComputed(createPanchangamLoadingState(location));
+
+      try {
+        const data = await getLivePanchangam(location);
+        if (!cancelled) {
+          setComputed(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to load live Panchangam", error);
+        if (!cancelled) {
+          setComputed(createPanchangamLoadingState(location));
+          setLoading(false);
+        }
+      }
+    }
+
+    loadPanchangam();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -64,7 +109,69 @@ export default function PanchangamPage() {
       </div>
 
       <div className="mt-8">
+        {loading && (
+          <p className="mb-4 text-sm text-gray-500">
+            Calculating live Panchangam for {location.label}...
+          </p>
+        )}
         <PanchangamWidget panchangam={computed} />
+      </div>
+
+      <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-[1.75rem] border border-temple-gold/20 bg-gradient-to-br from-[#fff9eb] to-[#fff4d6] shadow-[0_18px_50px_rgba(87,42,4,0.08)]">
+          <div className="border-b border-temple-gold/15 bg-temple-gold/10 px-6 py-4">
+            <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold-dark">
+              Panchangam Vivarana
+            </p>
+            <h3 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
+              పంచాంగ వివరణ
+            </h3>
+          </div>
+          <div className="px-6 py-6">
+            <p className="text-lg leading-9 text-gray-800">
+              పంచాంగము అనగా 5 అంగములు (అవయములు) కలిగినది. కాలమునకు 5
+              అవయములు కలవు. తిథి, వారము, నక్షత్రము, యోగము, కరణము ఈ 5
+              అవయములు కాలము యొక్క ఫలమును వెల్లడించును. కార్యమును
+              సాధింపదలచిన వారు ఈ విషయములను తెలుసికొనవలయును.
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[1.75rem] border border-temple-gold/20 bg-gradient-to-br from-[#fff8ef] via-white to-[#fff3de] shadow-[0_18px_50px_rgba(87,42,4,0.08)]">
+          <div className="border-b border-temple-gold/15 bg-temple-maroon/5 px-6 py-4">
+            <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold-dark">
+              Traditional Slokam
+            </p>
+            <h3 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
+              పంచాంగ శ్లోకం
+            </h3>
+          </div>
+          <div className="space-y-5 px-6 py-6 text-gray-800">
+            <div className="rounded-2xl bg-temple-maroon/[0.03] px-5 py-5">
+              <p className="text-lg leading-9">
+                తిథి వారంచ నక్షత్రం యోగః కరణ మేవచ ।
+              </p>
+              <p className="text-lg leading-9">
+                పంచాంగమితి విఖ్యాతం లోకయాం కర్మసాధకః ॥
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-temple-gold/15 bg-white/80 px-5 py-5">
+              <p className="text-lg leading-9">
+                తిథేశ్చ శ్రియమాప్నోతి వారాదాయుష్యవర్ధనం ।
+              </p>
+              <p className="text-lg leading-9">
+                నక్షత్రాద్ధరతే పాపం యోగాద్రోగ నివారణం ॥
+              </p>
+              <p className="mt-3 text-lg leading-9">
+                కరణాత్కార్య సిద్ధిశ్చ పంచాంగ ఫలముత్తమం ।
+              </p>
+              <p className="text-lg leading-9">
+                కాలవిత్ కర్మణాం శ్రేష్ఠం లభేత్ శుభం ॥
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Reference */}

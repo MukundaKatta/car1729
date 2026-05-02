@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { HeroSlideshow } from "@/components/hero/HeroSlideshow";
-import { StaticHeroImages } from "@/components/home/StaticHeroImages";
 import { HomePanchangamScroll } from "@/components/home/HomePanchangamScroll";
 import { ReadyToBookPriests } from "@/components/home/ReadyToBookPriests";
 import {
@@ -73,9 +72,6 @@ export default function HomePage() {
           </a>
         </div>
       </section>
-
-      {/* Static image collage */}
-      <StaticHeroImages />
 
       {/* Panchangam scroll */}
       <HomePanchangamScroll />

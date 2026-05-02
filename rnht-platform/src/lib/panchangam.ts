@@ -1,17 +1,5 @@
 import { samplePanchangam } from "@/lib/sample-data";
 
-/**
- * Location-aware panchangam computation.
- *
- * This module is a thin wrapper so the rest of the app never has to
- * think about which astronomy library we're using. For v1 we simply
- * relabel `samplePanchangam` with the user's location + date so the UI
- * is wired up end-to-end. Once an actual library is wired (candidates:
- * `mhah-panchang` or a Swiss Ephemeris WASM build), this is the one
- * place to swap it in — the call sites in `src/app/panchangam/page.tsx`
- * don't need to change.
- */
-
 export type PanchangamLocation = {
   lat: number;
   lon: number;
@@ -28,17 +16,81 @@ export const DEFAULT_LOCATION: PanchangamLocation = {
   timeZone: "America/Chicago",
 };
 
-export function computePanchangam(
+function getZonedDateParts(date: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(date);
+
+  return {
+    year: parts.find((part) => part.type === "year")?.value ?? "1970",
+    month: parts.find((part) => part.type === "month")?.value ?? "01",
+    day: parts.find((part) => part.type === "day")?.value ?? "01",
+  };
+}
+
+export function createPanchangamLoadingState(
   location: PanchangamLocation,
-  date: Date = new Date()
+  date = new Date()
 ): ComputedPanchangam {
-  // TODO: replace this stub with a real astronomy computation once we
-  // pick a library. For now we simply clone the sample and rewrite the
-  // location + date so the UI behaves correctly.
-  const iso = date.toISOString().slice(0, 10);
+  const { year, month, day } = getZonedDateParts(date, location.timeZone);
+  const vaara = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: location.timeZone,
+  }).format(date);
+
   return {
     ...samplePanchangam,
-    date: iso,
+    date: `${year}-${month}-${day}`,
     location: location.label,
+    sunrise: "--",
+    sunset: "--",
+    tithi: {
+      name: "Calculating...",
+      start: "--",
+      end: "--",
+      paksha: "--",
+    },
+    nakshatra: {
+      name: "Calculating...",
+      start: "--",
+      end: "--",
+    },
+    yoga: {
+      name: "Calculating...",
+      start: "--",
+      end: "--",
+    },
+    karana: {
+      name: "Calculating...",
+      start: "--",
+      end: "--",
+    },
+    rahu_kalam: {
+      start: "--",
+      end: "--",
+      warning: true,
+    },
+    yama_gandam: {
+      start: "--",
+      end: "--",
+    },
+    gulika_kalam: {
+      start: "--",
+      end: "--",
+    },
+    muhurtham: {
+      name: "Abhijit Muhurtham",
+      start: "--",
+      end: "--",
+    },
+    festival: null,
+    vaara,
+    masa: "Calculating",
+    samvatsara: "Calculating",
   };
 }
