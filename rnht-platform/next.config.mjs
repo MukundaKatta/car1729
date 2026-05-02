@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-const isStaticExport = process.env.STATIC_EXPORT === 'true';
+const isStaticExport =
+  process.env.STATIC_EXPORT === 'true' || process.env.STATIC_EXPORT === '1';
 
 const nextConfig = {
   output: isStaticExport ? 'export' : undefined,

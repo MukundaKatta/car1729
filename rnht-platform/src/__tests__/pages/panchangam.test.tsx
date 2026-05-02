@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
+import { samplePanchangam } from "@/lib/sample-data";
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
@@ -91,6 +92,37 @@ vi.mock("@/store/auth", () => ({
   },
 }));
 
+vi.mock("@/lib/panchangam", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/panchangam")>(
+    "@/lib/panchangam"
+  );
+
+  return {
+    ...actual,
+    computePanchangam: vi.fn(async (location) => ({
+      ...samplePanchangam,
+      location: location.label,
+      date: "2026-05-02",
+      sunrise: "6:22 AM",
+      sunset: "6:01 PM",
+      tithi: {
+        ...samplePanchangam.tithi,
+        name: "Dwadashi",
+        paksha: "Shukla",
+      },
+      nakshatra: {
+        ...samplePanchangam.nakshatra,
+        name: "Pushya",
+      },
+      rahu_kalam: {
+        ...samplePanchangam.rahu_kalam,
+        start: "10:42 AM",
+        end: "12:12 PM",
+      },
+    })),
+  };
+});
+
 import PanchangamPage from "@/app/panchangam/page";
 
 describe("PanchangamPage", () => {
@@ -158,25 +190,25 @@ describe("PanchangamPage", () => {
     expect(screen.queryByText("Abhijit Muhurtham:")).not.toBeInTheDocument();
   });
 
-  it("renders the PanchangamWidget with sample data", () => {
+  it("renders the PanchangamWidget with computed data", async () => {
     render(<PanchangamPage />);
-    expect(screen.getByText(/pushya/i)).toBeInTheDocument();
+    expect(await screen.findByText(/pushya/i)).toBeInTheDocument();
   });
 
-  it("displays sunrise and sunset times", () => {
+  it("displays sunrise and sunset times", async () => {
     render(<PanchangamPage />);
-    expect(screen.getByText(/6:22 AM/)).toBeInTheDocument();
-    expect(screen.getByText(/6:01 PM/)).toBeInTheDocument();
+    expect(await screen.findByText(/6:22 AM/)).toBeInTheDocument();
+    expect(await screen.findByText(/6:01 PM/)).toBeInTheDocument();
   });
 
-  it("displays tithi information from sample data", () => {
+  it("displays tithi information from computed data", async () => {
     render(<PanchangamPage />);
-    expect(screen.getByText(/shukla dwadashi/i)).toBeInTheDocument();
+    expect(await screen.findByText(/shukla dwadashi/i)).toBeInTheDocument();
   });
 
-  it("displays rahu kalam timings from sample data", () => {
+  it("displays rahu kalam timings from computed data", async () => {
     render(<PanchangamPage />);
-    expect(screen.getByText(/10:42 AM/)).toBeInTheDocument();
-    expect(screen.getByText(/12:12 PM/)).toBeInTheDocument();
+    expect(await screen.findByText(/10:42 AM/)).toBeInTheDocument();
+    expect(await screen.findByText(/12:12 PM/)).toBeInTheDocument();
   });
 });

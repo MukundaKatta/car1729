@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getLivePanchangam } from "@/app/actions/panchangam";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  computePanchangam,
   createPanchangamLoadingState,
   type ComputedPanchangam,
 } from "@/lib/panchangam";
@@ -51,7 +51,7 @@ export function HomePanchangamScroll() {
       setP(createPanchangamLoadingState(location));
 
       try {
-        const data = await getLivePanchangam(location);
+        const data = await computePanchangam(location);
         if (!cancelled) {
           setP(data);
         }

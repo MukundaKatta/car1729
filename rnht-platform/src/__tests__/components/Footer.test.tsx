@@ -7,23 +7,29 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Footer", () => {
-  it("renders the temple name and nonprofit badge", () => {
+  it("renders the redesigned footer heading and supporting copy", () => {
     render(<Footer />);
-    expect(screen.getByText("Rudra Narayana Hindu Temple")).toBeInTheDocument();
-    expect(screen.getByText("501(c)(3) Registered Nonprofit")).toBeInTheDocument();
+    expect(screen.getByText("Stay Connected")).toBeInTheDocument();
+    expect(screen.getByText("Follow RNHT")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Temple updates, booking support, and important links/i)
+    ).toBeInTheDocument();
   });
 
-  it("renders both priest contact numbers consistently", () => {
+  it("renders the compact legal and contact links", () => {
     render(<Footer />);
-    expect(screen.getByText(/512.*545.*0473/)).toBeInTheDocument();
-    expect(screen.getByText(/512.*998.*0112/)).toBeInTheDocument();
+    expect(screen.getByText("Contact Us")).toBeInTheDocument();
+    expect(screen.getByText("Terms of Use")).toBeInTheDocument();
+    expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
   });
 
-  it("renders the main navigation links", () => {
+  it("renders social links for the temple and priest contact channels", () => {
     render(<Footer />);
-    expect(screen.getByText("Book a Pooja")).toBeInTheDocument();
-    expect(screen.getByText("Events Calendar")).toBeInTheDocument();
-    expect(screen.getByText("Donate")).toBeInTheDocument();
-    expect(screen.getByText("About Us")).toBeInTheDocument();
+    expect(screen.getByLabelText("Facebook")).toBeInTheDocument();
+    expect(screen.getByLabelText("Instagram - Temple")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Instagram - Pandit Aditya Sharma")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("WhatsApp")).toBeInTheDocument();
   });
 });

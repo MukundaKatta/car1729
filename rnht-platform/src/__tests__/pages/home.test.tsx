@@ -12,31 +12,27 @@ vi.mock("next/image", () => ({
 vi.mock("@/components/hero/HeroSlideshow", () => ({
   HeroSlideshow: () => <div data-testid="hero-slideshow" />,
 }));
-vi.mock("@/components/home/HomeTempleCalendar", () => ({
-  HomeTempleCalendar: () => <div data-testid="home-temple-calendar">Temple Calendar</div>,
+vi.mock("@/components/home/HomePanchangamScroll", () => ({
+  HomePanchangamScroll: () => (
+    <div data-testid="home-panchangam-scroll">Panchangam and Temple Calendar</div>
+  ),
 }));
-vi.mock("@/components/home/NewsAndUpdates", () => ({
-  NewsAndUpdates: () => <div data-testid="news-and-updates">News &amp; Updates</div>,
-}));
-vi.mock("@/components/services/ServiceCard", () => ({
-  ServiceCard: ({ service }: any) => <div data-testid="service-card">{service.name}</div>,
+vi.mock("@/components/home/ReadyToBookPriests", () => ({
+  ReadyToBookPriests: () => <div data-testid="ready-to-book-priests">Priest cards</div>,
 }));
 
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the hero, calendar, and news sections", () => {
+  it("renders the hero and panchangam showcase sections", () => {
     render(<HomePage />);
     expect(screen.getByTestId("hero-slideshow")).toBeInTheDocument();
-    expect(screen.getByTestId("home-temple-calendar")).toBeInTheDocument();
-    expect(screen.getByTestId("news-and-updates")).toBeInTheDocument();
+    expect(screen.getByTestId("home-panchangam-scroll")).toBeInTheDocument();
   });
 
-  it("shows the quick info bar with the current location and phone", () => {
+  it("shows the quick info bar with the support phone", () => {
     render(<HomePage />);
-    expect(screen.getByText("Georgetown, TX 78628")).toBeInTheDocument();
     expect(screen.getByText("(512) 545-0473")).toBeInTheDocument();
-    expect(screen.getByText("Support the Temple")).toBeInTheDocument();
   });
 
   it("shows the trust stats section with current values", () => {
@@ -47,17 +43,17 @@ describe("HomePage", () => {
     expect(screen.getByText("12+")).toBeInTheDocument();
   });
 
-  it("renders featured service cards", () => {
+  it("renders the priest booking call-to-action area", () => {
     render(<HomePage />);
-    expect(screen.getAllByTestId("service-card")).toHaveLength(4);
+    expect(screen.getByText("Ready to Book a Pooja?")).toBeInTheDocument();
+    expect(screen.getByTestId("ready-to-book-priests")).toBeInTheDocument();
   });
 
   it("shows the major homepage sections", () => {
     render(<HomePage />);
-    expect(screen.getByText("Our Sacred Services")).toBeInTheDocument();
     expect(screen.getByText("Why Choose RNHT")).toBeInTheDocument();
+    expect(screen.getByText("Nitya Pooja Seva")).toBeInTheDocument();
     expect(screen.getByText("What Devotees Say")).toBeInTheDocument();
-    expect(screen.getByText("Explore RNHT")).toBeInTheDocument();
-    expect(screen.getByText("News & Updates")).toBeInTheDocument();
+    expect(screen.getByText("Ready to Book a Pooja?")).toBeInTheDocument();
   });
 });

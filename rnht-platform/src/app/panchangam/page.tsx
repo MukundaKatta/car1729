@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { MapPin, Navigation } from "lucide-react";
-import { getLivePanchangam } from "@/app/actions/panchangam";
 import { PanchangamWidget } from "@/components/panchangam/PanchangamWidget";
 import {
+  computePanchangam,
   createPanchangamLoadingState,
   type ComputedPanchangam,
 } from "@/lib/panchangam";
@@ -37,7 +37,7 @@ export default function PanchangamPage() {
       setComputed(createPanchangamLoadingState(location));
 
       try {
-        const data = await getLivePanchangam(location);
+        const data = await computePanchangam(location);
         if (!cancelled) {
           setComputed(data);
           setLoading(false);
