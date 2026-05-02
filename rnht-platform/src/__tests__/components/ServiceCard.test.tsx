@@ -84,8 +84,8 @@ describe("ServiceCard", () => {
 
   it("renders a category icon", () => {
     render(<ServiceCard service={makeService({ category_id: "cat-1" })} />);
-    // Each category maps to an emoji; cat-1 is 🔥
-    expect(screen.getByText("🔥")).toBeInTheDocument();
+    // Each category maps to an emoji; cat-1 is 🙏
+    expect(screen.getByText("🙏")).toBeInTheDocument();
   });
 
   it("does not render any pricing, duration, or location information", () => {

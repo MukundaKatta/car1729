@@ -49,6 +49,7 @@ vi.mock("@/components/services/ServicePdfDownloads", () => ({
 }));
 
 import ServicesPage from "@/app/services/page";
+import { sampleServices } from "@/lib/sample-data";
 
 describe("ServicesPage", () => {
   it("renders the page heading and intro", () => {
@@ -56,7 +57,9 @@ describe("ServicesPage", () => {
     expect(
       screen.getByRole("heading", { name: /Pooja & Spiritual Services/i })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Serving the Austin, Texas area/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Current catalog offerings include shanti pujas/i)
+    ).toBeInTheDocument();
   });
 
   it("does NOT render the removed At Temple / Outside Temple or price filters", () => {
@@ -81,16 +84,18 @@ describe("ServicesPage", () => {
     expect(screen.getByTestId("service-areas")).toBeInTheDocument();
   });
 
-  it("renders many service cards from sample data", () => {
+  it("renders service cards from the current sample catalog", () => {
     render(<ServicesPage />);
-    expect(screen.getAllByTestId("service-card").length).toBeGreaterThan(10);
+    expect(screen.getAllByTestId("service-card").length).toBe(
+      sampleServices.length
+    );
   });
 
   it("filters cards by search query", () => {
     render(<ServicesPage />);
     const initial = screen.getAllByTestId("service-card").length;
     fireEvent.change(screen.getByRole("textbox", { name: /Search services/i }), {
-      target: { value: "Ganapathi" },
+      target: { value: "Shraddham" },
     });
     const after = screen.getAllByTestId("service-card").length;
     expect(after).toBeLessThan(initial);
