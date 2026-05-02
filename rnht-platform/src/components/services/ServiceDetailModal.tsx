@@ -38,6 +38,16 @@ export function ServiceDetailModal({
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
   );
   const whatsappHref = `${whatsappUrl}?text=${whatsappMessage}`;
+  const categoryIcon =
+    service.category_id === "cat-1"
+      ? "🙏"
+      : service.category_id === "cat-2"
+        ? "📿"
+        : service.category_id === "cat-3"
+          ? "🪔"
+          : service.category_id === "cat-4"
+            ? "💒"
+            : "🔥";
 
   return (
     <div
@@ -59,9 +69,18 @@ export function ServiceDetailModal({
         </button>
 
         {/* Header */}
-        <div className="flex h-40 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/30">
-          <span className="text-6xl opacity-60">🙏</span>
-        </div>
+        {service.image_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={service.image_url}
+            alt={service.name}
+            className="h-56 w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-40 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/30">
+            <span className="text-6xl opacity-60">{categoryIcon}</span>
+          </div>
+        )}
 
         <div className="p-6">
           <h2 id="modal-title" className="font-heading text-2xl font-bold text-temple-maroon">

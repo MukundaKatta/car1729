@@ -95,7 +95,7 @@ describe("ServicesPage", () => {
     render(<ServicesPage />);
     const initial = screen.getAllByTestId("service-card").length;
     fireEvent.change(screen.getByRole("textbox", { name: /Search services/i }), {
-      target: { value: "Shraddham" },
+      target: { value: "Shradham" },
     });
     const after = screen.getAllByTestId("service-card").length;
     expect(after).toBeLessThan(initial);

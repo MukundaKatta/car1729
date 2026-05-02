@@ -39,11 +39,20 @@ export function ServiceCard({ service }: { service: Service }) {
         }}
         aria-label={service.name}
       >
-        <div className="h-36 bg-gradient-to-br from-temple-cream to-temple-gold/20 flex items-center justify-center">
-          <span className="text-5xl opacity-60 transition-transform group-hover:scale-110">
-            {icon}
-          </span>
-        </div>
+        {service.image_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={service.image_url}
+            alt={service.name}
+            className="h-36 w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-36 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20">
+            <span className="text-5xl opacity-60 transition-transform group-hover:scale-110">
+              {icon}
+            </span>
+          </div>
+        )}
         <div className="p-4">
           <h3 className="font-heading font-bold text-gray-900 leading-tight">
             {service.name}
