@@ -23,6 +23,28 @@ function formatHeaderDate(date: string, timeZone: string) {
     .toUpperCase();
 }
 
+function getDisplayDateParts(date: string, timeZone: string) {
+  const value = new Date(`${date}T12:00:00`);
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone,
+  }).format(value);
+  const month = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    timeZone,
+  }).format(value);
+  const day = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    timeZone,
+  }).format(value);
+  const year = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    timeZone,
+  }).format(value);
+
+  return { weekday, month, day, year };
+}
+
 export function HomePanchangamScroll() {
   const location = usePanchangamStore((s) => s.location);
   const detectCurrentLocation = usePanchangamStore((s) => s.detectCurrentLocation);
@@ -33,6 +55,7 @@ export function HomePanchangamScroll() {
   const calendarPreviewHref = "/downloads/preview/2026-rnht.pdf.png";
   const sharedCardHeight = "h-[38rem] sm:h-[42rem] xl:h-[46rem]";
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
+  const dateParts = getDisplayDateParts(p.date, location.timeZone);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -117,7 +140,7 @@ export function HomePanchangamScroll() {
               aria-label="Open Panchangam page"
             >
               <div className={`relative ${sharedCardHeight}`}>
-                <div className="pointer-events-none absolute inset-x-[6%] top-[4.8rem] bottom-[4.2rem] rounded-[2rem] bg-black/25 blur-2xl" />
+                <div className="pointer-events-none absolute inset-x-[6%] top-[4.8rem] bottom-[4.2rem] rounded-[2rem] bg-black/30 blur-2xl" />
 
                 <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-1 sm:px-2">
                   {[-1, 1].map((side) => (
@@ -229,20 +252,20 @@ export function HomePanchangamScroll() {
                 </div>
 
                 <div
-                  className="relative flex h-[calc(100%-3.5rem)] flex-col overflow-hidden rounded-[2.15rem] border-x-[10px] border-[#d98f11] px-6 pb-8 pt-10 sm:border-x-[14px] sm:px-10 sm:pb-10 sm:pt-12"
+                  className="relative flex h-[calc(100%-3.5rem)] flex-col overflow-hidden rounded-[2.15rem] border-x-[10px] border-[#d98f11] px-5 pb-7 pt-9 sm:border-x-[14px] sm:px-8 sm:pb-9 sm:pt-10"
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(255,52,20,0.98) 0%, rgba(214,20,9,0.99) 19%, rgba(162,10,7,0.99) 56%, rgba(115,7,8,0.99) 100%)",
+                      "linear-gradient(180deg, rgba(255,62,25,0.98) 0%, rgba(218,21,9,0.99) 16%, rgba(154,10,8,0.99) 58%, rgba(92,5,8,0.99) 100%)",
                     boxShadow:
                       "0 28px 56px rgba(0,0,0,0.36), inset 0 3px 10px rgba(255,255,255,0.12), inset 0 -16px 22px rgba(72,0,0,0.25)",
                   }}
                 >
                   <div
-                    className="absolute inset-0 opacity-[0.12]"
+                    className="absolute inset-0 opacity-[0.11]"
                     style={{
                       backgroundImage:
-                        "linear-gradient(0deg, transparent 0 87%, rgba(255,255,255,0.05) 87% 100%), linear-gradient(90deg, transparent 0 87%, rgba(255,255,255,0.04) 87% 100%)",
-                      backgroundSize: "60px 60px",
+                        "radial-gradient(circle at 20% 18%, rgba(255,255,255,0.16) 0, transparent 22%), radial-gradient(circle at 80% 28%, rgba(255,255,255,0.08) 0, transparent 18%), linear-gradient(0deg, transparent 0 87%, rgba(255,255,255,0.05) 87% 100%), linear-gradient(90deg, transparent 0 87%, rgba(255,255,255,0.04) 87% 100%)",
+                      backgroundSize: "auto, auto, 58px 58px, 58px 58px",
                     }}
                   />
                   <div className="absolute inset-x-5 top-5 h-px bg-gradient-to-r from-transparent via-[#ffd978]/60 to-transparent" />
@@ -250,6 +273,12 @@ export function HomePanchangamScroll() {
                   <div className="absolute inset-x-[6%] inset-y-4 rounded-[1.8rem] border border-white/8" />
 
                   <div className="relative mx-auto flex h-full max-w-[28rem] flex-col text-center text-[#fff6df]">
+                    <div className="mx-auto mb-5 flex items-center gap-3 rounded-full border border-[#f0cf80]/25 bg-black/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ffdf96] sm:text-xs">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#ffd66e]" />
+                      Daily Almanac
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#ffd66e]" />
+                    </div>
+
                     <div
                       className="mx-auto inline-flex max-w-full items-center gap-3 rounded-[1.1rem] border border-[#b8842b] px-5 py-3 shadow-[0_12px_28px_rgba(45,14,4,0.36)] sm:px-8"
                       style={{
@@ -264,78 +293,127 @@ export function HomePanchangamScroll() {
                       <span className="h-2.5 w-2.5 rounded-full bg-[#b32112] shadow-[0_0_10px_rgba(179,33,18,0.45)]" />
                     </div>
 
-                    <p className="mt-6 text-base font-semibold leading-snug text-[#ffecc3] sm:text-[1.42rem]">
-                      {p.masa} Masa, {p.samvatsara} Samvatsara
-                    </p>
+                    <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,245,222,0.1),rgba(95,0,0,0.08))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-6">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ffe7ae] sm:text-base">
+                        {dateParts.weekday}
+                      </p>
+                      <div className="mt-3 flex items-end justify-center gap-3 text-white">
+                        <span className="font-heading text-[3.4rem] font-black leading-none sm:text-[4.4rem]">
+                          {dateParts.day}
+                        </span>
+                        <div className="pb-1 text-left">
+                          <p className="font-heading text-2xl font-bold uppercase tracking-[0.12em] sm:text-[2rem]">
+                            {dateParts.month}
+                          </p>
+                          <p className="text-base font-semibold tracking-[0.22em] text-[#ffe1a0] sm:text-lg">
+                            {dateParts.year}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="mt-4 text-[11px] uppercase tracking-[0.34em] text-[#ffd978] sm:text-xs">
+                        {p.masa} Masa • {p.samvatsara}
+                      </p>
+                    </div>
 
-                    <p className="mt-5 font-heading text-[2.1rem] font-black uppercase tracking-[0.08em] text-white sm:text-[2.65rem] sm:leading-[1.05]">
-                      {formattedDate}
-                    </p>
-
-                    <div className="mt-6 space-y-2 text-base leading-snug sm:text-[1.12rem]">
-                      {p.festival && (
-                        <p className="font-semibold text-[#ffe4a5]">
-                          Festival &amp; Vrata: {p.festival.name}
-                        </p>
+                    <div className="mt-5 rounded-[1.35rem] border border-[#f1cb71]/18 bg-black/10 px-4 py-3 sm:px-5">
+                      {p.festival ? (
+                        <>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#ffd978] sm:text-xs">
+                            Festival & Vrata
+                          </p>
+                          <p className="mt-2 text-base font-semibold leading-snug text-[#fff0c8] sm:text-[1.08rem]">
+                            {p.festival.name}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#ffd978] sm:text-xs">
+                            Sacred Day Flow
+                          </p>
+                          <p className="mt-2 text-sm leading-relaxed text-[#fff0c8]/90 sm:text-base">
+                            Tithi, nakshatra, yoga, and key timings for the day.
+                          </p>
+                        </>
                       )}
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">Tithi:</span>{" "}
-                        {p.tithi.name}{" "}
-                        <span className="text-[#ffd58d]">|</span>{" "}
-                        <span className="font-semibold text-[#ffe4a5]">Paksha:</span>{" "}
-                        {p.tithi.paksha}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">
-                          Nakshatra:
-                        </span>{" "}
-                        {p.nakshatra.name}
-                      </p>
-                      <p className="text-sm text-[#ffe8b7] sm:text-base">
-                        {p.nakshatra.start} - {p.nakshatra.end}
-                      </p>
                     </div>
 
-                    <div className="mt-6 grid gap-2 text-sm leading-snug text-[#fff0c9] sm:text-[1.03rem]">
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">Yoga:</span>{" "}
-                        {p.yoga.name}{" "}
-                        <span className="text-[#ffd58d]">|</span>{" "}
-                        <span className="font-semibold text-[#ffe4a5]">Karana:</span>{" "}
-                        {p.karana.name}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">Rahu:</span>{" "}
-                        {p.rahu_kalam.start} - {p.rahu_kalam.end}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">Gulika:</span>{" "}
-                        {p.gulika_kalam.start} - {p.gulika_kalam.end}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">
-                          Yamaganda:
-                        </span>{" "}
-                        {p.yama_gandam.start} - {p.yama_gandam.end}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-[#ffe4a5]">
-                          Muhurtham:
-                        </span>{" "}
-                        {p.muhurtham.start} - {p.muhurtham.end}
-                      </p>
+                    <div className="mt-5 grid gap-3 text-left sm:grid-cols-2">
+                      <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ffd978]">
+                          Lunar Details
+                        </p>
+                        <div className="mt-3 space-y-2 text-sm leading-snug text-[#fff4d8] sm:text-[0.98rem]">
+                          <p>
+                            <span className="font-semibold text-[#ffe4a5]">Tithi</span>
+                            <br />
+                            {p.tithi.name} • {p.tithi.paksha}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-[#ffe4a5]">Nakshatra</span>
+                            <br />
+                            {p.nakshatra.name}
+                          </p>
+                          <p className="text-xs text-[#ffe8b7] sm:text-sm">
+                            {p.nakshatra.start} - {p.nakshatra.end}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ffd978]">
+                          Inner Balance
+                        </p>
+                        <div className="mt-3 space-y-2 text-sm leading-snug text-[#fff4d8] sm:text-[0.98rem]">
+                          <p>
+                            <span className="font-semibold text-[#ffe4a5]">Yoga</span>
+                            <br />
+                            {p.yoga.name}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-[#ffe4a5]">Karana</span>
+                            <br />
+                            {p.karana.name}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="mt-auto pt-6">
-                    <p className="text-xs uppercase tracking-[0.34em] text-[#ffd978] sm:text-sm">
-                      Based on {p.location}
-                    </p>
-
-                    <div className="mt-5">
-                      <span className="inline-flex items-center rounded-full border border-[#ffdb87]/30 bg-white/10 px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#fff4d8] transition-transform duration-300 group-hover:scale-[1.03]">
-                        View Full Panchangam
-                      </span>
+                    <div className="mt-5 rounded-[1.45rem] border border-[#f1cb71]/18 bg-[linear-gradient(180deg,rgba(50,0,0,0.12),rgba(255,255,255,0.05))] px-4 py-4 text-left sm:px-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[#ffd978] sm:text-xs">
+                        Key Timings
+                      </p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {[
+                          ["Rahu Kalam", `${p.rahu_kalam.start} - ${p.rahu_kalam.end}`],
+                          ["Gulika Kalam", `${p.gulika_kalam.start} - ${p.gulika_kalam.end}`],
+                          ["Yamaganda", `${p.yama_gandam.start} - ${p.yama_gandam.end}`],
+                          ["Muhurtham", `${p.muhurtham.start} - ${p.muhurtham.end}`],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="rounded-2xl border border-white/8 bg-black/10 px-3 py-3"
+                          >
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#ffe4a5]">
+                              {label}
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-[#fff4d8] sm:text-[0.98rem]">
+                              {value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
+                    <div className="mt-auto pt-5">
+                      <p className="text-[11px] uppercase tracking-[0.34em] text-[#ffd978] sm:text-xs">
+                        Based on {p.location}
+                      </p>
+
+                      <div className="mt-5">
+                        <span className="inline-flex items-center rounded-full border border-[#ffdb87]/30 bg-white/10 px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#fff4d8] transition-transform duration-300 group-hover:scale-[1.03]">
+                          View Full Panchangam
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, Upload } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, Upload, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth";
@@ -34,6 +34,7 @@ type FormState = {
   short_description: string;
   full_description: string;
   significance: string;
+  image_url: string;
   is_active: boolean;
   sort_order: number;
 };
@@ -46,9 +47,12 @@ const emptyForm: FormState = {
   short_description: "",
   full_description: "",
   significance: "",
+  image_url: "",
   is_active: true,
   sort_order: 0,
 };
+
+const SERVICE_IMAGE_BUCKET = "service-images";
 
 export default function AdminServicesPage() {
   const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
@@ -60,6 +64,7 @@ export default function AdminServicesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
@@ -92,10 +97,44 @@ export default function AdminServicesPage() {
       short_description: service.short_description,
       full_description: service.full_description ?? "",
       significance: service.significance ?? "",
+      image_url: service.image_url ?? "",
       is_active: service.is_active,
       sort_order: service.sort_order ?? 0,
     });
     setShowForm(true);
+  }
+
+  async function uploadServiceImage(file: File) {
+    if (!supabase) return;
+    setError(null);
+    setUploadingImage(true);
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const baseName = slugify(form.name || file.name.replace(/\.[^.]+$/, "")) || "service-image";
+    const storagePath = `${new Date().getFullYear()}/${baseName}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(SERVICE_IMAGE_BUCKET)
+      .upload(storagePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+
+    if (uploadError) {
+      setError(
+        `Image upload failed: ${uploadError.message}. Make sure the "${SERVICE_IMAGE_BUCKET}" Storage bucket exists and is public-read.`
+      );
+      setUploadingImage(false);
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(SERVICE_IMAGE_BUCKET).getPublicUrl(storagePath);
+
+    setForm((current) => ({ ...current, image_url: publicUrl }));
+    setUploadingImage(false);
   }
 
   async function save() {
@@ -117,6 +156,7 @@ export default function AdminServicesPage() {
       short_description: form.short_description.trim(),
       full_description: form.full_description || null,
       significance: form.significance || null,
+      image_url: form.image_url.trim() || null,
       is_active: form.is_active,
       sort_order: form.sort_order,
     };
@@ -307,6 +347,94 @@ export default function AdminServicesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, significance: e.target.value }))}
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Service Image
+              </label>
+              <div className="mt-1 rounded-xl border border-dashed border-temple-gold/30 bg-temple-cream/30 p-4">
+                {form.image_url ? (
+                  <div className="space-y-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.image_url}
+                      alt={form.name || "Service image preview"}
+                      className="h-40 w-full rounded-lg object-cover"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-temple-maroon px-4 py-2 text-sm font-semibold text-white hover:bg-temple-maroon/90">
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Uploading…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            Replace image
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp"
+                          className="hidden"
+                          disabled={uploadingImage}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadServiceImage(file);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
+                      >
+                        <X className="h-4 w-4" />
+                        Remove image
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex h-32 items-center justify-center rounded-lg bg-white text-gray-400">
+                      <div className="text-center">
+                        <ImageIcon className="mx-auto h-8 w-8" />
+                        <p className="mt-2 text-sm">No image uploaded yet</p>
+                      </div>
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-temple-maroon px-4 py-2 text-sm font-semibold text-white hover:bg-temple-maroon/90">
+                      {uploadingImage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Uploading…
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          Upload image
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        className="hidden"
+                        disabled={uploadingImage}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadServiceImage(file);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      Uploads use Supabase Storage bucket{" "}
+                      <span className="font-mono">{SERVICE_IMAGE_BUCKET}</span>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Sort Order</label>
               <input
@@ -386,10 +514,26 @@ export default function AdminServicesPage() {
               services.map((service) => (
                 <tr key={service.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm">
-                    <p className="font-semibold text-gray-900">{service.name}</p>
-                    <p className="line-clamp-1 text-xs text-gray-500">
-                      {service.short_description}
-                    </p>
+                    <div className="flex items-start gap-3">
+                      {service.image_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={service.image_url}
+                          alt={service.name}
+                          className="h-12 w-12 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-temple-cream text-temple-maroon">
+                          <ImageIcon className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900">{service.name}</p>
+                        <p className="line-clamp-1 text-xs text-gray-500">
+                          {service.short_description}
+                        </p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">
                     {categoryName(service.category_id)}

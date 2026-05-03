@@ -16,12 +16,21 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: null, error: null }),
-        }),
-      }),
+    from: (table: string) => ({
+      select: () => {
+        if (table === "services") {
+          return {
+            eq: () => ({
+              order: () => ({
+                order: () => Promise.resolve({ data: [], error: null }),
+              }),
+            }),
+          };
+        }
+        return {
+          order: () => Promise.resolve({ data: [], error: null }),
+        };
+      },
     }),
   },
 }));

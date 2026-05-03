@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, FileText } from "lucide-react";
 import { sampleServices, sampleCategories } from "@/lib/sample-data";
 import { ServiceCard } from "@/components/services/ServiceCard";
@@ -8,14 +8,46 @@ import { ServiceAreas } from "@/components/home/ServiceAreas";
 import { ServicePdfDownloads } from "@/components/services/ServicePdfDownloads";
 import { useLanguageStore } from "@/store/language";
 import { t } from "@/lib/i18n/translations";
+import { supabase } from "@/lib/supabase";
+import type { Service, ServiceCategory } from "@/types/database";
 
 export default function ServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [services, setServices] = useState<Service[]>(sampleServices);
+  const [categories, setCategories] = useState<ServiceCategory[]>(sampleCategories);
   const locale = useLanguageStore((s) => s.locale);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLiveCatalog() {
+      if (!supabase) return;
+
+      const [servicesResp, categoriesResp] = await Promise.all([
+        supabase.from("services").select("*").eq("is_active", true).order("sort_order").order("name"),
+        supabase.from("service_categories").select("*").order("sort_order"),
+      ]);
+
+      if (cancelled) return;
+
+      if (!servicesResp.error && servicesResp.data?.length) {
+        setServices(servicesResp.data as Service[]);
+      }
+
+      if (!categoriesResp.error && categoriesResp.data?.length) {
+        setCategories(categoriesResp.data as ServiceCategory[]);
+      }
+    }
+
+    loadLiveCatalog();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filteredServices = useMemo(() => {
-    return sampleServices.filter((service) => {
+    return services.filter((service) => {
       if (!service.is_active) return false;
 
       if (
@@ -37,7 +69,7 @@ export default function ServicesPage() {
 
       return true;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, services]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -80,9 +112,9 @@ export default function ServicesPage() {
             aria-label="Filter by category"
           >
             <option value="all">All Categories</option>
-            {sampleCategories.map((cat) => (
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
+                {cat.icon ?? "•"} {cat.name}
               </option>
             ))}
           </select>
@@ -101,7 +133,7 @@ export default function ServicesPage() {
         >
           All
         </button>
-        {sampleCategories.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
@@ -111,7 +143,7 @@ export default function ServicesPage() {
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
-            {cat.icon} {cat.name}
+            {cat.icon ?? "•"} {cat.name}
           </button>
         ))}
       </div>

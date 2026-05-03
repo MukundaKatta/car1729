@@ -11,6 +11,7 @@ const servicesData = [
     short_description: "Short description",
     full_description: "Full description",
     significance: "Auspicious",
+    image_url: null,
     is_active: true,
     sort_order: 1,
   },
@@ -45,6 +46,12 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/supabase", () => ({
   supabase: {
     from: mockFrom,
+    storage: {
+      from: () => ({
+        upload: vi.fn(async () => ({ error: null })),
+        getPublicUrl: () => ({ data: { publicUrl: "https://example.com/service.jpg" } }),
+      }),
+    },
   },
 }));
 vi.mock("@/store/auth", () => ({
@@ -86,6 +93,7 @@ describe("AdminServicesPage", () => {
     expect(screen.getByText("New Service")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Ganapathi Homam")).toHaveValue("");
     expect(screen.getByDisplayValue("0")).toBeInTheDocument();
+    expect(screen.getByText("Upload image")).toBeInTheDocument();
   });
 
   it("validates missing required fields in the form", async () => {
