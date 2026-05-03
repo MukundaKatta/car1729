@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
@@ -1066,11 +1067,24 @@ function ProfileTab() {
 /* ─── Main Dashboard Page ─── */
 export default function DashboardPage() {
   const { isAuthenticated, initialized, initialize } = useAuthStore();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    if (
+      requestedTab === "overview" ||
+      requestedTab === "bookings" ||
+      requestedTab === "donations" ||
+      requestedTab === "profile"
+    ) {
+      setActiveTab(requestedTab);
+    }
+  }, [searchParams]);
 
   if (!initialized) {
     return (

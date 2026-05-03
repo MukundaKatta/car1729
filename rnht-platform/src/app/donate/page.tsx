@@ -7,6 +7,9 @@ import {
   CreditCard,
   ShieldCheck,
   CheckCircle,
+  LogIn,
+  UserPlus,
+  Receipt,
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
@@ -59,6 +62,7 @@ export default function DonatePage() {
   const [confirmedFundName, setConfirmedFundName] = useState<string | null>(null);
   const locale = useLanguageStore((s) => s.locale);
   const searchParams = useSearchParams();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authUser = useAuthStore((s) => s.user);
 
   // Load fund types from DB; fall back gracefully if Supabase isn't set up.
@@ -224,6 +228,12 @@ export default function DonatePage() {
             A tax-deductible receipt will be emailed to you. RNHT is a
             registered 501(c)(3) nonprofit organization.
           </p>
+          {isAuthenticated && (
+            <p className="mt-2">
+              Because you donated through your devotee account, your giving
+              history stays connected to your profile for tax-document access.
+            </p>
+          )}
           {paymentMethod === "zelle" && (
             <p className="mt-2 font-semibold">
               Please send your Zelle payment of {formatCurrency(displayedAmount)}{" "}
@@ -235,6 +245,11 @@ export default function DonatePage() {
           <Link href="/" className="btn-outline">
             Return Home
           </Link>
+          {isAuthenticated && (
+            <Link href="/dashboard?tab=donations" className="btn-outline">
+              View Tax Documents
+            </Link>
+          )}
           <button className="btn-primary" onClick={() => setSubmitted(false)}>
             Make Another Donation
           </button>
@@ -252,6 +267,77 @@ export default function DonatePage() {
         <p className="mt-2 text-sm text-gray-500">
           All donations are tax-deductible under 501(c)(3).
         </p>
+      </div>
+
+      <div className="mt-8 rounded-3xl border border-temple-gold/20 bg-white/95 p-6 shadow-premium">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold">
+              Donate Your Way
+            </p>
+            <h2 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
+              Guest donation stays open, and devotee account options are here too
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-gray-600">
+              You can continue as a guest exactly as before. If you are already
+              a devotee, sign in before donating so your giving history stays
+              tied to your account for future tax-document access.
+            </p>
+          </div>
+
+          {isAuthenticated ? (
+            <div className="min-w-[280px] rounded-2xl border border-green-200 bg-green-50 p-5 text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-green-700">
+                Devotee Account Active
+              </p>
+              <p className="mt-2 text-sm font-semibold text-gray-900">
+                {authUser?.name || authUser?.email || "Signed in"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-green-800">
+                Donations made in this session can stay connected to your
+                devotee portal for receipts and year-end tax records.
+              </p>
+              <Link
+                href="/dashboard?tab=donations"
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-300 px-4 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-100"
+              >
+                <Receipt className="h-4 w-4" />
+                Open My Donations
+              </Link>
+            </div>
+          ) : (
+            <div className="grid min-w-[300px] gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <Link
+                href="/login?mode=signin"
+                className="flex items-start gap-3 rounded-2xl border border-temple-gold/20 bg-temple-cream/40 p-4 transition hover:border-temple-gold hover:bg-temple-cream"
+              >
+                <LogIn className="mt-0.5 h-5 w-5 text-temple-maroon" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Already a devotee?
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-gray-600">
+                    Sign in, donate, and keep your receipts under one account.
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/login?mode=signup"
+                className="flex items-start gap-3 rounded-2xl border border-temple-gold/20 bg-white p-4 transition hover:border-temple-gold hover:bg-temple-cream/30"
+              >
+                <UserPlus className="mt-0.5 h-5 w-5 text-temple-maroon" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    New devotee?
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-gray-600">
+                    Create your account now, or continue with guest donation below.
+                  </p>
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
@@ -327,6 +413,11 @@ export default function DonatePage() {
             <h2 className="font-heading text-lg font-bold text-gray-900">
               Your Information
             </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              {isAuthenticated
+                ? "Signed-in devotees can keep receipts and tax records aligned with their account."
+                : "Guest donations are welcome. If you sign in first, your donation history can stay tied to your devotee account."}
+            </p>
             <div className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">

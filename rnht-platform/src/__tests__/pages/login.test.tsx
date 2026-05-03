@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 
 const mockReplace = vi.fn();
+let searchParamsState = new URLSearchParams();
 const { mockSignInWithOAuth, mockGetSession } = vi.hoisted(() => ({
   mockSignInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
   mockGetSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -13,6 +14,7 @@ vi.mock("next/link", () => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: mockReplace, back: vi.fn() }),
+  useSearchParams: () => searchParamsState,
 }));
 vi.mock("@/lib/supabase", () => ({
   supabase: {
@@ -34,6 +36,7 @@ import LoginPage from "@/app/login/page";
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    searchParamsState = new URLSearchParams();
     authState = {
       isAuthenticated: false,
       initialize: vi.fn(),
@@ -52,6 +55,12 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: /Sign Up.*First-time devotees/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Welcome Back" })).toBeInTheDocument();
     expect(authState.initialize).toHaveBeenCalled();
+  });
+
+  it("opens in sign-up mode when requested from the donate page", () => {
+    searchParamsState = new URLSearchParams("mode=signup");
+    render(<LoginPage />);
+    expect(screen.getByRole("heading", { name: "Create Your Devotee Account" })).toBeInTheDocument();
   });
 
   it("switches to sign-up mode explicitly", () => {

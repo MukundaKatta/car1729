@@ -112,6 +112,21 @@ describe("DonatePage", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps guest giving and also shows sign-in and sign-up options", () => {
+    render(<DonatePage />);
+    expect(
+      screen.getByText(/Guest donation stays open, and devotee account options are here too/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Already a devotee\?/i })).toHaveAttribute(
+      "href",
+      "/login?mode=signin"
+    );
+    expect(screen.getByRole("link", { name: /New devotee\?/i })).toHaveAttribute(
+      "href",
+      "/login?mode=signup"
+    );
+  });
+
   it("loads fund types from the database and renders them", async () => {
     render(<DonatePage />);
     await waitFor(() => {

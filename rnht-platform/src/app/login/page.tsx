@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
@@ -34,6 +34,7 @@ function normalizePhone(input: string): string | null {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, sendOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<AuthStep>("method");
@@ -50,6 +51,13 @@ export default function LoginPage() {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    const requestedMode = searchParams.get("mode");
+    if (requestedMode === "signup" || requestedMode === "signin") {
+      setAuthMode(requestedMode);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const until = readEmailAuthCooldownUntil();

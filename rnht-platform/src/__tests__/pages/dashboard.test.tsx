@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
+let searchParamsState = new URLSearchParams();
+
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
@@ -11,7 +13,7 @@ vi.mock("next/link", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/dashboard",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParamsState,
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -69,6 +71,7 @@ function setSignedIn() {
 
 describe("Dashboard — signed-out sign-in form", () => {
   beforeEach(() => {
+    searchParamsState = new URLSearchParams();
     setSignedOut();
     Object.values(authState).forEach((v) => {
       if (typeof v === "function" && "mockClear" in v) (v as any).mockClear();
@@ -182,11 +185,19 @@ describe("Dashboard — signed-out sign-in form", () => {
 
 describe("Dashboard — signed-in state", () => {
   beforeEach(() => {
+    searchParamsState = new URLSearchParams();
     setSignedIn();
   });
 
   it("renders without crashing for a signed-in user", () => {
     const { container } = render(<DashboardPage />);
     expect(container).toBeTruthy();
+  });
+
+  it("opens directly on the donations tab when requested", () => {
+    searchParamsState = new URLSearchParams("tab=donations");
+    render(<DashboardPage />);
+    expect(screen.getByRole("heading", { name: "My Donations" })).toBeInTheDocument();
+    expect(screen.getByText(/Donation History/i)).toBeInTheDocument();
   });
 });
