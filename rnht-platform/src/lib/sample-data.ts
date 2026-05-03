@@ -37,7 +37,7 @@ export const sampleCategories: ServiceCategory[] = [
     slug: "kalyanam-weddings",
     description:
       "Divine weddings and auspicious ceremonial celebrations for deities and families",
-    icon: "💒",
+    icon: "🪷",
     sort_order: 4,
     created_at: "2024-01-01T00:00:00.000Z",
   },

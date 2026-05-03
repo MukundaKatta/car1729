@@ -83,6 +83,7 @@ describe("AdminServicesPage", () => {
     render(<AdminServicesPage />);
     await screen.findByText("Ganapathi Pooja");
     expect(screen.getByText("Upload PDF").closest("a")).toHaveAttribute("href", "/admin/services/upload");
+    expect(screen.getByText("Sync Catalog")).toBeInTheDocument();
     expect(screen.getByText("Add Service")).toBeInTheDocument();
   });
 
@@ -107,7 +108,7 @@ describe("AdminServicesPage", () => {
   it("opens the edit form for an existing service", async () => {
     render(<AdminServicesPage />);
     await screen.findByText("Ganapathi Pooja");
-    fireEvent.click(screen.getAllByRole("button")[2]);
+    fireEvent.click(screen.getByRole("button", { name: /edit ganapathi pooja/i }));
     expect(screen.getByText("Edit Service")).toBeInTheDocument();
     expect(screen.getByDisplayValue("ganapathi-pooja")).toBeInTheDocument();
   });

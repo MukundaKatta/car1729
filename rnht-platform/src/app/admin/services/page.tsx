@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, Upload, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { sampleCategories, sampleServices } from "@/lib/sample-data";
 import { useAuthStore } from "@/store/auth";
 import type { Service, ServiceCategory } from "@/types/database";
 
@@ -64,6 +65,7 @@ export default function AdminServicesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [syncingCatalog, setSyncingCatalog] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -173,6 +175,96 @@ export default function AdminServicesPage() {
     refresh();
   }
 
+  async function syncCatalogServices() {
+    if (!supabase) return;
+    setError(null);
+    setSyncingCatalog(true);
+
+    const categoryPayload = sampleCategories.map((category) => ({
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      icon: category.icon,
+      sort_order: category.sort_order,
+    }));
+
+    const { error: categoriesError } = await supabase
+      .from("service_categories")
+      .upsert(categoryPayload as never, { onConflict: "slug" });
+
+    if (categoriesError) {
+      setError(categoriesError.message);
+      setSyncingCatalog(false);
+      return;
+    }
+
+    const { data: liveCategories, error: liveCategoriesError } = await supabase
+      .from("service_categories")
+      .select("*")
+      .order("sort_order");
+
+    if (liveCategoriesError || !liveCategories) {
+      setError(liveCategoriesError?.message || "Unable to load service categories.");
+      setSyncingCatalog(false);
+      return;
+    }
+
+    const categoryIdBySlug = new Map(liveCategories.map((category) => [category.slug, category.id]));
+    const categorySlugBySampleId = new Map(sampleCategories.map((category) => [category.id, category.slug]));
+
+    const { data: existingServices } = await supabase
+      .from("services")
+      .select("id, slug, image_url");
+
+    const existingServiceBySlug = new Map(
+      (existingServices ?? []).map((service) => [service.slug, service])
+    );
+
+    const servicePayload = sampleServices
+      .map((service) => {
+        const categorySlug = categorySlugBySampleId.get(service.category_id);
+        const liveCategoryId = categorySlug ? categoryIdBySlug.get(categorySlug) : null;
+        if (!liveCategoryId) return null;
+
+        const existing = existingServiceBySlug.get(service.slug);
+
+        return {
+          ...(existing?.id ? { id: existing.id } : {}),
+          category_id: liveCategoryId,
+          name: service.name,
+          slug: service.slug,
+          short_description: service.short_description,
+          full_description: service.full_description,
+          significance: service.significance,
+          items_to_bring: service.items_to_bring,
+          whats_included: service.whats_included,
+          image_url: existing?.image_url ?? service.image_url ?? null,
+          price: service.price,
+          price_type: service.price_type,
+          price_tiers: service.price_tiers,
+          suggested_donation: service.suggested_donation,
+          duration_minutes: service.duration_minutes,
+          location_type: service.location_type,
+          is_active: service.is_active,
+          sort_order: service.sort_order,
+        };
+      })
+      .filter(Boolean);
+
+    const { error: servicesError } = await supabase
+      .from("services")
+      .upsert(servicePayload as never, { onConflict: "slug" });
+
+    setSyncingCatalog(false);
+
+    if (servicesError) {
+      setError(servicesError.message);
+      return;
+    }
+
+    await refresh();
+  }
+
   async function toggleActive(service: Service) {
     if (!supabase) return;
     const nextActive = !service.is_active;
@@ -226,6 +318,14 @@ export default function AdminServicesPage() {
             <Upload className="h-4 w-4" />
             Upload PDF
           </Link>
+          <button
+            onClick={syncCatalogServices}
+            disabled={syncingCatalog}
+            className="btn-outline flex items-center gap-2 disabled:opacity-60"
+          >
+            {syncingCatalog ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {syncingCatalog ? "Syncing…" : "Sync Catalog"}
+          </button>
           <button onClick={startNew} className="btn-primary flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add Service
@@ -557,6 +657,7 @@ export default function AdminServicesPage() {
                         onClick={() => toggleActive(service)}
                         className="rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-50"
                         title={service.is_active ? "Hide" : "Show"}
+                        aria-label={service.is_active ? `Hide ${service.name}` : `Show ${service.name}`}
                       >
                         {service.is_active ? (
                           <EyeOff className="h-4 w-4" />
@@ -567,12 +668,14 @@ export default function AdminServicesPage() {
                       <button
                         onClick={() => startEdit(service)}
                         className="rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-50"
+                        aria-label={`Edit ${service.name}`}
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => remove(service)}
                         className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                        aria-label={`Delete ${service.name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

@@ -10,7 +10,7 @@ const categoryIcons: Record<string, string> = {
   "cat-1": "🙏", // Puja & Shanti
   "cat-2": "📿", // Parayanam & Devotion
   "cat-3": "🪔", // Shraddham & Ancestor Rites
-  "cat-4": "💒", // Kalyanam & Weddings
+  "cat-4": "🪷", // Kalyanam & Weddings
   "cat-5": "🔥", // Rudrabhishekam & Abhishekam
 };
 

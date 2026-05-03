@@ -32,11 +32,15 @@ export default function ServicesPage() {
       if (cancelled) return;
 
       if (!servicesResp.error && servicesResp.data?.length) {
-        setServices(servicesResp.data as Service[]);
+        if (servicesResp.data.length >= sampleServices.length) {
+          setServices(servicesResp.data as Service[]);
+        }
       }
 
       if (!categoriesResp.error && categoriesResp.data?.length) {
-        setCategories(categoriesResp.data as ServiceCategory[]);
+        if (categoriesResp.data.length >= sampleCategories.length) {
+          setCategories(categoriesResp.data as ServiceCategory[]);
+        }
       }
     }
 

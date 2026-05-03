@@ -46,7 +46,7 @@ export function ServiceDetailModal({
         : service.category_id === "cat-3"
           ? "🪔"
           : service.category_id === "cat-4"
-            ? "💒"
+            ? "🪷"
             : "🔥";
 
   return (
