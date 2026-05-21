@@ -18,6 +18,12 @@ import { t } from "@/lib/i18n/translations";
 import { supabase } from "@/lib/supabase";
 import type { DonationType, DonationTypeCustomField } from "@/types/database";
 import { useAuthStore } from "@/store/auth";
+import {
+  donateCreateUrl,
+  donateVerifyUrl,
+  edgeFunctionHeaders,
+  paypalCaptureUrl,
+} from "@/lib/edge-functions";
 
 // Fallback fund types used when Supabase isn't configured (e.g. during
 // static builds) so the form still renders.
@@ -111,9 +117,9 @@ export default function DonatePage() {
 
       try {
         if (token && provider === "paypal") {
-          const response = await fetch("/api/webhooks/paypal", {
+          const response = await fetch(paypalCaptureUrl(), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: edgeFunctionHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({ orderId: token }),
           });
           const data = await response.json();
@@ -134,7 +140,9 @@ export default function DonatePage() {
           throw new Error("Missing session ID");
         }
 
-        const response = await fetch(`/api/donate?session_id=${encodeURIComponent(sessionId)}`);
+        const response = await fetch(donateVerifyUrl(sessionId), {
+          headers: edgeFunctionHeaders(),
+        });
         const data = await response.json();
 
         if (!response.ok || !data.verified) {
@@ -181,9 +189,9 @@ export default function DonatePage() {
     setError("");
     try {
       if (paymentMethod === "stripe" || paymentMethod === "paypal") {
-        const response = await fetch("/api/donate", {
+        const response = await fetch(donateCreateUrl(), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: edgeFunctionHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({
             amount: effectiveAmount,
             fundType: activeFund?.slug ?? fundTypeSlug,
