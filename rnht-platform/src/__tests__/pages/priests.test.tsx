@@ -133,10 +133,9 @@ describe("PriestsPage", () => {
     expect(screen.getByText("(512) 998-0112")).toBeInTheDocument();
   });
 
-  it("shows email addresses", () => {
+  it("does not surface placeholder priest emails", () => {
     render(<PriestsPage />);
-    const emails = screen.getAllByText("femtomax.inc@gmail.com");
-    expect(emails).toHaveLength(2);
+    expect(screen.queryByText(/femtomax\.inc/i)).not.toBeInTheDocument();
   });
 
   it("shows education information", () => {
