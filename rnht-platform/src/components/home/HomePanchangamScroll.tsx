@@ -147,11 +147,11 @@ export function HomePanchangamScroll() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 sm:mt-12 lg:grid-cols-3">
+        <div className="mt-10 grid items-start gap-6 sm:mt-12 lg:grid-cols-3">
           <Link
             href="/panchangam"
             aria-label="Open full Panchangam page"
-            className="group relative rounded-3xl border border-temple-gold/15 bg-gradient-to-br from-temple-ivory to-[#FFF8E7]/70 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/30 hover:shadow-premium-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold sm:p-7 lg:col-span-2"
+            className="group relative flex flex-col rounded-3xl border border-temple-gold/15 bg-gradient-to-br from-temple-ivory to-[#FFF8E7]/70 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/30 hover:shadow-premium-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold sm:p-7 lg:col-span-2"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-center gap-4">
@@ -296,13 +296,14 @@ export function HomePanchangamScroll() {
               Full year of festival dates, observances, and temple milestones.
             </p>
 
-            <div className="relative mt-5 aspect-[3/4] overflow-hidden rounded-xl border border-temple-gold/20 bg-temple-maroon-deep/60">
+            <div className="relative mt-5 overflow-hidden rounded-xl border border-temple-gold/20 bg-temple-maroon-deep/60">
               <Image
                 src={calendarPreviewHref}
                 alt=""
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                width={1600}
+                height={1200}
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="block h-auto w-full transition-transform duration-500 group-hover:scale-[1.03]"
               />
             </div>
 
