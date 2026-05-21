@@ -53,7 +53,7 @@ export function HomePanchangamScroll() {
   );
   const calendarPdfHref = "/downloads/2026-rnht.pdf";
   const calendarPreviewHref = "/downloads/preview/2026-rnht.pdf.png";
-  const sharedCardHeight = "h-[38rem] sm:h-[42rem] xl:h-[46rem]";
+  const sharedCardHeight = "sm:h-[42rem] xl:h-[46rem]";
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
   const dateParts = getDisplayDateParts(p.date, location.timeZone);
 
@@ -94,7 +94,7 @@ export function HomePanchangamScroll() {
   }, [location]);
 
   return (
-    <section className="relative overflow-hidden bg-[#06203A] py-20">
+    <section className="relative overflow-hidden bg-[#06203A] py-12 sm:py-16 lg:py-20">
       <div
         className="absolute inset-0 opacity-90"
         style={{
@@ -132,7 +132,7 @@ export function HomePanchangamScroll() {
           </p>
         </div>
 
-        <div className="mt-10 grid items-stretch gap-8 xl:grid-cols-2">
+        <div className="mt-8 grid items-stretch gap-6 sm:mt-10 sm:gap-8 xl:grid-cols-2">
           <div className="relative mx-auto flex h-full w-full max-w-[32rem]">
             <Link
               href="/panchangam"
@@ -252,7 +252,7 @@ export function HomePanchangamScroll() {
                 </div>
 
                 <div
-                  className="relative flex h-[calc(100%-3.5rem)] flex-col overflow-hidden rounded-[2.15rem] border-x-[10px] border-[#d98f11] px-5 pb-7 pt-9 sm:border-x-[14px] sm:px-8 sm:pb-9 sm:pt-10"
+                  className="relative flex flex-col overflow-hidden rounded-[2.15rem] border-x-[6px] border-[#d98f11] px-4 pb-14 pt-8 sm:h-[calc(100%-3.5rem)] sm:border-x-[14px] sm:px-8 sm:pb-9 sm:pt-10"
                   style={{
                     background:
                       "linear-gradient(180deg, rgba(255,62,25,0.98) 0%, rgba(218,21,9,0.99) 16%, rgba(154,10,8,0.99) 58%, rgba(92,5,8,0.99) 100%)",
@@ -297,15 +297,15 @@ export function HomePanchangamScroll() {
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ffe7ae] sm:text-base">
                         {dateParts.weekday}
                       </p>
-                      <div className="mt-3 flex items-end justify-center gap-3 text-white">
-                        <span className="font-heading text-[3.4rem] font-black leading-none sm:text-[4.4rem]">
+                      <div className="mt-3 flex flex-wrap items-end justify-center gap-x-3 gap-y-1 text-white">
+                        <span className="font-heading text-[2.8rem] font-black leading-none sm:text-[4.4rem]">
                           {dateParts.day}
                         </span>
                         <div className="pb-1 text-left">
-                          <p className="font-heading text-2xl font-bold uppercase tracking-[0.12em] sm:text-[2rem]">
+                          <p className="font-heading text-xl font-bold uppercase tracking-[0.08em] sm:text-[2rem] sm:tracking-[0.12em]">
                             {dateParts.month}
                           </p>
-                          <p className="text-base font-semibold tracking-[0.22em] text-[#ffe1a0] sm:text-lg">
+                          <p className="text-sm font-semibold tracking-[0.18em] text-[#ffe1a0] sm:text-lg sm:tracking-[0.22em]">
                             {dateParts.year}
                           </p>
                         </div>
