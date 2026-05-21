@@ -60,27 +60,18 @@ export function ServiceCard({ service }: { service: Service }) {
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">
             {service.short_description}
           </p>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4">
             <a
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
               onClick={(e) => e.stopPropagation()}
               aria-label={`Contact Panditji about ${service.name} on WhatsApp`}
             >
               <MessageCircle className="h-4 w-4" />
               Contact Panditji
             </a>
-            <button
-              className="rounded-lg border border-temple-gold/40 px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowModal(true);
-              }}
-            >
-              Details
-            </button>
           </div>
         </div>
       </div>

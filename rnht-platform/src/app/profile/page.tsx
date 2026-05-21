@@ -140,9 +140,24 @@ export default function ProfilePage() {
     );
   }
 
-  // Don't render if not authenticated (redirect will happen)
+  // Not authenticated: show a brief redirect message while the effect
+  // above pushes the user to /login. Beats a blank page if the redirect
+  // is slow or the auth backend is unreachable.
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-temple-red" />
+        <p className="mt-4 text-sm text-gray-600">
+          Redirecting to sign in&hellip;
+        </p>
+        <Link
+          href="/login"
+          className="mt-4 text-sm font-semibold text-temple-red hover:underline"
+        >
+          Go to sign in now
+        </Link>
+      </div>
+    );
   }
 
   const handleSignOut = async () => {

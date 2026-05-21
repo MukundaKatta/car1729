@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import {
   Phone,
-  Mail,
   MapPin,
   Globe,
   BookOpen,
@@ -34,7 +33,6 @@ const priests = [
     availability: { atTemple: true, outsideTemple: true, online: true },
     phone: "(512) 545-0473",
     whatsapp: "https://wa.me/message/P3YRA2XY3GI7F1",
-    email: "femtomax.inc@gmail.com",
     stats: { experience: "20+ yrs", serving: "Since 2013", area: "Austin, TX" },
   },
   {
@@ -51,7 +49,6 @@ const priests = [
     services: ["All Poojas", "Panchadasa Karmas", "Weddings (Vivaham)", "Homams & Yagnas", "Cultural Activities", "Purana Stotras Mentoring"],
     availability: { atTemple: true, outsideTemple: true, online: false },
     phone: "(512) 998-0112",
-    email: "femtomax.inc@gmail.com",
     stats: { experience: "15+ yrs", serving: "Since 2017", area: "Texas" },
   },
 ];
@@ -104,9 +101,6 @@ export default function PriestsPage() {
                 <div className="mt-4 space-y-2 text-sm text-gray-500 w-full">
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4" /> {priest.phone}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" /> {priest.email}
                   </div>
                 </div>
 

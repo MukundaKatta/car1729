@@ -63,13 +63,10 @@ const volunteerOpportunities = [
   },
 ];
 
-const topVolunteers = [
-  { name: "Smt. Radha Iyer", hours: 120, badge: "Gold Seva" },
-  { name: "Sri Venkat Raman", hours: 96, badge: "Gold Seva" },
-  { name: "Priya Sharma", hours: 72, badge: "Silver Seva" },
-  { name: "Kiran Kumar", hours: 64, badge: "Silver Seva" },
-  { name: "Meera Nair", hours: 48, badge: "Bronze Seva" },
-];
+// Top-volunteer leaderboard is sourced from real seva hours. Empty until
+// the volunteer tracking pipeline is wired; the leaderboard UI hides when
+// this list is empty and shows a "Coming Soon" placeholder instead.
+const topVolunteers: { name: string; hours: number; badge: string }[] = [];
 
 const annadanamSchedule = [
   { date: "2026-03-22", day: "Sunday", meal: "Full South Indian Meal", servings: 100, volunteers: 8, status: "upcoming" as const },
@@ -214,29 +211,36 @@ export default function CommunityPage() {
                   Top Volunteers (2026)
                 </h2>
                 <div className="mt-4 space-y-3">
-                  {topVolunteers.map((v, i) => (
-                    <div key={v.name} className="flex items-center gap-3">
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                        i === 0 ? "bg-amber-100 text-amber-700" :
-                        i === 1 ? "bg-gray-200 text-gray-700" :
-                        i === 2 ? "bg-orange-100 text-orange-700" :
-                        "bg-gray-100 text-gray-500"
-                      }`}>
-                        {i + 1}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{v.name}</p>
-                        <p className="text-xs text-gray-500">{v.hours} hours</p>
+                  {topVolunteers.length === 0 ? (
+                    <p className="rounded-lg bg-temple-ivory px-3 py-4 text-center text-sm text-gray-600">
+                      We&rsquo;ll feature top volunteers here once seva hours
+                      are tracked. Sign up for a shift to get started.
+                    </p>
+                  ) : (
+                    topVolunteers.map((v, i) => (
+                      <div key={v.name} className="flex items-center gap-3">
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                          i === 0 ? "bg-amber-100 text-amber-700" :
+                          i === 1 ? "bg-gray-200 text-gray-700" :
+                          i === 2 ? "bg-orange-100 text-orange-700" :
+                          "bg-gray-100 text-gray-500"
+                        }`}>
+                          {i + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{v.name}</p>
+                          <p className="text-xs text-gray-500">{v.hours} hours</p>
+                        </div>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          v.badge === "Gold Seva" ? "bg-amber-100 text-amber-700" :
+                          v.badge === "Silver Seva" ? "bg-gray-200 text-gray-700" :
+                          "bg-orange-100 text-orange-700"
+                        }`}>
+                          {v.badge}
+                        </span>
                       </div>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        v.badge === "Gold Seva" ? "bg-amber-100 text-amber-700" :
-                        v.badge === "Silver Seva" ? "bg-gray-200 text-gray-700" :
-                        "bg-orange-100 text-orange-700"
-                      }`}>
-                        {v.badge}
-                      </span>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
                 <div className="mt-6 rounded-lg bg-temple-cream p-3 text-center">
                   <p className="text-sm font-semibold text-temple-maroon">
