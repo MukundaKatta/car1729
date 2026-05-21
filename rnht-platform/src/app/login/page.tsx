@@ -358,8 +358,8 @@ export default function LoginPage() {
                   </p>
                   <p className="text-xs text-gray-500 group-hover:text-white/80">
                     {authMode === "signup"
-                      ? "We&apos;ll text you a 6-digit code to create your devotee account"
-                      : "We&apos;ll text you a 6-digit code to sign in to your account"}
+                      ? "We'll text you a 6-digit code to create your devotee account"
+                      : "We'll text you a 6-digit code to sign in to your account"}
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
@@ -378,8 +378,8 @@ export default function LoginPage() {
                   </p>
                   <p className="text-xs text-gray-500 group-hover:text-white/80">
                     {authMode === "signup"
-                      ? "We&apos;ll email you a confirmation link to create your devotee account"
-                      : "We&apos;ll email you a sign-in link for your devotee portal"}
+                      ? "We'll email you a confirmation link to create your devotee account"
+                      : "We'll email you a sign-in link for your devotee portal"}
                   </p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />

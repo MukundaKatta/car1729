@@ -1,251 +1,151 @@
-"use client";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Bell, Calendar, MessageCircle, Video, Youtube } from "lucide-react";
+import { canonicalPath } from "@/lib/site-metadata";
 
-import { useState, useEffect } from "react";
-import { Video, Calendar, Clock, Bell, MessageSquare, Play } from "lucide-react";
+export const metadata: Metadata = {
+  title: "Live Darshan & Streaming",
+  description:
+    "Live darshan, festival streams, and recordings from Rudra Narayana Hindu Temple. Subscribe on YouTube to get notified when we go live.",
+  alternates: {
+    canonical: canonicalPath("/streaming"),
+  },
+};
 
-const liveStreams = [
+const dailySchedule = [
   {
-    id: "live-1",
-    title: "Morning Aarti & Suprabhatam",
-    schedule: "Daily 7:00 AM - 7:30 AM CST",
-    description: "Start your day with the divine morning aarti and Suprabhatam at RNHT. Live from the main sanctum.",
-    isLive: true,
-    viewers: 34,
+    name: "Morning Aarti & Suprabhatam",
+    time: "Daily 7:00 AM - 7:30 AM CST",
+    detail:
+      "Start your day with the morning aarti and Suprabhatam from the main sanctum.",
   },
   {
-    id: "live-2",
-    title: "Evening Aarti & Deeparadhana",
-    schedule: "Daily 7:00 PM - 7:30 PM CST",
-    description: "Join the evening Deeparadhana ceremony live. Experience the divine light offering to all deities.",
-    isLive: false,
-    viewers: 0,
+    name: "Evening Aarti & Deeparadhana",
+    time: "Daily 7:00 PM - 7:30 PM CST",
+    detail:
+      "Evening Deeparadhana ceremony — the divine light offering to the deities.",
   },
 ];
 
-// Compute dynamic countdown
-function computeCountdown(dateStr: string): string {
-  const target = new Date(dateStr + "T00:00:00");
-  const now = new Date();
-  const diffMs = target.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return "past event";
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "tomorrow";
-  return `${diffDays} days`;
-}
-
-const upcomingStreamsData = [
-  { id: "up-1", title: "Ugadi Special Abhishekam", date: "2026-03-29", displayDate: "March 29, 2026", time: "9:00 AM CST" },
-  { id: "up-2", title: "Sri Rama Navami — Sita Rama Kalyanotsavam", date: "2026-04-07", displayDate: "April 7, 2026", time: "8:00 AM CST" },
-  { id: "up-3", title: "Hanuman Jayanti Celebrations", date: "2026-04-13", displayDate: "April 13, 2026", time: "6:00 AM CST" },
+const upcomingHighlights = [
+  {
+    name: "Festival darshan and special pujas",
+    detail:
+      "We stream major festivals and special pujas live. Schedule is announced ahead of each festival on our YouTube channel and WhatsApp group.",
+  },
 ];
 
-// Drop streams whose scheduled date is already in the past so the "Upcoming
-// Streams" panel never labels stale events as "in past event".
-function futureOnly(streams: typeof upcomingStreamsData): typeof upcomingStreamsData {
-  const now = new Date();
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return streams.filter((s) => new Date(s.date + "T00:00:00") >= todayMidnight);
-}
-
-const pastRecordings = [
-  { id: "rec-1", title: "Maha Shivaratri 2026 — Full Night Program", date: "Feb 27, 2026", duration: "6:45:00", views: 1240 },
-  { id: "rec-2", title: "Pongal / Makar Sankranti 2026", date: "Jan 14, 2026", duration: "3:20:00", views: 890 },
-  { id: "rec-3", title: "New Year Special Pooja 2026", date: "Jan 1, 2026", duration: "2:15:00", views: 650 },
-  { id: "rec-4", title: "Diwali 2025 — Lakshmi Pooja & Fireworks", date: "Oct 20, 2025", duration: "4:30:00", views: 2100 },
-  { id: "rec-5", title: "Ganesh Chaturthi 2025 — Visarjan", date: "Sep 7, 2025", duration: "2:45:00", views: 1560 },
-];
+const youtubeChannelUrl =
+  "https://www.youtube.com/@rudranarayanahindutemple";
+const whatsappGroupUrl = "https://wa.me/15125450473";
 
 export default function StreamingPage() {
-  // Compute after mount so SSR and client agree on which streams are upcoming.
-  const [upcomingStreams, setUpcomingStreams] = useState<typeof upcomingStreamsData>([]);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessage, setChatMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState([
-    { user: "DevoteeR", color: "text-blue-600", text: "Om Namah Shivaya!" },
-    { user: "PriyaS", color: "text-green-600", text: "Beautiful aarti today" },
-    { user: "VenkatK", color: "text-purple-600", text: "Har Har Mahadev!" },
-    { user: "MeeraJ", color: "text-red-600", text: "Jai Sri Ram" },
-  ]);
-
-  useEffect(() => {
-    setUpcomingStreams(futureOnly(upcomingStreamsData));
-  }, []);
-
-  const handleSendChat = () => {
-    if (!chatMessage.trim()) return;
-    setChatMessages((prev) => [...prev, { user: "You", color: "text-temple-red", text: chatMessage.trim() }]);
-    setChatMessage("");
-  };
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="text-center">
-        <Video className="mx-auto h-10 w-10 text-temple-red" />
-        <h1 className="mt-4 section-heading">Live Darshan & Streaming</h1>
-        <p className="mt-3 mx-auto max-w-2xl text-gray-600">
-          Experience the divine from anywhere. Watch live aarti, festival celebrations,
-          and special ceremonies streamed directly from RNHT.
+        <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full border border-temple-gold/25 bg-temple-gold/10">
+          <Video className="h-7 w-7 text-temple-red" />
+        </div>
+        <h1 className="mt-4 section-heading">Live Darshan &amp; Streaming</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+          Watch live aarti, festival celebrations, and special ceremonies from
+          RNHT. We stream on YouTube. Subscribe to be notified the moment we go
+          live.
         </p>
       </div>
 
-      {/* Live Streams */}
-      <div className="mt-10 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {liveStreams.map((stream) => (
-            <div key={stream.id} className="card overflow-hidden mb-6">
-              {/* Video Player Area */}
-              <div className="relative flex aspect-video items-center justify-center bg-gray-900">
-                {stream.isLive ? (
-                  <>
-                    <div className="text-center text-white">
-                      <Play className="mx-auto h-16 w-16 opacity-60" />
-                      <p className="mt-2 text-sm opacity-60">
-                        YouTube Live / Vimeo embed placeholder
-                      </p>
-                    </div>
-                    <div className="absolute left-4 top-4 flex items-center gap-2">
-                      <span className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
-                        LIVE
-                      </span>
-                      <span className="rounded-full bg-black/50 px-2 py-0.5 text-xs text-white">
-                        {stream.viewers} watching
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center text-gray-400">
-                    <Clock className="mx-auto h-12 w-12" />
-                    <p className="mt-2 text-sm">Next stream: {stream.schedule}</p>
-                  </div>
-                )}
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-heading text-lg font-bold text-gray-900">
-                      {stream.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">{stream.schedule}</p>
-                  </div>
-                  {stream.isLive && (
-                    <button
-                      className="btn-outline flex items-center gap-2 text-sm"
-                      onClick={() => setChatOpen(!chatOpen)}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      Chat
-                    </button>
-                  )}
-                </div>
-                <p className="mt-2 text-sm text-gray-600">{stream.description}</p>
-                <div className="mt-3 flex gap-2">
-                  <button className="flex items-center gap-1 rounded-lg bg-temple-cream px-3 py-1.5 text-xs font-medium text-temple-maroon hover:bg-temple-gold/20" onClick={() => alert("Reminder set! We'll notify you before the stream begins.")}>
-                    <Bell className="h-3.5 w-3.5" /> Set Reminder
-                  </button>
-                </div>
-              </div>
+      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        <a
+          href={youtubeChannelUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-4 rounded-2xl border border-temple-gold/15 bg-gradient-to-br from-temple-ivory to-[#FFF8E7]/70 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/35 hover:shadow-premium-lg"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-red-600 text-white">
+            <Youtube className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-heading text-lg font-bold text-temple-maroon">
+              Subscribe on YouTube
+            </p>
+            <p className="text-sm text-gray-600">
+              Get notified each time we start a live darshan.
+            </p>
+          </div>
+        </a>
+
+        <a
+          href={whatsappGroupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-4 rounded-2xl border border-temple-gold/15 bg-gradient-to-br from-temple-ivory to-[#FFF8E7]/70 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/35 hover:shadow-premium-lg"
+        >
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-green-600 text-white">
+            <MessageCircle className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-heading text-lg font-bold text-temple-maroon">
+              Join the WhatsApp updates
+            </p>
+            <p className="text-sm text-gray-600">
+              Festival timings and live-stream reminders sent ahead of time.
+            </p>
+          </div>
+        </a>
+      </div>
+
+      <section className="mt-12">
+        <h2 className="flex items-center gap-2 font-heading text-xl font-bold text-temple-maroon">
+          <Calendar className="h-5 w-5 text-temple-gold" />
+          Regular live darshan schedule
+        </h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {dailySchedule.map((item) => (
+            <div
+              key={item.name}
+              className="rounded-2xl border border-temple-gold/15 bg-white p-5 shadow-premium"
+            >
+              <p className="font-heading text-lg font-bold text-temple-maroon">
+                {item.name}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-temple-gold-dark">
+                {item.time}
+              </p>
+              <p className="mt-2 text-sm text-gray-600">{item.detail}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* Sidebar — Chat / Upcoming */}
-        <div className="space-y-6">
-          {/* Live Chat */}
-          {chatOpen && (
-            <div className="card overflow-hidden">
-              <div className="bg-gray-900 px-4 py-3 text-sm font-semibold text-white flex items-center justify-between">
-                <span>Live Chat</span>
-                <button onClick={() => setChatOpen(false)} className="text-gray-400 hover:text-white text-xs">
-                  Close
-                </button>
-              </div>
-              <div className="h-48 sm:h-64 overflow-y-auto p-3 space-y-2 text-sm bg-gray-50">
-                {chatMessages.map((msg, i) => (
-                  <div key={i}><span className={`font-semibold ${msg.color}`}>{msg.user}:</span> {msg.text}</div>
-                ))}
-              </div>
-              <div className="border-t p-3">
-                <div className="flex gap-2">
-                  <input type="text" className="input-field flex-1 text-sm" placeholder="Type a message..." aria-label="Chat message" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSendChat(); }} />
-                  <button className="btn-primary text-sm py-2 px-3" onClick={handleSendChat}>Send</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Streams */}
-          <div className="card p-5">
-            <h3 className="font-heading text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-temple-red" />
-              Upcoming Streams
-            </h3>
-            <div className="mt-4 space-y-4">
-              {upcomingStreams.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  No streams on the schedule right now. Subscribe on YouTube to be notified when we go live.
-                </p>
-              ) : (
-                upcomingStreams.map((stream) => (
-                  <div key={stream.id} className="border-b border-gray-100 pb-3 last:border-0">
-                    <h4 className="text-sm font-semibold text-gray-900">{stream.title}</h4>
-                    <p className="text-xs text-gray-500">{stream.displayDate} at {stream.time}</p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        in {computeCountdown(stream.date)}
-                      </span>
-                      <button className="flex items-center gap-1 text-xs text-temple-red hover:underline" onClick={() => alert("Reminder set! We'll notify you before the stream begins.")}>
-                        <Bell className="h-3 w-3" /> Remind me
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Camera Views (Future) */}
-          <div className="card p-5 bg-gray-50">
-            <h3 className="font-heading text-sm font-bold text-gray-700">
-              Multi-Camera Views (Coming Soon)
-            </h3>
-            <div className="mt-3 space-y-2">
-              {["Main Sanctum — Deity Darshan", "Mandapam — Ceremony View", "Havan Kund — Fire Ritual"].map((view) => (
-                <div key={view} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500">
-                  <Video className="h-3.5 w-3.5" />
-                  {view}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Past Recordings */}
-      <div className="mt-12">
-        <h2 className="section-heading">Past Recordings</h2>
-        <p className="mt-2 text-gray-600">Watch recordings of past festivals, ceremonies, and special events.</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pastRecordings.map((rec) => (
-            <div key={rec.id} className="card overflow-hidden cursor-pointer" onClick={() => alert("Full recording playback coming soon!")}>
-              <div className="relative flex h-36 items-center justify-center bg-gray-800">
-                <Play className="h-10 w-10 text-white/50" />
-                <span className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-xs text-white">
-                  {rec.duration}
-                </span>
-              </div>
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{rec.title}</h3>
-                <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                  <span>{rec.date}</span>
-                  <span>{rec.views.toLocaleString()} views</span>
-                </div>
-              </div>
+      <section className="mt-12">
+        <h2 className="flex items-center gap-2 font-heading text-xl font-bold text-temple-maroon">
+          <Bell className="h-5 w-5 text-temple-gold" />
+          Festival &amp; special streams
+        </h2>
+        <div className="mt-4 space-y-3">
+          {upcomingHighlights.map((item) => (
+            <div
+              key={item.name}
+              className="rounded-2xl border border-temple-gold/15 bg-temple-ivory/50 p-5"
+            >
+              <p className="font-heading text-base font-bold text-temple-maroon">
+                {item.name}
+              </p>
+              <p className="mt-2 text-sm text-gray-600">{item.detail}</p>
             </div>
           ))}
         </div>
-      </div>
+        <p className="mt-4 text-sm text-gray-500">
+          Past recordings live on our{" "}
+          <Link
+            href={youtubeChannelUrl}
+            className="font-semibold text-temple-red hover:underline"
+          >
+            YouTube channel
+          </Link>
+          .
+        </p>
+      </section>
     </div>
   );
 }

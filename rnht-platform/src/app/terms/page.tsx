@@ -16,7 +16,7 @@ export default function TermsPage() {
 
       <div className="mt-8 prose prose-sm max-w-none text-gray-700 space-y-6">
         <p>
-          rnht.org (&quot;We&quot;, &quot;us&quot;, &quot;our&quot;) provides this web site (the
+          Rudra Narayana Hindu Temple (&quot;We&quot;, &quot;us&quot;, &quot;our&quot;) provides this web site (the
           &quot;Site&quot;) to supply general information about our services. You may use
           this site subject to your compliance with these terms and conditions.
         </p>
