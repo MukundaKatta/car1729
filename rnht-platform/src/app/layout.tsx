@@ -72,7 +72,6 @@ const jsonLd = {
     "Traditional Hindu temple serving the Austin, Texas area with Vedic poojas, homams, weddings, and spiritual services.",
   url: "https://rnht-platform.web.app",
   telephone: "+15125450473",
-  email: "femtomax.inc@gmail.com",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Austin",
