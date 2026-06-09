@@ -96,6 +96,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // basePath is "" on Firebase (served at root) and "/rnht" on GitHub Pages.
+  // Drive the /public background image through it so it resolves on both.
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   return (
     <html
       lang="en"
@@ -103,6 +106,7 @@ export default function RootLayout({
         {
           "--font-heading": '"Playfair Display", Georgia, "Times New Roman", serif',
           "--font-accent": '"Cormorant Garamond", Georgia, "Times New Roman", serif',
+          "--page-bg-image": `url("${basePath}/red-mandala-bg.png")`,
         } as CSSProperties
       }
     >

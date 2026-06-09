@@ -12,7 +12,10 @@
        calm canvas behind the content as you scroll. Falls back to a deep
        red if the image fails to load. */
     background-color: #7d0f18;
-    background-image: url("/red-mandala-bg.png");
+    /* --page-bg-image is set on <html> in layout.tsx with the correct
+       basePath so the image resolves on both Firebase (root) and Pages
+       (/rnht). Falls back to the solid red above if unset. */
+    background-image: var(--page-bg-image, url("/red-mandala-bg.png"));
     background-position: center top;
     background-size: cover;
     background-repeat: no-repeat;

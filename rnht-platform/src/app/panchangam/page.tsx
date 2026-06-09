@@ -72,7 +72,7 @@ export default function PanchangamPage() {
       <section
         className="relative mt-8 overflow-hidden rounded-3xl border border-temple-gold/30 shadow-[0_18px_50px_rgba(87,42,4,0.18)]"
         style={{
-          backgroundImage: "url(/parchment.png)",
+          backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/parchment.png)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

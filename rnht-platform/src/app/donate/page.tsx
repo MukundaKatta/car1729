@@ -284,7 +284,7 @@ export default function DonatePage() {
           <div className="mx-auto w-full max-w-xs lg:max-w-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/nitya-pooja-seva.jpg"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/nitya-pooja-seva.jpg`}
               alt="Nitya Pooja Seva — $365 yearly offering for daily worship services"
               className="w-full rounded-xl border border-temple-gold/30 object-cover shadow-[0_0_40px_rgba(197,151,62,0.2)]"
             />
