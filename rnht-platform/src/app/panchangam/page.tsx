@@ -68,47 +68,38 @@ export default function PanchangamPage() {
         </p>
       </div>
 
-      {/* Panchangam Shloka — antique manuscript layout: Meaning | Slok | Timing */}
-      <section
-        className="relative mt-8 overflow-hidden rounded-3xl border border-temple-gold/30 shadow-[0_18px_50px_rgba(87,42,4,0.18)]"
-        style={{
-          backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/parchment.png)`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-[#f3e6c8]/55" />
-        <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-3 lg:gap-8">
-          {/* Left — English meaning */}
-          <div className="order-2 rounded-2xl bg-[#f7eeda]/85 p-5 ring-1 ring-[#9c7b3f]/30 lg:order-1">
-            <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-[#8a5a1c]">
-              Meaning
-            </p>
-            <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#4a3214]">
-              <p>
-                Tithi, V&#x101;ra (weekday), Nakshatra, Yoga and Karana &mdash;
-                these five together are renowned as the{" "}
-                <strong>Panch&#x101;nga</strong>, by which all auspicious works
-                are accomplished.
-              </p>
-              <p>
-                From the Tithi one gains prosperity; from the V&#x101;ra, long
-                life; from the Nakshatra, removal of sins; from the Yoga,
-                freedom from disease; and from the Karana, success in one&rsquo;s
-                endeavours.
-              </p>
-              <p>
-                Thus the Panch&#x101;nga yields the highest fruit &mdash; one who
-                knows the right time attains the best of all actions and obtains
-                blessedness.
-              </p>
-            </div>
-          </div>
+      {/* Panchangam Shloka — wide sacred verse (main box) flanked by two
+          separate info boxes: What is Panchangam? | Shloka | Understanding Timings */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-4 lg:items-stretch">
+        {/* Left box (outside the main box) — What is Panchangam? */}
+        <div className="order-2 rounded-2xl border border-temple-gold/20 bg-white p-6 shadow-premium lg:order-1">
+          <h3 className="font-heading text-lg font-bold text-temple-maroon">
+            What is Panchangam?
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">
+            Panchangam (Panchanga) is a Hindu calendar and almanac that tracks
+            five key attributes of each day: <strong>Tithi</strong> (lunar day),{" "}
+            <strong>Vaara</strong> (weekday), <strong>Nakshatra</strong> (lunar
+            mansion), <strong>Yoga</strong> (luni-solar day), and{" "}
+            <strong>Karana</strong> (half of Tithi). It is essential for
+            determining auspicious times for rituals, ceremonies, and important
+            activities.
+          </p>
+        </div>
 
-          {/* Center — Sanskrit shloka */}
-          <div className="order-1 flex flex-col items-center justify-center text-center lg:order-2">
+        {/* Middle (main box) — Sanskrit shloka on parchment, expanded width */}
+        <div
+          className="relative order-1 overflow-hidden rounded-3xl border border-temple-gold/30 shadow-[0_18px_50px_rgba(87,42,4,0.18)] lg:order-2 lg:col-span-2"
+          style={{
+            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/parchment.png)`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-[#f3e6c8]/40" />
+          <div className="relative flex h-full flex-col items-center justify-center px-6 py-12 text-center sm:px-10">
             <span className="text-2xl text-[#8a5a1c]">&#x0950;</span>
-            <div className="mt-3 space-y-2 font-heading text-base leading-9 text-[#3a2208] sm:text-lg">
+            <div className="mt-3 space-y-2 font-heading text-lg leading-10 text-[#3a2208] sm:text-xl">
               <p>तिथिर्वारं च नक्षत्रं योगः करणमेव च ।</p>
               <p>पञ्चाङ्गमिति विख्यातं लोकयां कर्मसाधकः ॥</p>
               <p>तिथेश्च श्रियमाप्नोति वारादायुर्वर्धनम् ।</p>
@@ -117,44 +108,38 @@ export default function PanchangamPage() {
               <p>कालवित् कर्मणां श्रेष्ठं लभेत् शुभम् ॥</p>
             </div>
           </div>
+        </div>
 
-          {/* Right — live Panchangam timings */}
-          <div className="order-3 rounded-2xl bg-[#f7eeda]/85 p-5 ring-1 ring-[#9c7b3f]/30">
-            <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-[#8a5a1c]">
-              Timing
-            </p>
-            <dl className="mt-3 space-y-2.5 text-sm text-[#4a3214]">
-              {[
-                {
-                  label: "Sunrise / Sunset",
-                  value: `${computed.sunrise} / ${computed.sunset}`,
-                },
-                {
-                  label: "Tithi",
-                  value: `${computed.tithi.paksha} ${computed.tithi.name}`,
-                },
-                { label: "Nakshatra", value: computed.nakshatra.name },
-                {
-                  label: "Rahu Kalam",
-                  value: `${computed.rahu_kalam.start} - ${computed.rahu_kalam.end}`,
-                },
-                {
-                  label: "Amrut Kalam",
-                  value: `${computed.muhurtham.start} - ${computed.muhurtham.end}`,
-                },
-              ].map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-center justify-between gap-3 border-b border-[#9c7b3f]/20 pb-2 last:border-0 last:pb-0"
-                >
-                  <dt className="font-semibold text-[#8a5a1c]">{row.label}</dt>
-                  <dd className="text-right">{row.value}</dd>
-                </div>
-              ))}
-            </dl>
+        {/* Right box (outside the main box) — Understanding Timings */}
+        <div className="order-3 rounded-2xl border border-temple-gold/20 bg-white p-6 shadow-premium">
+          <h3 className="font-heading text-lg font-bold text-temple-maroon">
+            Understanding Timings
+          </h3>
+          <div className="mt-3 space-y-3 text-sm text-gray-600">
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 h-3 w-3 rounded-full bg-red-500 flex-shrink-0" />
+              <p>
+                <strong>Rahu Kalam:</strong> Inauspicious period ruled by Rahu.
+                Avoid starting new activities.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 h-3 w-3 rounded-full bg-orange-500 flex-shrink-0" />
+              <p>
+                <strong>Yama Gandam:</strong> Inauspicious period associated with
+                Yama. Avoid important decisions.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 h-3 w-3 rounded-full bg-yellow-600 flex-shrink-0" />
+              <p>
+                <strong>Gulika Kalam:</strong> Another inauspicious interval best
+                reserved for routine tasks.
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Location picker */}
       <div className="mt-6 rounded-2xl border border-temple-gold/25 bg-temple-cream/50 p-5">
@@ -203,71 +188,6 @@ export default function PanchangamPage() {
           </p>
         )}
         <PanchangamWidget panchangam={computed} />
-      </div>
-
-      <div className="mt-12 overflow-hidden rounded-[1.75rem] border border-temple-gold/20 bg-gradient-to-br from-[#fff9eb] to-[#fff4d6] shadow-[0_18px_50px_rgba(87,42,4,0.08)]">
-        <div className="border-b border-temple-gold/15 bg-temple-gold/10 px-6 py-4">
-          <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold-dark">
-            Panchangam Vivarana
-          </p>
-          <h3 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
-            పంచాంగ వివరణ
-          </h3>
-        </div>
-        <div className="px-6 py-6">
-          <p className="text-lg leading-9 text-gray-800">
-            పంచాంగము అనగా 5 అంగములు (అవయములు) కలిగినది. కాలమునకు 5
-            అవయములు కలవు. తిథి, వారము, నక్షత్రము, యోగము, కరణము ఈ 5
-            అవయములు కాలము యొక్క ఫలమును వెల్లడించును. కార్యమును
-            సాధింపదలచిన వారు ఈ విషయములను తెలుసికొనవలయును.
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Reference */}
-      <div className="mt-12 grid gap-6 sm:grid-cols-2">
-        <div className="card p-6">
-          <h3 className="font-heading text-lg font-bold text-gray-900">
-            What is Panchangam?
-          </h3>
-          <p className="mt-3 text-sm text-gray-600">
-            Panchangam (Panchanga) is a Hindu calendar and almanac that tracks
-            five key attributes of each day: <strong>Tithi</strong> (lunar day),{" "}
-            <strong>Vaara</strong> (weekday), <strong>Nakshatra</strong> (lunar
-            mansion), <strong>Yoga</strong> (luni-solar day), and{" "}
-            <strong>Karana</strong> (half of Tithi). It is essential for
-            determining auspicious times for rituals, ceremonies, and
-            important activities.
-          </p>
-        </div>
-        <div className="card p-6">
-          <h3 className="font-heading text-lg font-bold text-gray-900">
-            Understanding Timings
-          </h3>
-          <div className="mt-3 space-y-3 text-sm text-gray-600">
-            <div className="flex items-start gap-2">
-              <span className="mt-0.5 h-3 w-3 rounded-full bg-red-500 flex-shrink-0" />
-              <p>
-                <strong>Rahu Kalam:</strong> Inauspicious period ruled by Rahu.
-                Avoid starting new activities.
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="mt-0.5 h-3 w-3 rounded-full bg-orange-500 flex-shrink-0" />
-              <p>
-                <strong>Yama Gandam:</strong> Inauspicious period associated
-                with Yama. Avoid important decisions.
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="mt-0.5 h-3 w-3 rounded-full bg-yellow-600 flex-shrink-0" />
-              <p>
-                <strong>Gulika Kalam:</strong> Another inauspicious interval
-                best reserved for routine tasks.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
