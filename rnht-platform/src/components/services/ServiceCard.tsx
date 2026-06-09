@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone, ClipboardList } from "lucide-react";
 import type { Service } from "@/types/database";
 import { ServiceDetailModal } from "./ServiceDetailModal";
 import { usePanditjiWhatsApp } from "@/store/panditji";
+import { getRegistrationUrl } from "@/lib/service-registration";
 
 const categoryIcons: Record<string, string> = {
   "cat-1": "🙏", // Puja & Shanti
@@ -23,6 +24,7 @@ export function ServiceCard({ service }: { service: Service }) {
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
   );
   const whatsappHref = `${panditjiWhatsApp}?text=${whatsappMessage}`;
+  const registerUrl = getRegistrationUrl(service.slug);
 
   return (
     <>
@@ -60,27 +62,42 @@ export function ServiceCard({ service }: { service: Service }) {
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">
             {service.short_description}
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Message about ${service.name} on WhatsApp`}
-            >
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
-            </a>
-            <a
-              href="tel:+15125450473"
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Call the temple about ${service.name}`}
-            >
-              <Phone className="h-4 w-4" />
-              Call
-            </a>
+          <div className="mt-4 space-y-2">
+            {registerUrl && (
+              <a
+                href={registerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-temple-red px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-temple-red-dark"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Register for ${service.name}`}
+              >
+                <ClipboardList className="h-4 w-4" />
+                Register
+              </a>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Message about ${service.name} on WhatsApp`}
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+              <a
+                href="tel:+15125450473"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Call the temple about ${service.name}`}
+              >
+                <Phone className="h-4 w-4" />
+                Call
+              </a>
+            </div>
           </div>
         </div>
       </div>
