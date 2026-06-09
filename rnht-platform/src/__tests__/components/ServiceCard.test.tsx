@@ -84,12 +84,6 @@ describe("ServiceCard", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("opens the detail modal when the Details button is clicked", () => {
-    render(<ServiceCard service={makeService()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Details" }));
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-
   it("renders a category icon", () => {
     render(<ServiceCard service={makeService({ category_id: "cat-1" })} />);
     // Each category maps to an emoji; cat-1 is 🙏

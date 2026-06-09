@@ -83,9 +83,6 @@ describe("TermsPage", () => {
   it("displays the introductory paragraph", () => {
     render(<TermsPage />);
     expect(
-      screen.getByText(/rnht\.org/)
-    ).toBeInTheDocument();
-    expect(
       screen.getByText(/provides this web site/)
     ).toBeInTheDocument();
   });

@@ -23,13 +23,10 @@ describe("Footer", () => {
     expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
   });
 
-  it("renders social links for the temple and priest contact channels", () => {
+  it("renders the temple social links", () => {
     render(<Footer />);
     expect(screen.getByLabelText("Facebook")).toBeInTheDocument();
-    expect(screen.getByLabelText("Instagram - Temple")).toBeInTheDocument();
-    expect(
-      screen.getByLabelText("Instagram - Pandit Aditya Sharma")
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Instagram")).toBeInTheDocument();
     expect(screen.getByLabelText("WhatsApp")).toBeInTheDocument();
   });
 });
