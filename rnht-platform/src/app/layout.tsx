@@ -7,7 +7,6 @@ import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
 import { StartupValidationNotice } from "@/components/system/StartupValidationNotice";
 import { StoreRehydrator } from "@/components/system/StoreRehydrator";
-import { PageSurface } from "@/components/system/PageSurface";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -96,9 +95,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // basePath is "" on Firebase (served at root) and "/rnht" on GitHub Pages.
-  // Drive the /public background image through it so it resolves on both.
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   return (
     <html
       lang="en"
@@ -106,7 +102,6 @@ export default function RootLayout({
         {
           "--font-heading": '"Playfair Display", Georgia, "Times New Roman", serif',
           "--font-accent": '"Cormorant Garamond", Georgia, "Times New Roman", serif',
-          "--page-bg-image": `url("${basePath}/red-mandala-bg.png")`,
         } as CSSProperties
       }
     >
@@ -127,9 +122,7 @@ export default function RootLayout({
         <StoreRehydrator />
         <Header />
         <FallingPetals />
-        <main id="main-content" className="flex-1">
-          <PageSurface>{children}</PageSurface>
-        </main>
+        <main id="main-content" className="flex-1">{children}</main>
         <Footer />
         <WhatsAppButton />
         <BackgroundMusic />

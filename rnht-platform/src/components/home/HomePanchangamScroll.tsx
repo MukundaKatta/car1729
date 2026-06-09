@@ -131,7 +131,17 @@ export function HomePanchangamScroll() {
   ];
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20">
+    <section
+      className="relative overflow-hidden py-16 sm:py-20"
+      style={{
+        // Client request (#2): the red mandala appears ONLY behind this
+        // "Today's Panchangam" box — the rest of the site stays light.
+        backgroundColor: "#7d0f18",
+        backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/red-mandala-bg.png)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">

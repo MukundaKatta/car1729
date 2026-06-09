@@ -25,7 +25,7 @@ const cities = [
  */
 export function ServiceAreas() {
   return (
-    <section className="relative py-20 bg-gradient-to-b from-temple-blush to-temple-blush-deep/60 overflow-hidden section-gold-border">
+    <section className="relative py-20 bg-gradient-to-b from-white to-[#FFF8E7]/50 overflow-hidden section-gold-border">
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">

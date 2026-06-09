@@ -7,19 +7,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply text-gray-900 antialiased;
-    /* Client-requested deep-red mandala backdrop (#2). Fixed so it stays a
-       calm canvas behind the content as you scroll. Falls back to a deep
-       red if the image fails to load. */
-    background-color: #7d0f18;
-    /* --page-bg-image is set on <html> in layout.tsx with the correct
-       basePath so the image resolves on both Firebase (root) and Pages
-       (/rnht). Falls back to the solid red above if unset. */
-    background-image: var(--page-bg-image, url("/red-mandala-bg.png"));
-    background-position: center top;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    @apply bg-temple-ivory text-gray-900 antialiased;
   }
 
   /* Focus visible ring for accessibility */
