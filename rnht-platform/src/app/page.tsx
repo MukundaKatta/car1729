@@ -86,7 +86,7 @@ const testimonials = [
 
 export default function HomePage() {
   return (
-    <div className="bg-temple-blush">
+    <div>
       {/* Hero — Three-panel animated slideshow with Ken Burns effect */}
       <HeroSlideshow />
 
@@ -152,14 +152,14 @@ export default function HomePage() {
       <HomePanchangamScroll />
 
       {/* Why Choose RNHT */}
-      <section className="relative py-20 bg-temple-blush overflow-hidden">
+      <section className="relative py-20 overflow-hidden">
         <div className="gold-particles" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold">Our Promise</p>
-            <h2 className="mt-2 section-heading">Why Choose RNHT</h2>
+            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold-light">Our Promise</p>
+            <h2 className="mt-2 section-heading text-white">Why Choose RNHT</h2>
             <div className="ornament-divider"><span>&#x2733;</span></div>
-            <p className="mx-auto max-w-xl text-gray-600 font-accent text-lg">
+            <p className="mx-auto max-w-xl text-gray-200 font-accent text-lg">
               Trusted by families across Texas for authentic Vedic ceremonies
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function HomePage() {
                 desc: "RNHT is a registered 501(c)(3) nonprofit. All donations and service contributions are tax-deductible.",
               },
             ].map((item) => (
-              <div key={item.title} className="gold-corners flex gap-4 p-6 rounded-2xl bg-gradient-to-br from-temple-ivory/80 to-[#FFF8E7]/60 border border-temple-gold/10 transition-all duration-300 hover:shadow-gold-glow hover:border-temple-gold/25 hover:-translate-y-1">
+              <div key={item.title} className="gold-corners flex gap-4 p-6 rounded-2xl bg-gradient-to-br from-temple-ivory to-[#FFF8E7] border border-temple-gold/20 shadow-premium transition-all duration-300 hover:shadow-gold-glow hover:border-temple-gold/35 hover:-translate-y-1">
                 <CheckCircle className="mt-0.5 h-6 w-6 shrink-0 text-temple-gold" />
                 <div>
                   <h3 className="font-heading font-bold text-temple-maroon text-lg">{item.title}</h3>
@@ -283,7 +283,7 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA — WhatsApp + Donate */}
-      <section className="py-20 bg-temple-blush">
+      <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-3xl overflow-hidden shadow-gold-glow-lg">
             {/* Background */}

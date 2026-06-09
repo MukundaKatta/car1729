@@ -131,18 +131,18 @@ export function HomePanchangamScroll() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-temple-blush py-16 sm:py-20">
+    <section className="relative overflow-hidden py-16 sm:py-20">
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold">
+          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold-light">
             Daily Guidance
           </p>
-          <h2 className="mt-2 section-heading">Today&rsquo;s Panchangam</h2>
+          <h2 className="mt-2 section-heading text-white">Today&rsquo;s Panchangam</h2>
           <div className="ornament-divider">
             <span>&#x2733;</span>
           </div>
-          <p className="mx-auto max-w-xl font-accent text-base text-gray-600 sm:text-lg">
+          <p className="mx-auto max-w-xl font-accent text-base text-gray-200 sm:text-lg">
             Vedic almanac for {p.location} on {formattedDate}
           </p>
         </div>

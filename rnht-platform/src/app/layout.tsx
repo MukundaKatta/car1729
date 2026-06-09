@@ -7,6 +7,7 @@ import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
 import { StartupValidationNotice } from "@/components/system/StartupValidationNotice";
 import { StoreRehydrator } from "@/components/system/StoreRehydrator";
+import { PageSurface } from "@/components/system/PageSurface";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -122,7 +123,9 @@ export default function RootLayout({
         <StoreRehydrator />
         <Header />
         <FallingPetals />
-        <main id="main-content" className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">
+          <PageSurface>{children}</PageSurface>
+        </main>
         <Footer />
         <WhatsAppButton />
         <BackgroundMusic />

@@ -7,7 +7,16 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-temple-blush text-gray-900 antialiased;
+    @apply text-gray-900 antialiased;
+    /* Client-requested deep-red mandala backdrop (#2). Fixed so it stays a
+       calm canvas behind the content as you scroll. Falls back to a deep
+       red if the image fails to load. */
+    background-color: #7d0f18;
+    background-image: url("/red-mandala-bg.png");
+    background-position: center top;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 
   /* Focus visible ring for accessibility */
