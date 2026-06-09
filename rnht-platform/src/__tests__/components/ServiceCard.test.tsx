@@ -60,14 +60,22 @@ describe("ServiceCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("exposes a 'Contact Panditji' CTA with a WhatsApp link", () => {
+  it("exposes a WhatsApp CTA with a prefilled link", () => {
     render(<ServiceCard service={makeService()} />);
     const cta = screen.getByRole("link", {
-      name: /contact panditji about ganapathi homam on whatsapp/i,
+      name: /message about ganapathi homam on whatsapp/i,
     });
     expect(cta.getAttribute("href")).toContain("https://wa.me/15125450473");
     // Prefilled message contains the service name (URL-encoded)
     expect(cta.getAttribute("href")).toContain("Ganapathi%20Homam");
+  });
+
+  it("exposes a Call CTA linking to the temple phone", () => {
+    render(<ServiceCard service={makeService()} />);
+    const cta = screen.getByRole("link", {
+      name: /call the temple about ganapathi homam/i,
+    });
+    expect(cta.getAttribute("href")).toBe("tel:+15125450473");
   });
 
   it("opens the detail modal when the card body is clicked", () => {

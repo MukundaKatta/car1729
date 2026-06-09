@@ -75,7 +75,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (items.length === 0 && !orderComplete && !success) {
-      router.push("/cart");
+      router.push("/services");
     }
   }, [items.length, orderComplete, router, success]);
 
@@ -203,12 +203,17 @@ export default function CheckoutPage() {
           </h1>
           <p className="mt-3 text-sm text-red-800">{error}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/cart" className="btn-outline">
-              Back to Cart
+            <Link href="/services" className="btn-outline">
+              Back to Services
             </Link>
-            <Link href="/contact" className="btn-primary">
+            <a
+              href="https://wa.me/message/P3YRA2XY3GI7F1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
               Contact Temple
-            </Link>
+            </a>
           </div>
         </div>
       </div>
@@ -218,11 +223,11 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <Link
-        href="/cart"
+        href="/services"
         className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-temple-red"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Cart
+        Back to Services
       </Link>
       <h1 className="mt-4 section-heading">Checkout</h1>
 

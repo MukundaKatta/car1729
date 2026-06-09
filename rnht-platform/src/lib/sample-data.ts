@@ -1485,7 +1485,7 @@ export const samplePanchangam = {
     end: "9:12 AM",
   },
   muhurtham: {
-    name: "Abhijit Muhurtham",
+    name: "Amrut Kalam",
     start: "11:47 AM",
     end: "12:37 PM",
   },

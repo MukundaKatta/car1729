@@ -132,7 +132,8 @@ describe("Header", () => {
       { name: "Services", href: "/services" },
       { name: "Priests", href: "/priests" },
       { name: "About us", href: "/about" },
-      { name: "Contact us", href: "/contact" },
+      // Contact us page removed — link now opens the temple WhatsApp chat.
+      { name: "Contact us", href: "https://wa.me/message/P3YRA2XY3GI7F1" },
     ];
 
     expectedLinks.forEach(({ name, href }) => {
@@ -156,13 +157,6 @@ describe("Header", () => {
     expect(donateLinks.length).toBeGreaterThan(0);
     const link = donateLinks[0].closest("a");
     expect(link).toHaveAttribute("href", "/donate");
-  });
-
-  it("renders the cart link", () => {
-    render(<Header />);
-    const cartLink = screen.getByLabelText("Shopping cart");
-    expect(cartLink).toBeInTheDocument();
-    expect(cartLink).toHaveAttribute("href", "/cart");
   });
 
   it("renders the dashboard/sign-in link", () => {
@@ -228,16 +222,6 @@ describe("Header", () => {
     render(<Header />);
     const aboutLinks = screen.getAllByText("About us");
     const activeLink = aboutLinks.find((el) =>
-      el.className?.includes("text-temple-maroon")
-    );
-    expect(activeLink).toBeTruthy();
-  });
-
-  it("highlights Contact us link when pathname starts with /contact", () => {
-    mockPathname = "/contact";
-    render(<Header />);
-    const contactLinks = screen.getAllByText("Contact us");
-    const activeLink = contactLinks.find((el) =>
       el.className?.includes("text-temple-maroon")
     );
     expect(activeLink).toBeTruthy();
@@ -453,21 +437,6 @@ describe("Header", () => {
     expect(mockSetLocale).toHaveBeenCalledWith("en");
   });
 
-  // --- Cart Badge ---
-
-  it("does not show a cart badge when item count is 0", () => {
-    render(<Header />);
-    const cartLink = screen.getByLabelText("Shopping cart");
-    const badge = cartLink.querySelector("span");
-    expect(badge).toBeNull();
-  });
-
-  it("shows correct aria-label for cart with no items", () => {
-    render(<Header />);
-    const cartLink = screen.getByLabelText("Shopping cart");
-    expect(cartLink).toBeInTheDocument();
-  });
-
   // --- Hanging Bells ---
 
   it("renders hanging bells decoration", () => {
@@ -654,43 +623,6 @@ describe("HangingLamp", () => {
     // Check that gradient IDs use the custom id prefix
     const gradient = svg?.querySelector("#test-lampch");
     expect(gradient).toBeInTheDocument();
-  });
-});
-
-describe("Header with cart items", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockCartState = { items: [] as any[], getItemCount: () => 0 };
-    mockAuthState = { isAuthenticated: false, user: null, initialize: vi.fn() };
-    mockPathname = "/";
-  });
-
-  it("shows a cart badge when items are present", () => {
-    mockCartState = { items: [{ id: "1" }, { id: "2" }], getItemCount: () => 2 };
-
-    render(<Header />);
-    const cartLink = screen.getByLabelText(/Shopping cart, 2 items/);
-    expect(cartLink).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-  });
-
-  it("cart badge shows correct count for 1 item", () => {
-    mockCartState = { items: [{ id: "1" }], getItemCount: () => 1 };
-
-    render(<Header />);
-    const cartLink = screen.getByLabelText(/Shopping cart, 1 items/);
-    expect(cartLink).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
-  });
-
-  it("cart badge shows correct count for 5 items", () => {
-    mockCartState = {
-      items: [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }, { id: "5" }],
-      getItemCount: () => 5,
-    };
-
-    render(<Header />);
-    expect(screen.getByText("5")).toBeInTheDocument();
   });
 });
 

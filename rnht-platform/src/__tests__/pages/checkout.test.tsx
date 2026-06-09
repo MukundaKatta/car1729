@@ -48,10 +48,10 @@ describe("CheckoutPage", () => {
     vi.restoreAllMocks();
   });
 
-  it("redirects empty carts back to /cart", () => {
+  it("redirects empty carts back to /services", () => {
     cartState = { items: [], getTotal: () => 0, clearCart: mockClearCart };
     render(<CheckoutPage />);
-    expect(mockPush).toHaveBeenCalledWith("/cart");
+    expect(mockPush).toHaveBeenCalledWith("/services");
   });
 
   it("renders the summary and payment methods", () => {

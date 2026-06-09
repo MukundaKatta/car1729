@@ -7,7 +7,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-temple-ivory text-gray-900 antialiased;
+    @apply bg-temple-blush text-gray-900 antialiased;
   }
 
   /* Focus visible ring for accessibility */

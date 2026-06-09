@@ -60,12 +60,14 @@ export function Footer() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/contact"
+            <a
+              href="https://wa.me/message/P3YRA2XY3GI7F1"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full border border-temple-gold/20 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-gray-200 transition-all duration-300 hover:border-temple-gold/45 hover:bg-white/[0.08] hover:text-white"
             >
               Contact Us
-            </Link>
+            </a>
             <Link
               href="/terms"
               className="rounded-full border border-temple-gold/20 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-gray-200 transition-all duration-300 hover:border-temple-gold/45 hover:bg-white/[0.08] hover:text-white"
@@ -80,9 +82,21 @@ export function Footer() {
             </Link>
           </div>
 
-          <div className="mx-auto mt-8 h-px w-32 bg-gradient-to-r from-transparent via-temple-gold/45 to-transparent" />
+          {/* Devotional blessing + tax-deductible note (client request) */}
+          <p className="mt-8 font-accent text-lg italic tracking-wide text-temple-gold-light sm:text-xl">
+            &#x201C;Dharmo Rakshati Rakshitah&#x201D;
+          </p>
+          <p className="mt-2 text-sm text-gray-300">
+            All donations are tax deductible.
+          </p>
 
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <h4 className="mt-8 font-heading text-xl font-bold tracking-tight text-white">
+            Follow Us
+          </h4>
+
+          <div className="mx-auto mt-3 h-px w-32 bg-gradient-to-r from-transparent via-temple-gold/45 to-transparent" />
+
+          <div className="mt-6 flex items-center justify-center gap-4">
             <SocialIconLink
               href="https://www.facebook.com/people/Rudra-Narayana-Hindu-Temple/61572697872055/"
               label="Facebook"

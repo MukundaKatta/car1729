@@ -88,7 +88,7 @@ export async function POST(request: Request) {
         booking_ids: JSON.stringify(bookingIds),
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/cart`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/services`,
     });
 
     return NextResponse.json({ url: session.url });

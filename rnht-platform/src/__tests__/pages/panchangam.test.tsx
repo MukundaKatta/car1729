@@ -190,25 +190,29 @@ describe("PanchangamPage", () => {
     expect(screen.queryByText("Abhijit Muhurtham:")).not.toBeInTheDocument();
   });
 
+  // NOTE: these values now appear twice — once in the PanchangamWidget and
+  // once in the redesigned shloka "Timing" column — so we assert >= 1 match.
   it("renders the PanchangamWidget with computed data", async () => {
     render(<PanchangamPage />);
-    expect(await screen.findByText(/pushya/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/pushya/i)).length).toBeGreaterThanOrEqual(1);
   });
 
   it("displays sunrise and sunset times", async () => {
     render(<PanchangamPage />);
-    expect(await screen.findByText(/6:22 AM/)).toBeInTheDocument();
-    expect(await screen.findByText(/6:01 PM/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/6:22 AM/)).length).toBeGreaterThanOrEqual(1);
+    expect((await screen.findAllByText(/6:01 PM/)).length).toBeGreaterThanOrEqual(1);
   });
 
   it("displays tithi information from computed data", async () => {
     render(<PanchangamPage />);
-    expect(await screen.findByText(/shukla dwadashi/i)).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText(/shukla dwadashi/i)).length
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("displays rahu kalam timings from computed data", async () => {
     render(<PanchangamPage />);
-    expect(await screen.findByText(/10:42 AM/)).toBeInTheDocument();
-    expect(await screen.findByText(/12:12 PM/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/10:42 AM/)).length).toBeGreaterThanOrEqual(1);
+    expect((await screen.findAllByText(/12:12 PM/)).length).toBeGreaterThanOrEqual(1);
   });
 });

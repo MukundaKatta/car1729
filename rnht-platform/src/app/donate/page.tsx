@@ -272,10 +272,72 @@ export default function DonatePage() {
         <Heart className="mx-auto h-10 w-10 text-temple-red" />
         <h1 className="mt-4 section-heading">{t("donate.title", locale)}</h1>
         <p className="mt-3 text-gray-600">{t("donate.subtitle", locale)}</p>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm font-semibold text-gray-900">
           All donations are tax-deductible under 501(c)(3).
         </p>
       </div>
+
+      {/* Nitya Pooja Seva — featured offering card (client request).
+          Image + content; no contact number; Join Now → Google Form. */}
+      <section className="mt-8 overflow-hidden rounded-3xl border border-temple-gold/25 bg-gradient-to-br from-[#2A0612] to-[#3a0a1c] shadow-premium">
+        <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-2 lg:items-center">
+          <div className="mx-auto w-full max-w-xs lg:max-w-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/nitya-pooja-seva.jpg"
+              alt="Nitya Pooja Seva — $365 yearly offering for daily worship services"
+              className="w-full rounded-xl border border-temple-gold/30 object-cover shadow-[0_0_40px_rgba(197,151,62,0.2)]"
+            />
+          </div>
+          <div className="text-center lg:text-left">
+            <p className="font-accent text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold">
+              Daily Worship
+            </p>
+            <h2 className="mt-2 font-heading text-3xl font-bold text-white">
+              Nitya Pooja Seva
+            </h2>
+            <p className="mt-4 font-accent text-base leading-relaxed text-gray-300">
+              With the blessings of Lord Rudra Narayana, the temple offers the
+              Nitya Pooja Scheme for the spiritual welfare of all devotees.
+            </p>
+            <ul className="mt-5 space-y-2.5 text-left">
+              {[
+                "Nitya Deeparadhana",
+                "Shodashopachara Seva",
+                "Naivedyam",
+                "Pushpa Archana",
+                "Rudrabhishekam",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-3 font-accent text-temple-gold-light"
+                >
+                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-temple-gold/20 text-xs text-temple-gold">
+                    &#x2713;
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-7">
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLSe77eeHv8sIScrCMnSuPeMlPwU4FK00wpU65x20_E3p8g5hvA/viewform"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-8 py-3.5 text-lg font-bold text-[#2A0612]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #C5973E 0%, #E8D5A3 40%, #C5973E 100%)",
+                  borderRadius: "4px",
+                  boxShadow: "0 6px 30px rgba(197,151,62,0.35)",
+                }}
+              >
+                $365/Year &mdash; Join Now
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="mt-8 rounded-3xl border border-temple-gold/20 bg-white/95 p-6 shadow-premium">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -552,6 +614,17 @@ export default function DonatePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Donate via Zelle — moved from the (removed) Contact page */}
+      <div className="mt-8 rounded-2xl border border-temple-gold/20 bg-temple-cream/50 p-6">
+        <h3 className="font-heading text-lg font-bold text-gray-900">
+          Donate via Zelle
+        </h3>
+        <p className="mt-2 text-sm text-gray-600">
+          Send donations directly via Zelle to:{" "}
+          <strong className="text-temple-maroon">(512) 545-0473</strong>
+        </p>
       </div>
     </div>
   );

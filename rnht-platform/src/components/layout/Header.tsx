@@ -7,13 +7,11 @@ import Image from "next/image";
 import {
   Menu,
   X,
-  ShoppingCart,
   User,
   Globe,
   Heart,
   Calendar,
 } from "lucide-react";
-import { useCartStore } from "@/store/cart";
 import { useLanguageStore } from "@/store/language";
 import { useAuthStore } from "@/store/auth";
 import { localeNames, t, type Locale } from "@/lib/i18n/translations";
@@ -281,7 +279,6 @@ export function Header() {
   const [showLangPicker, setShowLangPicker] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const itemCount = useCartStore((s) => s.items.length);
   const { locale, setLocale } = useLanguageStore();
   const { isAuthenticated, user } = useAuthStore();
   const pathname = usePathname();
@@ -297,12 +294,17 @@ export function Header() {
   }, []);
 
   const navigation = [
-    { name: t("nav.home", locale), href: "/" },
-    { name: t("nav.gallery", locale), href: "/gallery" },
-    { name: t("nav.services", locale), href: "/services" },
-    { name: t("nav.priests", locale), href: "/priests" },
-    { name: t("nav.aboutUs", locale), href: "/about" },
-    { name: t("nav.contactUs", locale), href: "/contact" },
+    { name: t("nav.home", locale), href: "/", external: false },
+    { name: t("nav.gallery", locale), href: "/gallery", external: false },
+    { name: t("nav.services", locale), href: "/services", external: false },
+    { name: t("nav.priests", locale), href: "/priests", external: false },
+    { name: t("nav.aboutUs", locale), href: "/about", external: false },
+    // Contact Us page removed — link now opens the temple WhatsApp chat.
+    {
+      name: t("nav.contactUs", locale),
+      href: "https://wa.me/message/P3YRA2XY3GI7F1",
+      external: true,
+    },
   ];
 
   // Close mobile menu on route change
@@ -380,22 +382,34 @@ export function Header() {
 
         {/* ── Center: Navigation ── */}
         <div className="hidden lg:flex items-center gap-1 mx-4">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red ${
-                isActive(item.href)
-                  ? "text-temple-maroon"
-                  : "text-gray-700 hover:bg-temple-gold/10"
-              }`}
-            >
-              {item.name}
-              {isActive(item.href) && (
-                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-gradient-to-r from-temple-gold via-temple-red to-temple-gold" />
-              )}
-            </Link>
-          ))}
+          {navigation.map((item) =>
+            item.external ? (
+              <a
+                key={item.name}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative rounded-lg px-4 py-2.5 text-[15px] font-semibold text-gray-700 transition-all duration-200 hover:bg-temple-gold/10 hover:text-temple-red"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red ${
+                  isActive(item.href)
+                    ? "text-temple-maroon"
+                    : "text-gray-700 hover:bg-temple-gold/10"
+                }`}
+              >
+                {item.name}
+                {isActive(item.href) && (
+                  <span className="absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-gradient-to-r from-temple-gold via-temple-red to-temple-gold" />
+                )}
+              </Link>
+            )
+          )}
         </div>
 
         {/* ── Right: Action Buttons ── */}
@@ -485,20 +499,6 @@ export function Header() {
             )}
           </div>
 
-          {/* Cart */}
-          <Link
-            href="/cart"
-            className="relative rounded-full p-2.5 text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon"
-            aria-label={`Shopping cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}
-          >
-            <ShoppingCart className="h-[18px] w-[18px]" />
-            {itemCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-temple-red text-[9px] font-bold text-white animate-scale-in">
-                {itemCount}
-              </span>
-            )}
-          </Link>
-
           {/* Profile / Dashboard */}
           <Link
             href="/dashboard"
@@ -569,20 +569,33 @@ export function Header() {
                 <User className="h-5 w-5 text-temple-maroon/60" />
                 {isAuthenticated ? (user?.name || "My Account") : t("nav.login", locale)}
               </Link>
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-temple-cream ${
-                    isActive(item.href)
-                      ? "text-temple-red bg-temple-cream/50"
-                      : "text-gray-700"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) =>
+                item.external ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-lg px-4 py-3 text-base font-medium text-gray-700 transition-colors hover:bg-temple-cream"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-temple-cream ${
+                      isActive(item.href)
+                        ? "text-temple-red bg-temple-cream/50"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
+              )}
             </div>
             {/* Mobile language picker */}
             <div className="border-t border-temple-gold/10 px-4 py-4">

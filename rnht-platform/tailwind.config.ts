@@ -21,6 +21,10 @@ const config: Config = {
           maroon: "#4A0818",
           "maroon-deep": "#2D0510",
           ivory: "#FFFEF9",
+          // Subtle red-toned page background (client request — replaces stark
+          // white). Soft warm rosé-cream that keeps body text fully readable.
+          blush: "#FBF1EE",
+          "blush-deep": "#F7E7E2",
         },
       },
       fontFamily: {

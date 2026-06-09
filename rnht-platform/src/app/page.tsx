@@ -5,8 +5,10 @@ import { HomePanchangamScroll } from "@/components/home/HomePanchangamScroll";
 import { ReadyToBookPriests } from "@/components/home/ReadyToBookPriests";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import {
-  Phone,
   CheckCircle,
+  MessageCircle,
+  BookOpen,
+  Heart,
 } from "lucide-react";
 
 const testimonials = [
@@ -84,7 +86,7 @@ const testimonials = [
 
 export default function HomePage() {
   return (
-    <div className="bg-temple-ivory">
+    <div className="bg-temple-blush">
       {/* Hero — Three-panel animated slideshow with Ken Burns effect */}
       <HeroSlideshow />
 
@@ -115,16 +117,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Info Bar */}
+      {/* Quick Action Bar — primary CTAs moved here from the hero */}
       <section className="border-b border-temple-gold/15 bg-[#25050F] text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-center px-4 py-4 text-sm sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-stretch justify-center gap-3 px-4 py-5 sm:flex-row sm:items-center sm:gap-4 sm:px-6 lg:px-8">
           <a
-            href="tel:+15125450473"
-            className="flex items-center gap-2 rounded-full border border-temple-gold/12 bg-white/[0.02] px-4 py-2.5 transition-colors hover:text-temple-gold-light"
+            href="https://wa.me/message/P3YRA2XY3GI7F1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:flex-none sm:min-w-[200px]"
+            style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
           >
-            <Phone className="h-4 w-4 text-temple-gold-light" />
-            <span className="font-medium">(512) 545-0473</span>
+            <MessageCircle className="h-4 w-4" />
+            Join WhatsApp Group
           </a>
+          <Link
+            href="/services"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-temple-maroon-deep transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:flex-none sm:min-w-[180px]"
+            style={{ background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)" }}
+          >
+            <BookOpen className="h-4 w-4" />
+            Book Pooja
+          </Link>
+          <Link
+            href="/donate"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-temple-gold/70 bg-temple-maroon/30 px-6 py-3 text-sm font-bold text-temple-gold-light backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-temple-maroon/50 sm:flex-none sm:min-w-[180px]"
+          >
+            <Heart className="h-4 w-4" />
+            Donate
+          </Link>
         </div>
       </section>
 
@@ -132,7 +152,7 @@ export default function HomePage() {
       <HomePanchangamScroll />
 
       {/* Why Choose RNHT */}
-      <section className="relative py-20 bg-white overflow-hidden">
+      <section className="relative py-20 bg-temple-blush overflow-hidden">
         <div className="gold-particles" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -263,7 +283,7 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA — WhatsApp + Donate */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-temple-blush">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-3xl overflow-hidden shadow-gold-glow-lg">
             {/* Background */}

@@ -64,7 +64,7 @@ export function PanchangamWidget({
             <div className="flex items-center gap-2 text-green-700">
               <Clock className="h-4 w-4" />
               <span>
-                <strong>Muhurtham:</strong> {panchangam.muhurtham.start} -{" "}
+                <strong>Amrut Kalam:</strong> {panchangam.muhurtham.start} -{" "}
                 {panchangam.muhurtham.end}
               </span>
             </div>

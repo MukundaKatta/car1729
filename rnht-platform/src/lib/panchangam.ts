@@ -114,7 +114,10 @@ const MASA_BY_MONTH = [
   "Phalguna",
   "Chaitra",
   "Vaishakha",
-  "Jyeshtha",
+  // Client request: display Jyeshtha as the Adhika (leap) month for 2026.
+  // NOTE: this label is hardcoded for the June slot; revisit once the
+  // 2026 Adhika Jyeshtha period passes or make it date-aware.
+  "Adhik Jyeshtha",
   "Ashadha",
   "Shravana",
   "Bhadrapada",
@@ -539,7 +542,7 @@ export function createPanchangamLoadingState(
       end: "--",
     },
     muhurtham: {
-      name: "Abhijit Muhurtham",
+      name: "Amrut Kalam",
       start: "--",
       end: "--",
     },
@@ -668,7 +671,7 @@ export async function computePanchangam(
       location.timeZone
     ),
     muhurtham: {
-      name: "Abhijit Muhurtham",
+      name: "Amrut Kalam",
       start: formatTime(muhurthamStart, location.timeZone),
       end: formatTime(muhurthamEnd, location.timeZone),
     },

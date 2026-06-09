@@ -138,11 +138,14 @@ describe("AboutPage", () => {
     expect(link).toHaveAttribute("href", "/services");
   });
 
-  it("has a link to the contact page", () => {
+  it("has a Contact Us link to the temple WhatsApp", () => {
     render(<AboutPage />);
     const link = screen.getByRole("link", { name: /contact us/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/contact");
+    expect(link).toHaveAttribute(
+      "href",
+      "https://wa.me/message/P3YRA2XY3GI7F1"
+    );
   });
 
   it("renders three CTA links in the footer section", () => {

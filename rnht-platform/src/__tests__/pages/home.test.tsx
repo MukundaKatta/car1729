@@ -30,9 +30,11 @@ describe("HomePage", () => {
     expect(screen.getByTestId("home-panchangam-scroll")).toBeInTheDocument();
   });
 
-  it("shows the quick info bar with the support phone", () => {
+  it("shows the quick action bar with the three primary CTAs", () => {
     render(<HomePage />);
-    expect(screen.getByText("(512) 545-0473")).toBeInTheDocument();
+    expect(screen.getByText("Join WhatsApp Group")).toBeInTheDocument();
+    expect(screen.getByText("Book Pooja")).toBeInTheDocument();
+    expect(screen.getAllByText("Donate").length).toBeGreaterThan(0);
   });
 
   it("shows the trust stats section with current values", () => {

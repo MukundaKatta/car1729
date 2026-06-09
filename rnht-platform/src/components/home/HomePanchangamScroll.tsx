@@ -117,7 +117,7 @@ export function HomePanchangamScroll() {
       tone: "warn" as const,
     },
     {
-      label: "Muhurtham",
+      label: "Amrut Kalam",
       value: `${p.muhurtham.start} - ${p.muhurtham.end}`,
       tone: "good" as const,
     },
@@ -131,7 +131,7 @@ export function HomePanchangamScroll() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-white py-16 sm:py-20">
+    <section className="relative overflow-hidden bg-temple-blush py-16 sm:py-20">
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">

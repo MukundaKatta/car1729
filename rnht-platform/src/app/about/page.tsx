@@ -73,9 +73,14 @@ export default function AboutPage() {
         <Link href="/services" className="btn-secondary">
           View Services
         </Link>
-        <Link href="/contact" className="btn-outline">
+        <a
+          href="https://wa.me/message/P3YRA2XY3GI7F1"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-outline"
+        >
           Contact Us
-        </Link>
+        </a>
       </div>
     </div>
   );

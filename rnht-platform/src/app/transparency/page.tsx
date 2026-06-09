@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Download, FileText, ShieldCheck } from "lucide-react";
 import { canonicalPath } from "@/lib/site-metadata";
 
@@ -55,13 +54,15 @@ export default function TransparencyPage() {
           request to any devotee or supporter. Reach out and we&rsquo;ll send
           you the most recent fiscal year report.
         </p>
-        <Link
-          href="/contact"
+        <a
+          href="https://wa.me/message/P3YRA2XY3GI7F1"
+          target="_blank"
+          rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-2 rounded-lg border border-temple-gold/40 px-4 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/10"
         >
           <Download className="h-4 w-4" />
           Request financial report
-        </Link>
+        </a>
       </section>
 
       <section className="mt-8 rounded-2xl border border-temple-gold/15 bg-temple-ivory/40 p-6">

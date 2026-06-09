@@ -4,6 +4,7 @@ import {
   MapPin,
   Globe,
   BookOpen,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { canonicalPath } from "@/lib/site-metadata";
@@ -49,6 +50,7 @@ const priests = [
     services: ["All Poojas", "Panchadasa Karmas", "Weddings (Vivaham)", "Homams & Yagnas", "Cultural Activities", "Purana Stotras Mentoring"],
     availability: { atTemple: true, outsideTemple: true, online: false },
     phone: "(512) 998-0112",
+    whatsapp: "https://wa.me/message/P3YRA2XY3GI7F1",
     stats: { experience: "15+ yrs", serving: "Since 2017", area: "Texas" },
   },
 ];
@@ -72,9 +74,18 @@ export default function PriestsPage() {
             <div className="flex flex-col md:flex-row">
               {/* Left — Profile */}
               <div className="flex flex-col items-center bg-gradient-to-b from-temple-cream to-white p-8 md:w-64 lg:w-72">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-temple-red text-3xl font-heading font-bold text-white">
-                  {priest.initials}
-                </div>
+                {priest.image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={priest.image}
+                    alt={priest.name}
+                    className="h-40 w-36 rounded-xl object-cover shadow-md ring-1 ring-temple-gold/30"
+                  />
+                ) : (
+                  <div className="flex h-40 w-36 items-center justify-center rounded-xl bg-temple-red text-4xl font-heading font-bold text-white shadow-md ring-1 ring-temple-gold/30">
+                    {priest.initials}
+                  </div>
+                )}
                 <h2 className="mt-4 text-center font-heading text-xl font-bold text-gray-900">
                   {priest.name}
                 </h2>
@@ -155,13 +166,31 @@ export default function PriestsPage() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-6">
+                <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Link
                     href="/services"
                     className="btn-primary text-sm"
                   >
                     Book with {priest.name.split(" ")[1]}
                   </Link>
+                  <a
+                    href={priest.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                    aria-label={`Message ${priest.name} on WhatsApp`}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </a>
+                  <a
+                    href={`tel:+1${priest.phone.replace(/\D/g, "")}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-4 py-2.5 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
+                    aria-label={`Call ${priest.name}`}
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
                 </div>
               </div>
             </div>

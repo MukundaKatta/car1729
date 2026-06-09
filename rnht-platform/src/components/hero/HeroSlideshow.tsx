@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import type { CSSProperties } from "react";
 
 /**
@@ -233,35 +232,8 @@ export function HeroSlideshow() {
           }}
         />
 
-        <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-32 sm:px-6 sm:pb-20 lg:px-8 lg:pb-16">
-          <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-2.5 sm:flex-row sm:gap-4">
-            <Link
-              href="/services"
-              className="cta-primary-glow inline-flex w-full max-w-[188px] items-center justify-center px-5 py-2.5 text-[12px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] hover:brightness-110 sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
-              style={{
-                background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)",
-                color: "#2A0612",
-                borderRadius: "4px",
-              }}
-            >
-              Book a Pooja
-            </Link>
-            <Link
-              href="/donate"
-              className="inline-flex w-full max-w-[188px] items-center justify-center px-5 py-2.5 text-[12px] font-bold tracking-[0.08em] transition-all duration-300 hover:scale-[1.04] sm:w-auto sm:min-w-[210px] sm:px-10 sm:py-3.5 sm:text-base"
-              style={{
-                background: "rgba(42,6,18,0.34)",
-                color: "#E8D5A3",
-                border: "1.5px solid rgba(197,151,62,0.70)",
-                borderRadius: "4px",
-                backdropFilter: "blur(10px)",
-                boxShadow: "0 0 24px rgba(197,151,62,0.15), inset 0 0 24px rgba(197,151,62,0.06)",
-              }}
-            >
-              Donate
-            </Link>
-          </div>
-        </div>
+        {/* CTAs (Book a Pooja / Donate) moved into the homepage info bar
+            below the hero per client request — see src/app/page.tsx. */}
 
       </section>
     </>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 import type { Service } from "@/types/database";
 import { ServiceDetailModal } from "./ServiceDetailModal";
 import { usePanditjiWhatsApp } from "@/store/panditji";
@@ -60,17 +60,26 @@ export function ServiceCard({ service }: { service: Service }) {
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">
             {service.short_description}
           </p>
-          <div className="mt-4">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <a
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Contact Panditji about ${service.name} on WhatsApp`}
+              aria-label={`Message about ${service.name} on WhatsApp`}
             >
               <MessageCircle className="h-4 w-4" />
-              Contact Panditji
+              WhatsApp
+            </a>
+            <a
+              href="tel:+15125450473"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Call the temple about ${service.name}`}
+            >
+              <Phone className="h-4 w-4" />
+              Call
             </a>
           </div>
         </div>
