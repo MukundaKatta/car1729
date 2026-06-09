@@ -131,28 +131,18 @@ export function HomePanchangamScroll() {
   ];
 
   return (
-    <section
-      className="relative overflow-hidden py-16 sm:py-20"
-      style={{
-        // Client request (#2): the red mandala appears ONLY behind this
-        // "Today's Panchangam" box — the rest of the site stays light.
-        backgroundColor: "#7d0f18",
-        backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/red-mandala-bg.png)`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <section className="relative overflow-hidden bg-white py-16 sm:py-20">
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold-light">
+          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold">
             Daily Guidance
           </p>
-          <h2 className="mt-2 section-heading text-white">Today&rsquo;s Panchangam</h2>
+          <h2 className="mt-2 section-heading">Today&rsquo;s Panchangam</h2>
           <div className="ornament-divider">
             <span>&#x2733;</span>
           </div>
-          <p className="mx-auto max-w-xl font-accent text-base text-gray-200 sm:text-lg">
+          <p className="mx-auto max-w-xl font-accent text-base text-gray-600 sm:text-lg">
             Vedic almanac for {p.location} on {formattedDate}
           </p>
         </div>
@@ -161,7 +151,15 @@ export function HomePanchangamScroll() {
           <Link
             href="/panchangam"
             aria-label="Open full Panchangam page"
-            className="group relative flex flex-col rounded-3xl border border-temple-gold/15 bg-gradient-to-br from-temple-ivory to-[#FFF8E7]/70 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/30 hover:shadow-premium-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold sm:p-7 lg:col-span-2"
+            className="group relative flex flex-col overflow-hidden rounded-3xl border border-temple-gold/40 p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/60 hover:shadow-premium-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold sm:p-7 lg:col-span-2"
+            style={{
+              // Client request (#2, final): the red mandala lives ONLY inside
+              // this panchangam card — the section around it stays light.
+              backgroundColor: "#7d0f18",
+              backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/red-mandala-bg.png)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-center gap-4">
@@ -173,19 +171,19 @@ export function HomePanchangamScroll() {
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-temple-gold-dark">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-temple-gold-light">
                     {dateParts.weekday}
                   </p>
-                  <p className="font-heading text-xl font-bold leading-tight text-temple-maroon sm:text-2xl">
+                  <p className="font-heading text-xl font-bold leading-tight text-white sm:text-2xl">
                     {dateParts.month} {dateParts.year}
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-200">
                     {p.masa} Masa &middot; {p.samvatsara} Samvatsara
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-temple-gold/25 bg-gradient-to-br from-temple-gold/10 to-temple-saffron/10 px-4 py-3 sm:max-w-[18rem]">
+              <div className="rounded-2xl border border-temple-gold/40 bg-[#FFF8E7]/95 px-4 py-3 sm:max-w-[18rem]">
                 {p.festival ? (
                   <>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-temple-saffron">
@@ -208,7 +206,7 @@ export function HomePanchangamScroll() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-center gap-6 rounded-xl border border-temple-gold/10 bg-white/60 px-4 py-3 sm:gap-12">
+            <div className="mt-5 flex items-center justify-center gap-6 rounded-xl border border-temple-gold/20 bg-white/90 px-4 py-3 sm:gap-12">
               <div className="flex items-center gap-2">
                 <Sun className="h-5 w-5 text-temple-saffron" />
                 <div>
@@ -236,8 +234,8 @@ export function HomePanchangamScroll() {
 
             <div className="mt-5">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-temple-gold-dark" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-temple-gold-dark">
+                <Clock className="h-4 w-4 text-temple-gold-light" />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-temple-gold-light">
                   Sacred Timings
                 </p>
               </div>
@@ -247,8 +245,8 @@ export function HomePanchangamScroll() {
                     key={t.label}
                     className={`rounded-xl border px-3 py-2.5 ${
                       t.tone === "good"
-                        ? "border-emerald-200/70 bg-emerald-50/70"
-                        : "border-temple-red/15 bg-temple-red/[0.04]"
+                        ? "border-emerald-200/80 bg-emerald-50/95"
+                        : "border-temple-red/20 bg-[#FDF1EE]/95"
                     }`}
                   >
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
@@ -262,7 +260,7 @@ export function HomePanchangamScroll() {
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-temple-gold/10 bg-white/50 px-3 py-3 sm:grid-cols-4 sm:gap-4 sm:px-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-temple-gold/20 bg-white/90 px-3 py-3 sm:grid-cols-4 sm:gap-4 sm:px-4">
               {lunarDetails.map((d) => (
                 <div key={d.label}>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
@@ -276,8 +274,8 @@ export function HomePanchangamScroll() {
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-gray-500">Based on {p.location}</p>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-temple-gold-dark transition-colors group-hover:text-temple-red">
+              <p className="text-xs text-gray-200">Based on {p.location}</p>
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-temple-gold-light transition-colors group-hover:text-white">
                 View Full Panchangam
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </span>
