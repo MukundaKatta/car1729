@@ -42,6 +42,9 @@ export default function CalendarPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [view, setView] = useState<"list" | "calendar">("list");
+  // Month-grid: tapping a day shows its events below the grid — the in-cell
+  // text chips are unreadable at phone cell widths, so they're dots on mobile.
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   // List view surfaces upcoming events (today onward) and recurring series
   // (weekly bhajans, monthly vratams). Calendar view keeps the month grid
@@ -133,6 +136,7 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => {
+                setSelectedDay(null);
                 if (selectedMonth === 0) {
                   setSelectedMonth(11);
                   setSelectedYear((y) => y - 1);
@@ -140,7 +144,7 @@ export default function CalendarPage() {
                   setSelectedMonth((m) => m - 1);
                 }
               }}
-              className="btn-outline px-3 py-1"
+              className="btn-outline min-h-[44px] min-w-[44px] px-3 py-1"
               aria-label="Previous month"
             >
               &larr;
@@ -150,6 +154,7 @@ export default function CalendarPage() {
             </h3>
             <button
               onClick={() => {
+                setSelectedDay(null);
                 if (selectedMonth === 11) {
                   setSelectedMonth(0);
                   setSelectedYear((y) => y + 1);
@@ -157,7 +162,7 @@ export default function CalendarPage() {
                   setSelectedMonth((m) => m + 1);
                 }
               }}
-              className="btn-outline px-3 py-1"
+              className="btn-outline min-h-[44px] min-w-[44px] px-3 py-1"
               aria-label="Next month"
             >
               &rarr;
@@ -176,19 +181,51 @@ export default function CalendarPage() {
             <div className="grid grid-cols-7 gap-px bg-gray-200">
               {calendarDays.map((day, idx) => {
                 const events = day ? getEventsForDay(day) : [];
+                const isSelected = day !== null && selectedDay === day;
                 return (
                   <div
                     key={idx}
-                    className={`min-h-[48px] sm:min-h-[80px] bg-white p-1 ${!day ? "bg-gray-50" : ""}`}
+                    role={day && events.length ? "button" : undefined}
+                    tabIndex={day && events.length ? 0 : undefined}
+                    onClick={() =>
+                      day && events.length && setSelectedDay(isSelected ? null : day)
+                    }
+                    onKeyDown={(e) => {
+                      if (day && events.length && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        setSelectedDay(isSelected ? null : day);
+                      }
+                    }}
+                    className={`min-h-[48px] bg-white p-1 sm:min-h-[80px] ${!day ? "bg-gray-50" : ""} ${
+                      events.length ? "cursor-pointer" : ""
+                    } ${isSelected ? "ring-2 ring-inset ring-temple-gold" : ""}`}
                   >
                     {day && (
                       <>
-                        <span className="text-xs sm:text-sm text-gray-700">{day}</span>
-                        <div className="mt-1 space-y-1">
+                        <span className="text-xs text-gray-700 sm:text-sm">{day}</span>
+                        {/* Phones: dots (titles are unreadable at ~50px cell widths) */}
+                        <div className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                          {events.map((event) => (
+                            <span
+                              key={event.id}
+                              className={`h-2 w-2 rounded-full ${
+                                event.event_type === "festival"
+                                  ? "bg-amber-500"
+                                  : event.event_type === "regular_pooja"
+                                    ? "bg-red-500"
+                                    : event.event_type === "community"
+                                      ? "bg-green-500"
+                                      : "bg-blue-500"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        {/* sm+: text chips */}
+                        <div className="mt-1 hidden space-y-1 sm:block">
                           {events.map((event) => (
                             <div
                               key={event.id}
-                              className={`truncate rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-medium ${
+                              className={`truncate rounded px-1 py-0.5 text-[10px] font-medium ${
                                 event.event_type === "festival"
                                   ? "bg-amber-100 text-amber-800"
                                   : event.event_type === "regular_pooja"
@@ -208,6 +245,35 @@ export default function CalendarPage() {
                 );
               })}
             </div>
+
+            {/* Tapped-day detail (primary on phones; harmless on desktop) */}
+            {selectedDay !== null && getEventsForDay(selectedDay).length > 0 && (
+              <div className="border-t border-gray-200 bg-temple-cream/40 p-4">
+                <p className="text-sm font-semibold text-temple-maroon">
+                  {months[selectedMonth]} {selectedDay}, {selectedYear}
+                </p>
+                <div className="mt-2 space-y-2">
+                  {getEventsForDay(selectedDay).map((event) => (
+                    <div key={event.id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">
+                      <span className="font-medium text-gray-800">{event.title}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                          event.event_type === "festival"
+                            ? "bg-amber-100 text-amber-800"
+                            : event.event_type === "regular_pooja"
+                              ? "bg-red-100 text-red-800"
+                              : event.event_type === "community"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {event.event_type.replace("_", " ")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

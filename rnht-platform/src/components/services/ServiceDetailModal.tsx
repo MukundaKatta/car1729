@@ -63,7 +63,7 @@ export function ServiceDetailModal({
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-2 text-gray-500 hover:text-gray-800"
+          className="absolute right-3 top-3 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/80 text-gray-500 hover:text-gray-800"
         >
           <X className="h-5 w-5" />
         </button>

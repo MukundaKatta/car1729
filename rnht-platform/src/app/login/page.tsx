@@ -213,7 +213,19 @@ export default function LoginPage() {
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
+    // iOS/Android SMS autofill can inject the whole code into one box —
+    // distribute the digits across the boxes instead of discarding them.
+    if (value.length > 1) {
+      const digits = value.replace(/\D/g, "").slice(0, 6 - index).split("");
+      if (!digits.length) return;
+      const newOtp = [...otp];
+      digits.forEach((d, di) => {
+        newOtp[index + di] = d;
+      });
+      setOtp(newOtp);
+      document.getElementById(`otp-${Math.min(index + digits.length, 5)}`)?.focus();
+      return;
+    }
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -586,7 +598,7 @@ export default function LoginPage() {
                     id={`otp-${i}`}
                     type="text"
                     inputMode="numeric"
-                    maxLength={1}
+                    autoComplete={i === 0 ? "one-time-code" : "off"}
                     className="h-12 w-12 rounded-lg border border-gray-300 text-center text-lg font-semibold focus:border-temple-red focus:outline-none focus:ring-2 focus:ring-temple-red/20"
                     value={digit}
                     onChange={(e) => handleOtpChange(i, e.target.value)}

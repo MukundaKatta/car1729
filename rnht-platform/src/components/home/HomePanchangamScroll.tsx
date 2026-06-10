@@ -174,7 +174,7 @@ export function HomePanchangamScroll() {
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-temple-gold-light">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-temple-gold-light">
                     {dateParts.weekday}
                   </p>
                   <p className="font-heading text-xl font-bold leading-tight text-white sm:text-2xl">
@@ -189,7 +189,7 @@ export function HomePanchangamScroll() {
               <div className="rounded-2xl border border-temple-gold/40 bg-[#FFF8E7]/95 px-4 py-3 sm:max-w-[18rem]">
                 {p.festival ? (
                   <>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-temple-saffron">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-saffron">
                       Festival &middot; Vrata
                     </p>
                     <p className="mt-1 font-heading text-base font-bold leading-snug text-temple-maroon sm:text-lg">
@@ -198,7 +198,7 @@ export function HomePanchangamScroll() {
                   </>
                 ) : (
                   <>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-temple-saffron">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-saffron">
                       Today&rsquo;s Tithi
                     </p>
                     <p className="mt-1 font-heading text-base font-bold leading-snug text-temple-maroon sm:text-lg">
@@ -213,7 +213,7 @@ export function HomePanchangamScroll() {
               <div className="flex items-center gap-2">
                 <Sun className="h-5 w-5 text-temple-saffron" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                     Sunrise
                   </p>
                   <p className="font-heading text-sm font-bold text-temple-maroon sm:text-base">
@@ -225,7 +225,7 @@ export function HomePanchangamScroll() {
               <div className="flex items-center gap-2">
                 <Moon className="h-5 w-5 text-temple-maroon" />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                     Sunset
                   </p>
                   <p className="font-heading text-sm font-bold text-temple-maroon sm:text-base">
@@ -238,7 +238,7 @@ export function HomePanchangamScroll() {
             <div className="mt-5">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-temple-gold-light" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-temple-gold-light">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-gold-light">
                   Sacred Timings
                 </p>
               </div>
@@ -252,7 +252,7 @@ export function HomePanchangamScroll() {
                         : "border-temple-red/20 bg-[#FDF1EE]/95"
                     }`}
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                       {t.label}
                     </p>
                     <p className="mt-1 font-heading text-sm font-bold text-temple-maroon">
@@ -266,7 +266,7 @@ export function HomePanchangamScroll() {
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-temple-gold/20 bg-white/90 px-3 py-3 sm:grid-cols-4 sm:gap-4 sm:px-4">
               {lunarDetails.map((d) => (
                 <div key={d.label}>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                     {d.label}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-temple-maroon">
@@ -293,7 +293,7 @@ export function HomePanchangamScroll() {
           >
             <div className="flex items-start justify-between">
               <CalendarIcon className="h-7 w-7 text-temple-gold" />
-              <span className="rounded-full border border-temple-gold/40 bg-white/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-temple-gold-light">
+              <span className="rounded-full border border-temple-gold/40 bg-white/5 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.18em] text-temple-gold-light">
                 PDF
               </span>
             </div>

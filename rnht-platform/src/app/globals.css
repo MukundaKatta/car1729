@@ -432,3 +432,17 @@
   animation: fallingPetal var(--duration, 12s) ease-in-out infinite;
   will-change: transform, opacity;
 }
+
+/* Respect the OS "Reduce Motion" accessibility setting: stop the infinite
+   decorative animations (Ken Burns hero, gold particles, bell swings,
+   border shimmer) for users who opt out of motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

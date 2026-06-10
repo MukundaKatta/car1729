@@ -104,7 +104,7 @@ export default function PriestsPage() {
                   {Object.entries(priest.stats).map(([key, val]) => (
                     <div key={key}>
                       <p className="text-base sm:text-lg font-bold text-temple-maroon">{val}</p>
-                      <p className="text-[10px] text-gray-500 capitalize">{key}</p>
+                      <p className="text-xs text-gray-500 capitalize">{key}</p>
                     </div>
                   ))}
                 </div>

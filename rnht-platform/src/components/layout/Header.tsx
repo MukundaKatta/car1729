@@ -429,7 +429,7 @@ export function Header() {
           </Link>
           <Link
             href="/panchangam"
-            className="sm:hidden flex items-center justify-center rounded-full p-2.5"
+            className="sm:hidden flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full"
             style={{
               background: "linear-gradient(135deg, rgba(197,151,62,0.12) 0%, rgba(232,195,74,0.18) 100%)",
               border: "1.5px solid rgba(197,151,62,0.35)",
@@ -452,7 +452,7 @@ export function Header() {
           </Link>
           <Link
             href="/donate"
-            className="sm:hidden flex items-center justify-center rounded-full p-2.5 shadow-[0_2px_12px_rgba(197,151,62,0.4)]"
+            className="sm:hidden flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full shadow-[0_2px_12px_rgba(197,151,62,0.4)]"
             style={{
               background: "linear-gradient(135deg, #B8862D 0%, #D4A843 25%, #F0D060 50%, #D4A843 75%, #B8862D 100%)",
             }}
@@ -502,7 +502,7 @@ export function Header() {
           {/* Profile / Dashboard */}
           <Link
             href="/dashboard"
-            className="flex items-center gap-1.5 rounded-full p-2.5 text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-full text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon"
             aria-label={isAuthenticated ? "Dashboard" : "Sign in"}
           >
             {isAuthenticated ? (
@@ -518,7 +518,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-full p-2.5 text-temple-maroon/70 transition-colors hover:bg-temple-gold/15 lg:hidden"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-temple-maroon/70 transition-colors hover:bg-temple-gold/15 lg:hidden"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
@@ -610,7 +610,7 @@ export function Header() {
                       onClick={() => {
                         setLocale(code);
                       }}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      className={`min-h-[44px] rounded-full px-4 text-xs font-medium transition-colors ${
                         locale === code
                           ? "bg-temple-red text-white"
                           : "bg-temple-cream text-gray-600 hover:bg-temple-cream-dark"

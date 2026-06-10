@@ -126,7 +126,7 @@ export function BackgroundMusic() {
       <audio ref={audioRef} src="/devotional-music.mp3" loop preload="none" />
       <button
         onClick={toggleMusic}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 sm:h-11 sm:w-11"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
         style={{
           background: isPlaying
             ? "linear-gradient(135deg, #C5973E 0%, #E8C34A 50%, #C5973E 100%)"

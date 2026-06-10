@@ -127,7 +127,7 @@ export function HomeTempleCalendar() {
                   onClick={() =>
                     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))
                   }
-                  className="rounded-md p-2 text-temple-maroon hover:bg-temple-gold/10"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-temple-maroon hover:bg-temple-gold/10"
                   aria-label="Previous month"
                 >
                   &larr;
@@ -140,7 +140,7 @@ export function HomeTempleCalendar() {
                   onClick={() =>
                     setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))
                   }
-                  className="rounded-md p-2 text-temple-maroon hover:bg-temple-gold/10"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-temple-maroon hover:bg-temple-gold/10"
                   aria-label="Next month"
                 >
                   &rarr;

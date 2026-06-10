@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { Camera, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
@@ -58,6 +58,20 @@ export default function GalleryPage() {
   const goNext = useCallback(() => {
     setLightboxIndex((prev) => (prev === null ? null : prev === filtered.length - 1 ? 0 : prev + 1));
   }, [filtered.length]);
+
+  // Phones: swipe left/right in the lightbox to change photos.
+  const touchStartX = useRef<number | null>(null);
+  const onLightboxTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onLightboxTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 50) return;
+    if (dx < 0) goNext();
+    else goPrev();
+  };
 
   // Close lightbox if index is out of bounds (e.g. filter changed)
   useEffect(() => {
@@ -122,7 +136,7 @@ export default function GalleryPage() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`min-h-[44px] rounded-full px-5 text-sm font-medium transition-colors ${
               selectedCategory === cat
                 ? "bg-temple-red text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -186,6 +200,8 @@ export default function GalleryPage() {
           aria-modal="true"
           aria-label={`Image: ${filtered[lightboxIndex].alt}`}
           onClick={closeLightbox}
+          onTouchStart={onLightboxTouchStart}
+          onTouchEnd={onLightboxTouchEnd}
         >
           <button
             className="absolute right-2 top-2 sm:right-4 sm:top-4 rounded-lg p-2 text-white hover:bg-white/10 z-10 min-w-[44px] min-h-[44px] flex items-center justify-center"
