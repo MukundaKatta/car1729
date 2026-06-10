@@ -223,7 +223,7 @@ export default function AdminDashboard() {
             View all
           </Link>
         </div>
-        <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

@@ -91,7 +91,7 @@ export default function PanchangamPage() {
         <div
           className="relative order-1 overflow-hidden rounded-3xl border border-temple-gold/30 shadow-[0_18px_50px_rgba(87,42,4,0.18)] lg:order-2 lg:col-span-2"
           style={{
-            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/parchment.png)`,
+            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/parchment.jpg)`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

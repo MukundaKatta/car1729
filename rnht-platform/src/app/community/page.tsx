@@ -140,8 +140,9 @@ export default function CommunityPage() {
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-8 flex justify-center gap-2">
+      {/* Tabs — flex-wrap so the three pills never push the page wider than
+          a phone viewport (this row caused ~35px of horizontal overflow). */}
+      <div className="mt-8 flex flex-wrap justify-center gap-2">
         {[
           { id: "volunteer" as const, label: "Volunteer", icon: HeartHandshake },
           { id: "annadanam" as const, label: "Annadanam", icon: ChefHat },

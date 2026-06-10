@@ -7,6 +7,7 @@ import { BackgroundMusic } from "@/components/effects/BackgroundMusic";
 import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
 import { StartupValidationNotice } from "@/components/system/StartupValidationNotice";
 import { StoreRehydrator } from "@/components/system/StoreRehydrator";
+import { CapacitorInit } from "@/components/CapacitorInit";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -118,6 +119,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
+        <CapacitorInit />
         <StartupValidationNotice />
         <StoreRehydrator />
         <Header />

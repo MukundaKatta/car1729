@@ -17,7 +17,9 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'LIGHT',
+      // 'DARK' = light (white) status-bar icons, required for legibility on
+      // the dark maroon bar. ('LIGHT' would mean dark icons on dark maroon.)
+      style: 'DARK',
       backgroundColor: '#2A0612',
     },
   },

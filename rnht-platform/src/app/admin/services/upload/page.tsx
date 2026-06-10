@@ -179,7 +179,7 @@ export default function AdminServicesUploadPage() {
         <h2 className="font-heading text-lg font-bold text-temple-maroon">
           Previous Uploads
         </h2>
-        <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

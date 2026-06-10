@@ -11,7 +11,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "preflight": "npm run test:run && npm run build",
-    "release": "npm run test:run && npm run build && firebase deploy --only hosting"
+    "release": "npm run test:run && npm run build && firebase deploy --only hosting",
+    "build:mobile": "bash scripts/build-mobile.sh"
   },
   "dependencies": {
     "@bidyashish/panchang": "^1.0.10",

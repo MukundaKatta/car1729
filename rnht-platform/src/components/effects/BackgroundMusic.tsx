@@ -12,8 +12,7 @@ export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeIntervalRef = useRef<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const [userMuted, setUserMuted] = useState(false);
+  const [, setUserMuted] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -97,30 +96,14 @@ export function BackgroundMusic() {
       });
   }, [fadeAudio]);
 
-  // Auto-play after first user interaction on the page
-  useEffect(() => {
-    function handleFirstInteraction() {
-      if (!hasInteracted && !userMuted) {
-        setHasInteracted(true);
-        if (audioRef.current) {
-          startPlayback();
-        }
-      }
-    }
-
-    document.addEventListener("click", handleFirstInteraction, { once: true });
-    document.addEventListener("touchstart", handleFirstInteraction, { once: true });
-    return () => {
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("touchstart", handleFirstInteraction);
-    };
-  }, [hasInteracted, userMuted, startPlayback]);
+  // Music is strictly opt-in: playback starts only from the explicit toggle
+  // button below. (The old behavior — starting on the user's first tap
+  // anywhere — surprised mobile users with audio in public settings.)
 
   const toggleMusic = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    setHasInteracted(true);
     if (isPlaying) {
       setIsPlaying(false);
       fadeAudio(0, () => {
@@ -138,7 +121,9 @@ export function BackgroundMusic() {
 
   return (
     <>
-      <audio ref={audioRef} src="/devotional-music.mp3" loop preload="auto" />
+      {/* preload="none": don't force a multi-MB download on every page view —
+          the file is fetched only when the user opts into music. */}
+      <audio ref={audioRef} src="/devotional-music.mp3" loop preload="none" />
       <button
         onClick={toggleMusic}
         className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 sm:h-11 sm:w-11"

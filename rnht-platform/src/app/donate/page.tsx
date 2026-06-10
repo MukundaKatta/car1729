@@ -356,7 +356,7 @@ export default function DonatePage() {
           </div>
 
           {isAuthenticated ? (
-            <div className="min-w-[280px] rounded-2xl border border-green-200 bg-green-50 p-5 text-left">
+            <div className="w-full rounded-2xl border border-green-200 bg-green-50 p-5 text-left lg:min-w-[280px] lg:w-auto">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-green-700">
                 Devotee Account Active
               </p>
@@ -376,7 +376,7 @@ export default function DonatePage() {
               </Link>
             </div>
           ) : (
-            <div className="grid min-w-[300px] gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid w-full gap-3 sm:min-w-[300px] sm:w-auto sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <Link
                 href="/login?mode=signin"
                 className="flex items-start gap-3 rounded-2xl border border-temple-gold/20 bg-temple-cream/40 p-4 transition hover:border-temple-gold hover:bg-temple-cream"
@@ -467,6 +467,7 @@ export default function DonatePage() {
                 </span>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   step="0.01"
                   placeholder="Enter any amount"

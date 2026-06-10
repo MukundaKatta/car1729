@@ -59,8 +59,11 @@ export function HomePanchangamScroll() {
   const [p, setP] = useState<ComputedPanchangam>(() =>
     createPanchangamLoadingState(location)
   );
-  const calendarPdfHref = "/downloads/2026-rnht.pdf";
-  const calendarPreviewHref = "/downloads/preview/2026-rnht.pdf.png";
+  // Absolute URL so the PDF also works inside the native apps, where the
+  // 12 MB file is stripped from the bundled assets (build-mobile.sh) and
+  // opens via the in-app browser instead.
+  const calendarPdfHref = "https://rnht-platform.web.app/downloads/2026-rnht.pdf";
+  const calendarPreviewHref = "/downloads/preview/2026-rnht-preview.jpg";
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
   const dateParts = getDisplayDateParts(p.date, location.timeZone);
 

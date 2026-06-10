@@ -542,7 +542,7 @@ export function Header() {
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-x-0 top-[var(--header-h)] z-50 border-t border-temple-gold/10 bg-white lg:hidden max-h-[calc(100vh-var(--header-h))] overflow-y-auto animate-slide-down">
+          <div className="fixed inset-x-0 top-[var(--header-h)] z-50 border-t border-temple-gold/10 bg-white lg:hidden max-h-[calc(100dvh-var(--header-h))] overflow-y-auto animate-slide-down">
             <div className="px-4 py-2">
               {/* Prominent mobile donate button */}
               <Link
