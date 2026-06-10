@@ -27,7 +27,7 @@ function SocialIconLink({
 export function Footer() {
   return (
     <footer
-      className="relative overflow-hidden bg-[linear-gradient(180deg,#1b0208_0%,#130106_52%,#0b0104_100%)] text-white"
+      className="relative overflow-hidden bg-[linear-gradient(180deg,#1b0208_0%,#130106_52%,#0b0104_100%)] text-white pb-[env(safe-area-inset-bottom)]"
       role="contentinfo"
     >
       <div className="h-[2px] bg-gradient-to-r from-transparent via-temple-gold/90 to-transparent" />

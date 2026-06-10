@@ -15,6 +15,10 @@ export const viewport: Viewport = {
   themeColor: "#C41E3A",
   width: "device-width",
   initialScale: 1,
+  // Edge-to-edge in the native apps: lets env(safe-area-inset-*) resolve so
+  // the header/footer pad around the iPhone notch/Dynamic Island and Android
+  // system bars. No effect on normal desktop/mobile browser rendering.
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {

@@ -341,7 +341,7 @@ export function Header() {
   };
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 bg-gradient-to-b from-[#FFF8E7] via-[#FFF3D6] to-[#FDEDC4] backdrop-blur-md shadow-[0_2px_20px_rgba(191,155,48,0.15)] border-b border-temple-gold/30 relative">
+    <header ref={headerRef} className="sticky top-0 z-50 bg-gradient-to-b from-[#FFF8E7] via-[#FFF3D6] to-[#FDEDC4] backdrop-blur-md shadow-[0_2px_20px_rgba(191,155,48,0.15)] border-b border-temple-gold/30 relative pt-[env(safe-area-inset-top)]">
       {/* Premium gold accent line at top */}
       <div className="h-1 bg-gradient-to-r from-temple-gold via-yellow-400 to-temple-gold" />
 

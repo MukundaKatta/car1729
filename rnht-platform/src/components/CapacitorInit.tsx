@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import { initBackButton, openExternal, isNative } from "@/lib/capacitor";
 
 /**
@@ -18,6 +20,13 @@ export function CapacitorInit() {
 
     // On native: intercept all external link clicks and open in system browser
     if (!isNative()) return cleanup;
+
+    // iOS renders edge-to-edge: the status bar sits over the cream header, so
+    // it needs DARK icons (Style.Light = dark content). Android keeps the
+    // config default (light icons on the maroon bar).
+    if (Capacitor.getPlatform() === "ios") {
+      StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    }
 
     const handleLinkClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest("a[href]") as HTMLAnchorElement | null;
