@@ -283,15 +283,27 @@ export function Header() {
   const { isAuthenticated, user } = useAuthStore();
   const pathname = usePathname();
 
-  // Measure header height and set CSS variable on root for fixed elements
+  // Measure header height and set CSS variable on root for fixed elements.
+  // Re-measure when the mobile menu opens and shortly after mount: in the
+  // native apps the safe-area inset (notch padding) is injected asynchronously
+  // after load, so an early-only measurement leaves --header-h too small and
+  // the open menu panel covers the header (hiding the X close button).
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
     const update = () => document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
     update();
+    const raf = requestAnimationFrame(update);
+    const settle = window.setTimeout(update, 350);
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(settle);
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
+  }, [mobileMenuOpen]);
 
   const navigation = [
     { name: t("nav.home", locale), href: "/", external: false },
