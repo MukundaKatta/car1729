@@ -195,7 +195,9 @@ export default function DonatePage() {
           body: JSON.stringify({
             amount: effectiveAmount,
             fundType: activeFund?.slug ?? fundTypeSlug,
-            donorName,
+            // The name field is optional in the UI, but the backend requires a
+            // non-empty donorName — default so blank names don't 400 silently.
+            donorName: donorName.trim() || "Anonymous",
             donorEmail,
             customFields: customFieldValues,
             paymentMethod,
