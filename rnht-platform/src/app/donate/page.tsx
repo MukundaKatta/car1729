@@ -70,6 +70,7 @@ export default function DonatePage() {
   const searchParams = useSearchParams();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authUser = useAuthStore((s) => s.user);
+  const fetchUserData = useAuthStore((s) => s.fetchUserData);
 
   // Load fund types from DB; fall back gracefully if Supabase isn't set up.
   useEffect(() => {
@@ -188,33 +189,48 @@ export default function DonatePage() {
     setProcessing(true);
     setError("");
     try {
-      if (paymentMethod === "stripe" || paymentMethod === "paypal") {
-        const response = await fetch(donateCreateUrl(), {
-          method: "POST",
-          headers: edgeFunctionHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            amount: effectiveAmount,
-            fundType: activeFund?.slug ?? fundTypeSlug,
-            // The name field is optional in the UI, but the backend requires a
-            // non-empty donorName — default so blank names don't 400 silently.
-            donorName: donorName.trim() || "Anonymous",
-            donorEmail,
-            customFields: customFieldValues,
-            paymentMethod,
-          }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          setError(data.error || "Payment processing failed.");
-          return;
-        }
-        if (data.url) {
-          window.location.href = data.url;
-          return;
+      // Signed-in devotees: pass the session token so the backend can verify
+      // it and link the donation to their account (dashboard history).
+      const extraHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) {
+          extraHeaders["x-user-token"] = data.session.access_token;
         }
       }
+
+      // All methods create a donation record — Zelle is recorded as a pending
+      // pledge (the transfer itself happens in the donor's banking app).
+      const response = await fetch(donateCreateUrl(), {
+        method: "POST",
+        headers: edgeFunctionHeaders(extraHeaders),
+        body: JSON.stringify({
+          amount: effectiveAmount,
+          fundType: activeFund?.slug ?? fundTypeSlug,
+          // The name field is optional in the UI, but the backend requires a
+          // non-empty donorName — default so blank names don't 400 silently.
+          donorName: donorName.trim() || "Anonymous",
+          donorEmail,
+          customFields: customFieldValues,
+          paymentMethod,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || "Payment processing failed.");
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
       setSubmitted(true);
+      // Refresh dashboard data so the new (e.g. Zelle) donation shows without
+      // a hard reload when the donor navigates to their dashboard.
+      if (isAuthenticated) void fetchUserData();
     } catch {
       setError("Payment processing failed. Please try again.");
     } finally {

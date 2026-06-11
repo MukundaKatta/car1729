@@ -55,6 +55,22 @@ interface DonateRequest {
   paymentMethod?: "stripe" | "paypal" | "zelle";
 }
 
+// If the caller is a signed-in devotee, the client passes their Supabase
+// session token in x-user-token. We verify it server-side (never trust a raw
+// id from the client) and stamp user_id so the donation shows in their
+// dashboard history.
+async function resolveUserId(req: Request): Promise<string | null> {
+  const token = req.headers.get("x-user-token");
+  if (!token) return null;
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error) return null;
+    return data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 interface PayPalOrder {
   id: string;
   approvalUrl: string;
@@ -146,10 +162,12 @@ async function handleCreate(req: Request): Promise<Response> {
   }
 
   const label = fundLabels[fundType] ?? "Donation";
+  const userId = await resolveUserId(req);
 
   const { data: donation, error: dbError } = await supabase
     .from("donations")
     .insert({
+      user_id: userId,
       donor_name: donorName,
       donor_email: donorEmail,
       amount,
@@ -168,6 +186,16 @@ async function handleCreate(req: Request): Promise<Response> {
     return new Response(
       JSON.stringify({ error: "Failed to create donation record" }),
       { status: 500, headers: jsonHeaders },
+    );
+  }
+
+  // Zelle moves money outside the app — record the pledge as a pending
+  // donation (it shows in the donor's dashboard; admins mark it completed in
+  // Admin → Donations once the transfer arrives in the bank).
+  if (paymentMethod === "zelle") {
+    return new Response(
+      JSON.stringify({ ok: true, donationId: donation.id }),
+      { headers: jsonHeaders },
     );
   }
 
