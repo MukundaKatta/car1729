@@ -35,7 +35,7 @@ function normalizePhone(input: string): string | null {
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, sendOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
+  const { isAuthenticated, sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<AuthStep>("method");
   const [email, setEmail] = useState("");
@@ -43,6 +43,10 @@ export default function LoginPage() {
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [name, setName] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  // Code from the sign-in email — lets users finish auth without leaving the
+  // page. Essential in the native apps: the email link opens the system
+  // browser, whose session never reaches the app's webview.
+  const [emailCode, setEmailCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailCooldownUntil, setEmailCooldownUntil] = useState(0);
@@ -651,9 +655,41 @@ export default function LoginPage() {
                 </p>
                 <p className="font-semibold text-gray-900">{email}</p>
               </div>
+              {/* Code entry — works everywhere, and is the ONLY path that
+                  completes inside the native apps (the email link signs you
+                  in in the system browser, not the app). */}
+              <div className="rounded-xl border border-temple-gold/30 bg-white px-4 py-4 text-left">
+                <p className="text-sm font-medium text-temple-maroon">
+                  Enter the verification code from the email
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="e.g. 60216421"
+                    className="input-field flex-1 text-center tracking-[0.2em]"
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  />
+                  <button
+                    className="btn-primary px-5"
+                    disabled={loading || emailCode.length < 6}
+                    onClick={async () => {
+                      setLoading(true);
+                      setError("");
+                      const result = await verifyOtp(email, emailCode);
+                      setLoading(false);
+                      if (result.error) setError(result.error);
+                    }}
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-4 text-left text-sm text-gray-700">
                 <p className="font-medium text-temple-maroon">
-                  Open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
+                  Or open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
                 </p>
                 <p className="mt-2 text-gray-600">
                   After you confirm, come back here and tap the button below. We will also check again automatically when this page regains focus.

@@ -51,13 +51,16 @@ function normalizePhone(input: string): string | null {
 
 /* ─── Login Form (shown when not authenticated) ─── */
 function LoginForm() {
-  const { sendOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
+  const { sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp } = useAuthStore();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [method, setMethod] = useState<"phone" | "email">("phone");
   const [step, setStep] = useState<"form" | "phone_otp" | "email_sent">("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  // Email verification code — completes sign-in inside the native apps,
+  // where the email link only signs in the system browser.
+  const [emailCode, setEmailCode] = useState("");
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -427,9 +430,41 @@ function LoginForm() {
                 </p>
                 <p className="text-xl font-semibold text-gray-900 break-all">{email}</p>
               </div>
+              {/* Code entry — the only path that completes inside the
+                  native apps (the email link signs in the system browser). */}
+              <div className="rounded-xl border border-temple-gold/30 bg-white px-4 py-4 text-left">
+                <p className="text-sm font-medium text-temple-maroon">
+                  Enter the verification code from the email
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="e.g. 60216421"
+                    className="input-field flex-1 text-center tracking-[0.2em]"
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary px-5"
+                    disabled={loading || emailCode.length < 6}
+                    onClick={async () => {
+                      setLoading(true);
+                      setError("");
+                      const result = await verifyOtp(email, emailCode);
+                      setLoading(false);
+                      if (result.error) setError(result.error);
+                    }}
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
               <div className="rounded-xl border border-temple-gold/20 bg-temple-cream/40 px-4 py-4 text-left text-sm text-gray-700">
                 <p className="font-medium text-temple-maroon">
-                  Open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
+                  Or open the email and click the confirmation link to finish {authMode === "signup" ? "creating your account" : "signing in"}.
                 </p>
                 <p className="mt-2 text-gray-600">
                   After you confirm, come back here and tap the button below. We will refresh your devotee portal automatically when the session is ready.
