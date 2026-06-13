@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
+import { supabase } from "@/lib/supabase";
+import { deleteAccountUrl, edgeFunctionHeaders } from "@/lib/edge-functions";
 
 type Tab = "profile" | "family" | "bookings" | "donations" | "preferences";
 
@@ -72,6 +74,39 @@ export default function ProfilePage() {
   } = useAuthStore();
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const token = supabase
+        ? (await supabase.auth.getSession()).data.session?.access_token
+        : undefined;
+      if (!token) {
+        setDeleteError("Your session has expired. Please sign in again.");
+        setDeleting(false);
+        return;
+      }
+      const res = await fetch(deleteAccountUrl(), {
+        method: "POST",
+        headers: edgeFunctionHeaders({ "Content-Type": "application/json", "x-user-token": token }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error || "Could not delete your account. Please try again.");
+        setDeleting(false);
+        return;
+      }
+      await logout();
+      router.push("/");
+    } catch {
+      setDeleteError("Could not delete your account. Please try again.");
+      setDeleting(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -643,7 +678,7 @@ export default function ProfilePage() {
                 <button className="btn-outline text-sm flex items-center gap-2" onClick={() => alert("Data export is coming soon! Contact us at (512) 545-0473 for assistance.")}>
                   <Download className="h-4 w-4" /> Export My Data
                 </button>
-                <button className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50" onClick={() => alert("To delete your account, please contact us at (512) 545-0473 or email support.")}>
+                <button className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50" onClick={() => { setDeleteError(""); setShowDeleteConfirm(true); }}>
                   Delete Account
                 </button>
               </div>
@@ -651,6 +686,39 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 id="delete-account-title" className="font-heading text-xl font-bold text-red-700">Delete your account?</h3>
+            <p className="mt-3 text-sm text-gray-600">
+              This permanently deletes your devotee account and personal profile
+              (name, contact details, family members, and preferences). This
+              cannot be undone. Your past donation records are retained by the
+              temple for tax/accounting purposes but are no longer linked to you.
+            </p>
+            {deleteError && (
+              <p className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{deleteError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="btn-outline text-sm"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+              >
+                {deleting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Deleting…</>) : "Delete My Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
+import { isNative } from "@/lib/capacitor";
 import {
   getEmailAuthCooldownSeconds,
   readEmailAuthCooldownUntil,
@@ -13,6 +14,9 @@ import {
 } from "@/lib/email-auth-cooldown";
 
 type AuthStep = "method" | "email" | "email_sent" | "phone" | "phone_otp" | "success";
+
+// Basic email shape check so we don't send magic links to malformed addresses.
+const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
 /**
  * Normalize a user-entered phone number to E.164 format.
@@ -401,6 +405,11 @@ export default function LoginPage() {
                 <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
               </button>
 
+              {/* Google OAuth opens the system browser and cannot return a
+                  session to the native WebView (no deep-link handler), so it is
+                  hidden in the apps; email/phone code sign-in work in-app. */}
+              {!isNative() && (
+              <>
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200" />
@@ -436,6 +445,8 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </button>
+              </>
+              )}
             </div>
           )}
 
@@ -485,7 +496,7 @@ export default function LoginPage() {
               )}
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={!email || (authMode === "signup" && !name.trim()) || loading || emailCooldownSeconds > 0}
+                disabled={!isValidEmail(email) || (authMode === "signup" && !name.trim()) || loading || emailCooldownSeconds > 0}
                 onClick={handleSendOtp}
               >
                 {loading ? (

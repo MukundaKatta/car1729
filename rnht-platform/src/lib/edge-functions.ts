@@ -41,3 +41,6 @@ export const donateVerifyUrl = (sessionId: string): string =>
 
 /** POST /functions/v1/paypal-capture — capture an approved PayPal order. */
 export const paypalCaptureUrl = (): string => functionUrl("paypal-capture");
+
+/** POST /functions/v1/delete-account — permanently delete the caller's account. */
+export const deleteAccountUrl = (): string => functionUrl("delete-account");
