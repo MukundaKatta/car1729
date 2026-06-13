@@ -130,7 +130,7 @@ export default function LoginPage() {
   const handleSendOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendOtp(email, authMode === "signup" ? name : "");
+    const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -144,7 +144,7 @@ export default function LoginPage() {
   const handleResendOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendOtp(email, authMode === "signup" ? name : "");
+    const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -177,7 +177,7 @@ export default function LoginPage() {
     }
     setNormalizedPhone(e164);
     setLoading(true);
-    const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "");
+    const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "", authMode === "signup");
     setLoading(false);
     if (result.error) {
       setError(result.error);
@@ -202,7 +202,7 @@ export default function LoginPage() {
   const handleResendPhoneOtp = async () => {
     setError("");
     setLoading(true);
-    const result = await sendPhoneOtp(normalizedPhone, authMode === "signup" ? name : "");
+    const result = await sendPhoneOtp(normalizedPhone, authMode === "signup" ? name : "", authMode === "signup");
     setLoading(false);
     if (result.error) setError(result.error);
   };

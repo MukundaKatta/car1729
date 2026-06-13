@@ -95,6 +95,26 @@ export default function DonatePage() {
     load();
   }, []);
 
+  // Quick Donate deep-link from the dashboard: ?fund=<slug-or-name>&amount=<n>.
+  // (Previously these params were ignored, so Quick Donate did nothing.)
+  useEffect(() => {
+    if (!fundTypes.length) return;
+    const fundParam = searchParams.get("fund");
+    const amountParam = searchParams.get("amount");
+    if (fundParam) {
+      const match = fundTypes.find(
+        (f) =>
+          f.slug === fundParam ||
+          f.name?.toLowerCase() === fundParam.toLowerCase(),
+      );
+      if (match) setFundTypeSlug(match.slug);
+    }
+    if (amountParam && Number(amountParam) > 0) {
+      setCustomAmount(String(Number(amountParam)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fundTypes]);
+
   // Prefill donor email / name from the logged-in user.
   useEffect(() => {
     if (authUser) {
@@ -133,7 +153,7 @@ export default function DonatePage() {
 
           if (cancelled) return;
 
-          setConfirmedAmount(typeof data.amount === "number" ? data.amount : null);
+          setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
           setConfirmedFundName(data.fundType ? donationFundLabel(data.fundType) : null);
           setSubmitted(true);
           return;
@@ -154,7 +174,7 @@ export default function DonatePage() {
 
         if (cancelled) return;
 
-        setConfirmedAmount(typeof data.amount === "number" ? data.amount : null);
+        setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
         setConfirmedFundName(data.fundLabel || null);
         setSubmitted(true);
       } catch {
@@ -178,6 +198,11 @@ export default function DonatePage() {
 
   const activeFund = fundTypes.find((f) => f.slug === fundTypeSlug) ?? fundTypes[0] ?? null;
   const customFields: DonationTypeCustomField[] = activeFund?.custom_fields ?? [];
+  // The form isn't a <form>, so HTML `required` never fires — enforce required
+  // custom fields ourselves before allowing submit.
+  const requiredFieldsMissing = customFields.some(
+    (f) => f.required && !(customFieldValues[f.key] ?? "").trim(),
+  );
   const amount = customAmount ? parseFloat(customAmount) : NaN;
   const effectiveAmount = !isNaN(amount) && amount > 0 ? amount : 0;
   const displayedAmount = confirmedAmount ?? effectiveAmount;
@@ -290,7 +315,19 @@ export default function DonatePage() {
               View Tax Documents
             </Link>
           )}
-          <button className="btn-primary" onClick={() => setSubmitted(false)}>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              // Clear the previous confirmation so the next success screen
+              // doesn't show a stale amount/fund.
+              setSubmitted(false);
+              setConfirmedAmount(null);
+              setConfirmedFundName(null);
+              setNativePaymentOpened(false);
+              setCustomAmount("");
+              setCustomFieldValues({});
+            }}
+          >
             Make Another Donation
           </button>
         </div>
@@ -638,6 +675,7 @@ export default function DonatePage() {
                 !donorEmail ||
                 !donorEmail.includes("@") ||
                 effectiveAmount <= 0 ||
+                requiredFieldsMissing ||
                 processing ||
                 verifyingPayment
               }

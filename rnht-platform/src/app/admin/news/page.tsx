@@ -34,6 +34,7 @@ type FormState = {
   category: Category;
   hero_image_url: string;
   is_published: boolean;
+  published_at: string | null;
 };
 
 const emptyForm: FormState = {
@@ -45,6 +46,7 @@ const emptyForm: FormState = {
   category: "announcement",
   hero_image_url: "",
   is_published: false,
+  published_at: null,
 };
 
 export default function AdminNewsPage() {
@@ -89,6 +91,7 @@ export default function AdminNewsPage() {
       category: post.category,
       hero_image_url: post.hero_image_url ?? "",
       is_published: post.is_published,
+      published_at: post.published_at,
     });
     setShowForm(true);
   }
@@ -109,7 +112,9 @@ export default function AdminNewsPage() {
       category: form.category,
       hero_image_url: form.hero_image_url.trim() || null,
       is_published: form.is_published,
-      published_at: form.is_published ? new Date().toISOString() : null,
+      // Preserve the original publish time on edits; only stamp now when a post
+      // is being published for the first time.
+      published_at: form.is_published ? (form.published_at ?? new Date().toISOString()) : null,
     };
     const { error } = form.id
       ? await supabase.from("news_posts").update(payload).eq("id", form.id)
@@ -139,7 +144,7 @@ export default function AdminNewsPage() {
           .from("news_posts")
           .update({
             is_published: nextPublished,
-            published_at: nextPublished ? new Date().toISOString() : null,
+            published_at: nextPublished ? (post.published_at ?? new Date().toISOString()) : null,
           })
           .eq("id", post.id);
         await refresh();

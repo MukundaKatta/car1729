@@ -128,7 +128,8 @@ describe("Dashboard — signed-out sign-in form", () => {
     await waitFor(() => {
       expect(authState.sendPhoneOtp).toHaveBeenCalledWith(
         "+15125550123",
-        "Rajesh"
+        "Rajesh",
+        true
       );
     });
   });
@@ -146,7 +147,8 @@ describe("Dashboard — signed-out sign-in form", () => {
     await waitFor(() => {
       expect(authState.sendOtp).toHaveBeenCalledWith(
         "rajesh@example.com",
-        "Rajesh"
+        "Rajesh",
+        true
       );
     });
     expect(screen.getByText(/we sent a confirmation email to/i)).toBeInTheDocument();
@@ -161,7 +163,7 @@ describe("Dashboard — signed-out sign-in form", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Send Sign-In Link/i }));
     await waitFor(() => {
-      expect(authState.sendOtp).toHaveBeenCalledWith("rajesh@example.com", "");
+      expect(authState.sendOtp).toHaveBeenCalledWith("rajesh@example.com", "", false);
     });
   });
 

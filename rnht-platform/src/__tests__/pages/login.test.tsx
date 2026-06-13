@@ -95,7 +95,7 @@ describe("LoginPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send Sign-In Link" }));
 
     await waitFor(() => {
-      expect(authState.sendOtp).toHaveBeenCalledWith("test@example.com", "");
+      expect(authState.sendOtp).toHaveBeenCalledWith("test@example.com", "", false);
     });
     expect(screen.getByText(/we sent a confirmation link to/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "I Clicked the Sign-In Link" })).toBeInTheDocument();

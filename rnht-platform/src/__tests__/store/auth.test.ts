@@ -176,6 +176,7 @@ describe("useAuthStore", () => {
         email: "test@temple.org",
         options: {
           data: { name: "Rama" },
+          shouldCreateUser: true,
           emailRedirectTo: expect.stringContaining("/auth/callback"),
         },
       });

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { sampleEvents } from "@/lib/sample-data";
 import { EventCard } from "@/components/calendar/EventCard";
+import { supabase } from "@/lib/supabase";
 
 const eventTypes = [
   { value: "all", label: "All Events" },
@@ -46,12 +47,33 @@ export default function CalendarPage() {
   // text chips are unreadable at phone cell widths, so they're dots on mobile.
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
+  // Load the live events table (admin-managed), same source the homepage uses.
+  // Falls back to the bundled sample events when the backend is empty/down.
+  const [events, setEvents] = useState(sampleEvents);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadEvents() {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("start_date", { ascending: true });
+      if (!cancelled && !error && data && data.length) {
+        setEvents(data as typeof sampleEvents);
+      }
+    }
+    loadEvents();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // List view surfaces upcoming events (today onward) and recurring series
   // (weekly bhajans, monthly vratams). Calendar view keeps the month grid
   // so devotees can still scroll through past months for reference.
   const filteredEvents = useMemo(() => {
     const today = todayYmd();
-    return sampleEvents
+    return events
       .filter((event) => {
         if (filterType !== "all" && event.event_type !== filterType) return false;
         if (view === "list") {
@@ -60,7 +82,7 @@ export default function CalendarPage() {
         return true;
       })
       .sort((a, b) => a.start_date.localeCompare(b.start_date));
-  }, [filterType, view]);
+  }, [filterType, view, events]);
 
   // Calendar grid
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
@@ -73,7 +95,7 @@ export default function CalendarPage() {
 
   const getEventsForDay = (day: number) => {
     const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return sampleEvents.filter((e) => {
+    return events.filter((e) => {
       if (e.start_date !== dateStr) return false;
       if (filterType !== "all" && e.event_type !== filterType) return false;
       return true;

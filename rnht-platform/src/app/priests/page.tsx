@@ -50,7 +50,8 @@ const priests = [
     services: ["All Poojas", "Panchadasa Karmas", "Weddings (Vivaham)", "Homams & Yagnas", "Cultural Activities", "Purana Stotras Mentoring"],
     availability: { atTemple: true, outsideTemple: true, online: false },
     phone: "(512) 998-0112",
-    whatsapp: "https://wa.me/message/P3YRA2XY3GI7F1",
+    // His own number (was incorrectly pointing to Pt. Aditya's WhatsApp).
+    whatsapp: "https://wa.me/15129980112",
     stats: { experience: "15+ yrs", serving: "Since 2017", area: "Texas" },
   },
 ];

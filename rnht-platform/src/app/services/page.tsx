@@ -31,16 +31,18 @@ export default function ServicesPage() {
 
       if (cancelled) return;
 
-      if (!servicesResp.error && servicesResp.data?.length) {
-        if (servicesResp.data.length >= sampleServices.length) {
-          setServices(servicesResp.data as Service[]);
-        }
-      }
+      // Swap services AND categories together, atomically: live services
+      // reference live category ids, so mixing live categories with sample
+      // services (or vice-versa) breaks the category filter. Only adopt the
+      // live catalog when BOTH queries succeed with data; otherwise keep the
+      // bundled sample catalog as a consistent fallback. (Previously a
+      // `>= sample length` guard silently discarded smaller live catalogs.)
+      const servicesOk = !servicesResp.error && (servicesResp.data?.length ?? 0) > 0;
+      const categoriesOk = !categoriesResp.error && (categoriesResp.data?.length ?? 0) > 0;
 
-      if (!categoriesResp.error && categoriesResp.data?.length) {
-        if (categoriesResp.data.length >= sampleCategories.length) {
-          setCategories(categoriesResp.data as ServiceCategory[]);
-        }
+      if (servicesOk && categoriesOk) {
+        setServices(servicesResp.data as Service[]);
+        setCategories(categoriesResp.data as ServiceCategory[]);
       }
     }
 

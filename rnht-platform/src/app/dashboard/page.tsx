@@ -105,7 +105,7 @@ function LoginForm() {
         setLoading(false);
         return;
       }
-      const result = await sendOtp(email, authMode === "signup" ? name : "");
+      const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
       setLoading(false);
       if (result.error) {
         setError(result.error);
@@ -122,7 +122,7 @@ function LoginForm() {
         return;
       }
       setNormalizedPhone(e164);
-      const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "");
+      const result = await sendPhoneOtp(e164, authMode === "signup" ? name : "", authMode === "signup");
       setLoading(false);
       if (result.error) setError(result.error);
       else setStep("phone_otp");
@@ -487,7 +487,7 @@ function LoginForm() {
                 onClick={async () => {
                   setLoading(true);
                   setError("");
-                  const result = await sendOtp(email, authMode === "signup" ? name : "");
+                  const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
                   setLoading(false);
                   if (result.error) {
                     setError(result.error);
@@ -555,7 +555,10 @@ function StatusBadge({ status }: { status: string }) {
 /* ─── Overview Tab ─── */
 function OverviewTab() {
   const { user, bookings, donations, activities } = useAuthStore();
-  const totalDonated = donations.reduce((s, d) => s + d.amount, 0);
+  // Only completed donations count toward the giving total (exclude pending
+  // Zelle pledges / abandoned checkouts).
+  const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
+  const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
   const totalBookings = bookings.length;
   const upcomingBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "pending");
   const recurringDonations = donations.filter((d) => d.recurring);
@@ -761,8 +764,9 @@ function DonationsTab() {
   const [selectedAmount, setSelectedAmount] = useState(51);
   const [selectedFund, setSelectedFund] = useState("General Temple Fund");
 
-  const totalDonated = donations.reduce((s, d) => s + d.amount, 0);
-  const recurringTotal = donations.filter((d) => d.recurring).reduce((s, d) => s + d.amount, 0);
+  const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
+  const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
+  const recurringTotal = completedDonations.filter((d) => d.recurring).reduce((s, d) => s + d.amount, 0);
 
   const handleQuickDonate = () => {
     // Redirect to donate page with pre-selected fund and amount
@@ -847,7 +851,7 @@ function DonationsTab() {
         </div>
         <div className="card p-5 text-center">
           <Receipt className="mx-auto h-6 w-6 text-blue-600" />
-          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{donations.length}</p>
+          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{completedDonations.length}</p>
           <p className="text-sm text-gray-500 font-accent">Tax Receipts</p>
         </div>
       </div>

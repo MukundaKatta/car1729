@@ -53,6 +53,8 @@ export type Donation = {
   frequency?: "monthly" | "quarterly" | "annual";
   receiptId: string;
   taxDeductible: boolean;
+  /** payment_status from the DB: "completed" | "pending" | etc. */
+  status?: string;
 };
 
 export type ActivityItem = {
@@ -74,10 +76,11 @@ type AuthStore = {
   loading: boolean;
   initialized: boolean;
 
-  // Auth actions
-  sendOtp: (email: string, name: string) => Promise<AuthResult>;
+  // Auth actions. createUser=false (sign-in) prevents silently creating a new
+  // account for an email/phone that doesn't exist yet.
+  sendOtp: (email: string, name: string, createUser?: boolean) => Promise<AuthResult>;
   verifyOtp: (email: string, token: string) => Promise<AuthResult>;
-  sendPhoneOtp: (phone: string, name: string) => Promise<AuthResult>;
+  sendPhoneOtp: (phone: string, name: string, createUser?: boolean) => Promise<AuthResult>;
   verifyPhoneOtp: (phone: string, token: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
@@ -183,13 +186,14 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     });
   },
 
-  sendOtp: async (email, name) => {
+  sendOtp: async (email, name, createUser = true) => {
     if (!supabase) return { error: "Authentication is not configured" };
     set({ loading: true });
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         data: { name },
+        shouldCreateUser: createUser,
         emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}${process.env.NEXT_PUBLIC_BASE_PATH || ""}/auth/callback`,
       },
     });
@@ -211,7 +215,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     return {};
   },
 
-  sendPhoneOtp: async (phone, name) => {
+  sendPhoneOtp: async (phone, name, createUser = true) => {
     if (!supabase) return { error: "Authentication is not configured" };
     set({ loading: true });
     // Phone must be E.164 (e.g. "+15125550123"). normalizePhone() from
@@ -220,6 +224,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       phone,
       options: {
         data: { name },
+        shouldCreateUser: createUser,
       },
     });
     set({ loading: false });
@@ -257,7 +262,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     if (!authUser) return;
 
     // Fetch profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", authUser.id)
@@ -265,8 +270,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     if (profile) {
       set({ user: profileRowToUserProfile(profile) });
-    } else {
-      // Profile may not exist yet (trigger delay); create a fallback
+    } else if (!profileError && !get().user) {
+      // No row yet (trigger delay) and nothing loaded — seed a fallback.
+      // On a transient fetch error we keep any already-loaded profile rather
+      // than clobbering it with an empty placeholder.
       set({
         user: {
           id: authUser.id,
@@ -277,6 +284,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           createdAt: authUser.created_at,
         },
       });
+    } else if (profileError) {
+      console.error("fetchUserData profile error:", profileError.message);
     }
 
     // Fetch bookings
@@ -315,12 +324,15 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         donations: donations.map((d) => ({
           id: d.id,
           fund: d.fund_type || "General",
-          amount: d.amount,
+          // PostgREST returns NUMERIC columns as strings — coerce so totals
+          // sum instead of string-concatenating.
+          amount: Number(d.amount) || 0,
           date: d.created_at,
           method: d.payment_method,
           recurring: d.is_recurring,
           receiptId: `REC-${d.id.slice(0, 8)}`,
           taxDeductible: true,
+          status: d.payment_status,
         })),
       });
     }
