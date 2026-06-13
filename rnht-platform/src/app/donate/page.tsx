@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useLanguageStore } from "@/store/language";
 import { t } from "@/lib/i18n/translations";
 import { supabase } from "@/lib/supabase";
+import { isNative } from "@/lib/capacitor";
 import type { DonationType, DonationTypeCustomField } from "@/types/database";
 import { useAuthStore } from "@/store/auth";
 import {
@@ -62,6 +63,7 @@ export default function DonatePage() {
   );
   const [submitted, setSubmitted] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [nativePaymentOpened, setNativePaymentOpened] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [error, setError] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
@@ -224,6 +226,18 @@ export default function DonatePage() {
         return;
       }
       if (data.url) {
+        if (isNative()) {
+          // In the native app, navigating window.location would load the
+          // external checkout INSIDE the app's WebView and trap the user with
+          // no way back. Open it in the system browser overlay instead; the
+          // app stays mounted underneath. When the user returns we refresh so
+          // the completed donation shows in their dashboard.
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url });
+          setNativePaymentOpened(true);
+          if (isAuthenticated) void fetchUserData();
+          return;
+        }
         window.location.href = data.url;
         return;
       }
@@ -606,6 +620,14 @@ export default function DonatePage() {
             {error && (
               <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                 {error}
+              </div>
+            )}
+
+            {nativePaymentOpened && (
+              <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                Your secure payment page has opened in the browser. After you
+                finish paying, return to the app — your donation will appear in
+                your dashboard once confirmed.
               </div>
             )}
 

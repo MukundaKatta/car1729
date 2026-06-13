@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
+import { Browser } from "@capacitor/browser";
 import { initBackButton, openExternal, isNative } from "@/lib/capacitor";
+import { useAuthStore } from "@/store/auth";
 
 /**
  * Initializes Capacitor-specific functionality:
@@ -54,9 +56,17 @@ export function CapacitorInit() {
 
     document.addEventListener("click", handleLinkClick, true);
 
+    // When the in-app payment browser closes (donor returns from Stripe/PayPal),
+    // refresh their data so a just-completed donation shows in the dashboard.
+    const browserListener = Browser.addListener("browserFinished", () => {
+      const { isAuthenticated, fetchUserData } = useAuthStore.getState();
+      if (isAuthenticated) void fetchUserData();
+    });
+
     return () => {
       cleanup?.();
       document.removeEventListener("click", handleLinkClick, true);
+      browserListener.then((l) => l.remove());
     };
   }, [router]);
 
