@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   getEmailAuthCooldownSeconds,
   readEmailAuthCooldownUntil,
@@ -568,7 +569,7 @@ function OverviewTab() {
       {/* Welcome */}
       <div className="card p-8 bg-gradient-to-r from-temple-maroon-deep to-temple-maroon text-white">
         <h2 className="font-heading text-2xl font-bold">
-          Namaste, {user?.name?.split(" ")[0]}!
+          Namaste{user?.name?.trim() ? `, ${user.name.split(" ")[0]}` : ""}!
         </h2>
         <p className="mt-2 text-gray-300 font-accent text-lg">
           Welcome to your devotee portal. Manage your services, donations, and spiritual journey.
@@ -586,7 +587,7 @@ function OverviewTab() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: "Total Donated", value: `$${totalDonated}`, icon: DollarSign, color: "text-green-600 bg-green-50" },
+          { label: "Total Donated", value: formatCurrency(totalDonated), icon: DollarSign, color: "text-green-600 bg-green-50" },
           { label: "Services Booked", value: totalBookings, icon: CalendarCheck, color: "text-blue-600 bg-blue-50" },
           { label: "Upcoming", value: upcomingBookings.length, icon: Clock, color: "text-amber-600 bg-amber-50" },
           { label: "Recurring", value: recurringDonations.length, icon: RefreshCw, color: "text-purple-600 bg-purple-50" },
@@ -641,7 +642,7 @@ function OverviewTab() {
               </div>
               <div className="text-right shrink-0">
                 {a.amount && <p className="text-sm font-semibold text-gray-900">${a.amount}</p>}
-                <p className="text-xs text-gray-400">{a.date}</p>
+                <p className="text-xs text-gray-400">{formatDate(a.date)}</p>
               </div>
             </div>
           ))}
@@ -841,12 +842,12 @@ function DonationsTab() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card p-5 text-center">
           <DollarSign className="mx-auto h-6 w-6 text-green-600" />
-          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">${totalDonated}</p>
+          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(totalDonated)}</p>
           <p className="text-sm text-gray-500 font-accent">Total Donated</p>
         </div>
         <div className="card p-5 text-center">
           <RefreshCw className="mx-auto h-6 w-6 text-purple-600" />
-          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">${recurringTotal}/mo</p>
+          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(recurringTotal)}/mo</p>
           <p className="text-sm text-gray-500 font-accent">Recurring</p>
         </div>
         <div className="card p-5 text-center">
@@ -872,16 +873,21 @@ function DonationsTab() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 text-sm">{d.fund}</p>
                 <p className="text-xs text-gray-500">
-                  {d.date} &middot; {d.method}
-                  {d.recurring && ` &middot; ${d.frequency}`}
+                  {formatDate(d.date)} · {d.method}
+                  {d.recurring && d.frequency ? ` · ${d.frequency}` : ""}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-heading font-bold text-temple-maroon">${d.amount}</p>
+                <p className="font-heading font-bold text-temple-maroon">{formatCurrency(d.amount)}</p>
                 <p className="text-xs text-gray-400">{d.receiptId}</p>
               </div>
             </div>
           ))}
+          {donations.length === 0 && (
+            <div className="px-6 py-10 text-center text-sm text-gray-500">
+              No donations yet. Your giving history will appear here.
+            </div>
+          )}
         </div>
       </div>
 
@@ -1075,7 +1081,7 @@ function ProfileTab() {
               <div key={m.id} className="flex items-center justify-between rounded-xl bg-temple-ivory p-4">
                 <div>
                   <p className="font-semibold text-gray-900">{m.name}</p>
-                  <p className="text-xs text-gray-500">{m.relationship}{m.gotra ? ` &middot; ${m.gotra} Gotra` : ""}</p>
+                  <p className="text-xs text-gray-500">{m.relationship}{m.gotra ? ` · ${m.gotra} Gotra` : ""}</p>
                 </div>
                 <button
                   onClick={() => removeFamilyMember(m.id)}
