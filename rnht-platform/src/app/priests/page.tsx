@@ -9,6 +9,14 @@ import {
 import Link from "next/link";
 import { canonicalPath } from "@/lib/site-metadata";
 
+// First given name, skipping honorifics — so "Pt. Shri Aditya Sharma" -> "Aditya"
+// (was naively name.split(" ")[1], which produced "Book with Shri").
+function priestShortName(name: string): string {
+  const honorifics = new Set(["pt", "pt.", "pandit", "shri", "sri", "sree", "smt", "smt."]);
+  const parts = name.split(/\s+/).filter((p) => !honorifics.has(p.toLowerCase()));
+  return parts[0] || name;
+}
+
 export const metadata: Metadata = {
   title: "Our Priests",
   description:
@@ -172,7 +180,7 @@ export default function PriestsPage() {
                     href="/services"
                     className="btn-primary text-sm"
                   >
-                    Book with {priest.name.split(" ")[1]}
+                    Book with {priestShortName(priest.name)}
                   </Link>
                   <a
                     href={priest.whatsapp}

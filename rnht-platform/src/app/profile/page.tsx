@@ -18,7 +18,7 @@ import {
   Clock,
   Loader2,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
 import { deleteAccountUrl, edgeFunctionHeaders } from "@/lib/edge-functions";
@@ -208,13 +208,26 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
+    // Validate before writing so malformed contact details aren't persisted.
+    if (!formName.trim()) {
+      setSaveError("Please enter your name.");
+      return;
+    }
+    if (formEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail.trim())) {
+      setSaveError("Please enter a valid email address.");
+      return;
+    }
+    if (formPhone.trim() && formPhone.replace(/\D/g, "").length < 10) {
+      setSaveError("Please enter a valid phone number.");
+      return;
+    }
     setSaving(true);
     setSaveError("");
     setSaveSuccess(false);
     const result = await updateProfile({
-      name: formName,
-      email: formEmail,
-      phone: formPhone,
+      name: formName.trim(),
+      email: formEmail.trim(),
+      phone: formPhone.trim(),
       address: formAddress,
       gotra: formGotra,
       nakshatra: formNakshatra,
@@ -601,7 +614,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-                  <Calendar className="h-4 w-4" /> {d.date}
+                  <Calendar className="h-4 w-4" /> {formatDate(d.date)}
                   <button className="ml-auto text-xs text-temple-red hover:underline" onClick={() => alert("Feature coming soon!")}>Download Receipt</button>
                 </div>
               </div>

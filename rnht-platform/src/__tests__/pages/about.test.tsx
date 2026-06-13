@@ -101,9 +101,9 @@ describe("AboutPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("mentions Pandit Raghuram Sharma", () => {
+  it("mentions Pandit Raghurama Sharma", () => {
     render(<AboutPage />);
-    const matches = screen.getAllByText(/Pandit Raghuram Sharma/i);
+    const matches = screen.getAllByText(/Pandit Raghurama Sharma/i);
     expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 

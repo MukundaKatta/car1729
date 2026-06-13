@@ -208,11 +208,12 @@ describe("PriestsPage", () => {
     });
   });
 
-  it("shows Book with Shri for Aditya Sharma", () => {
+  it("shows a 'Book with <given name>' link per priest (skipping honorifics)", () => {
     render(<PriestsPage />);
-    // Both priests have "Book with Shri ..." links
-    const bookLinks = screen.getAllByRole("link", { name: /book with Shri/i });
+    // e.g. "Book with Aditya" / "Book with Raghurama" — not "Book with Shri"
+    const bookLinks = screen.getAllByRole("link", { name: /book with (Aditya|Raghurama)/i });
     expect(bookLinks.length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByRole("link", { name: /book with Shri/i })).toBeNull();
   });
 
   it("renders Education section headers", () => {

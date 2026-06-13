@@ -320,7 +320,7 @@ describe("RootLayout metadata exports", () => {
     const layoutModule = await import("@/app/layout");
     const viewport = (layoutModule as any).viewport;
     expect(viewport).toBeDefined();
-    expect(viewport.themeColor).toBe("#C41E3A");
+    expect(viewport.themeColor).toBe("#B91C32");
     expect(viewport.width).toBe("device-width");
     expect(viewport.initialScale).toBe(1);
   });

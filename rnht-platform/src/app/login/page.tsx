@@ -30,10 +30,15 @@ function normalizePhone(input: string): string | null {
   const hasPlus = trimmed.startsWith("+");
   const digits = trimmed.replace(/\D/g, "");
   if (!digits) return null;
-  let e164 = hasPlus ? `+${digits}` : `+1${digits}`;
-  // US number sanity: +1 followed by 10 digits. For international, require 8-15 digits total.
-  if (!/^\+\d{8,15}$/.test(e164)) return null;
-  return e164;
+  if (hasPlus) {
+    // International: full E.164 with country code, 11–15 digits total.
+    const e164 = `+${digits}`;
+    if (!/^\+\d{11,15}$/.test(e164)) return null;
+    return e164;
+  }
+  // No "+": assume US — require exactly 10 digits (reject 7-digit fragments).
+  if (digits.length !== 10) return null;
+  return `+1${digits}`;
 }
 
 export default function LoginPage() {
@@ -149,6 +154,10 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
       if (result.retryAfterSeconds) startEmailCooldown(result.retryAfterSeconds);
+    } else {
+      // Restart the throttle on a successful resend (was missing, so the
+      // cooldown never re-armed and the button could be spammed).
+      startEmailCooldown(60);
     }
   };
 
@@ -209,6 +218,10 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setError("");
+    if (!supabase) {
+      setError("Authentication is not configured");
+      return;
+    }
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -655,6 +668,7 @@ export default function LoginPage() {
                 onClick={() => {
                   setStep("email");
                   setError("");
+                  setEmailCode("");
                 }}
                 className="text-sm text-gray-500 hover:text-gray-700"
               >

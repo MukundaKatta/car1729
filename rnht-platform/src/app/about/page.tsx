@@ -33,7 +33,7 @@ export default function AboutPage() {
           Rudra Narayana Hindu Temple was founded by Pandit Aditya Sharma, who
           had a vision to create a spiritual hub for the community. With his
           dedication and perseverance, RNHT was{" "}
-          <strong>established in 2022</strong>. Later, Pandit Raghuram Sharma
+          <strong>established in 2022</strong>. Later, Pandit Raghurama Sharma
           joined Pandit Aditya Sharma, bringing his own expertise and passion to
           the temple. Together, they have guided RNHT to become a{" "}
           <strong>thriving spiritual center</strong>, offering a range of
@@ -56,7 +56,7 @@ export default function AboutPage() {
 
         <p>
           After serving the community for many years, Pandit Aditya Sharma and
-          Pandit Raghuram Sharma wanted to take their vision to the next level by
+          Pandit Raghurama Sharma wanted to take their vision to the next level by
           establishing a <strong>Vedic experience</strong> for devotees. They
           aimed to create a sacred space where individuals could immerse
           themselves in the ancient wisdom of the Vedas, experience the richness

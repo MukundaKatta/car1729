@@ -15,6 +15,7 @@ import type { NewsPost } from "@/types/database";
 export default function NewsPage() {
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,11 +31,12 @@ export default function NewsPage() {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("news_posts")
         .select("*")
         .eq("is_published", true)
         .order("published_at", { ascending: false, nullsFirst: false });
+      if (error) setLoadError(true);
       setPosts((data ?? []) as unknown as NewsPost[]);
       setLoading(false);
     }
@@ -117,7 +119,9 @@ export default function NewsPage() {
           : posts.length === 0
             ? (
               <p className="col-span-full py-12 text-center text-gray-500">
-                No posts yet.
+                {loadError
+                  ? "We couldn't load the latest news right now. Please try again shortly."
+                  : "No news or updates have been posted yet. Please check back soon."}
               </p>
             )
             : posts.map((post) => (

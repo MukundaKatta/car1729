@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
+import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FallingPetals } from "@/components/effects/FallingPetals";
@@ -11,8 +12,24 @@ import { CapacitorInit } from "@/components/CapacitorInit";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
+// Self-hosted (bundled) so the decorative headings actually render — and work
+// offline in the native apps. Exposed as CSS variables used by --font-heading/
+// --font-accent below.
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cormorant",
+  display: "swap",
+});
+
 export const viewport: Viewport = {
-  themeColor: "#C41E3A",
+  themeColor: "#B91C32",
   width: "device-width",
   initialScale: 1,
   // Edge-to-edge in the native apps: lets env(safe-area-inset-*) resolve so
@@ -29,6 +46,7 @@ export const metadata: Metadata = {
   },
   description:
     "Austin's premier Hindu temple offering traditional Vedic poojas, homams, weddings, samskaras, and spiritual services. Serving Kyle, Manor, Round Rock, and greater Texas area. Book online or call (512) 545-0473.",
+  manifest: "/manifest.json",
   keywords: [
     "Hindu Temple Austin",
     "Pooja Services Texas",
@@ -52,12 +70,14 @@ export const metadata: Metadata = {
     description:
       "Traditional Vedic poojas, homams, weddings & spiritual services in Austin, Texas. Book online today.",
     url: "/",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rudra Narayana Hindu Temple - Austin, TX",
     description:
       "Traditional Vedic poojas, homams, weddings & spiritual services in Austin, Texas.",
+    images: ["/deity-collage.jpg"],
   },
   robots: {
     index: true,
@@ -103,10 +123,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      className={`${playfair.variable} ${cormorant.variable}`}
       style={
         {
-          "--font-heading": '"Playfair Display", Georgia, "Times New Roman", serif',
-          "--font-accent": '"Cormorant Garamond", Georgia, "Times New Roman", serif',
+          "--font-heading": 'var(--font-playfair), Georgia, "Times New Roman", serif',
+          "--font-accent": 'var(--font-cormorant), Georgia, "Times New Roman", serif',
         } as CSSProperties
       }
     >
