@@ -23,8 +23,10 @@ const routes = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // Site uses trailingSlash:true, so emit canonical trailing-slash URLs to match
+  // each page's rel=canonical (avoids 301-redirect URLs in the sitemap).
   return routes.map((r) => ({
-    url: `${SITE_URL}${r || "/"}`,
+    url: r === "" ? `${SITE_URL}/` : `${SITE_URL}${r}/`,
     changeFrequency: "weekly",
     priority: r === "" ? 1 : 0.7,
   }));

@@ -569,7 +569,7 @@ function OverviewTab() {
       {/* Welcome */}
       <div className="card p-8 bg-gradient-to-r from-temple-maroon-deep to-temple-maroon text-white">
         <h2 className="font-heading text-2xl font-bold">
-          Namaste{user?.name?.trim() ? `, ${user.name.split(" ")[0]}` : ""}!
+          Namaste{user?.name?.trim() ? `, ${user.name.trim().split(" ")[0]}` : ""}!
         </h2>
         <p className="mt-2 text-gray-300 font-accent text-lg">
           Welcome to your devotee portal. Manage your services, donations, and spiritual journey.
@@ -863,7 +863,12 @@ function DonationsTab() {
           <h3 className="font-heading font-bold text-gray-900">Donation History</h3>
         </div>
         <div className="divide-y divide-gray-50">
-          {donations.map((d) => (
+          {donations.map((d) => {
+            // A receipt only exists once the gift is verified/received. Pending
+            // gifts (e.g. a Zelle pledge awaiting bank confirmation) show a
+            // status instead of a receipt ID that isn't valid yet.
+            const isCompleted = d.status === "completed" || d.status === undefined;
+            return (
             <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-temple-ivory/50 transition-colors">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                 d.recurring ? "bg-purple-50 text-purple-600" : "bg-green-50 text-green-600"
@@ -879,10 +884,15 @@ function DonationsTab() {
               </div>
               <div className="text-right shrink-0">
                 <p className="font-heading font-bold text-temple-maroon">{formatCurrency(d.amount)}</p>
-                <p className="text-xs text-gray-400">{d.receiptId}</p>
+                {isCompleted ? (
+                  <p className="text-xs text-gray-400">{d.receiptId}</p>
+                ) : (
+                  <p className="text-xs font-accent text-amber-600">Pending</p>
+                )}
               </div>
             </div>
-          ))}
+            );
+          })}
           {donations.length === 0 && (
             <div className="px-6 py-10 text-center text-sm text-gray-500">
               No donations yet. Your giving history will appear here.

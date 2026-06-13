@@ -66,6 +66,12 @@ export default function DonatePage() {
   const [nativePaymentOpened, setNativePaymentOpened] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [error, setError] = useState("");
+  // Errors from verifying a returned Stripe/PayPal payment are tracked
+  // separately from form-submit errors. Reading searchParams at render to tell
+  // them apart is unreliable — replaceState strips ?success but useSearchParams
+  // doesn't react to it, so the value goes stale and a later form error would
+  // render in the wrong place.
+  const [verifyError, setVerifyError] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
   const [confirmedFundName, setConfirmedFundName] = useState<string | null>(null);
   const locale = useLanguageStore((s) => s.locale);
@@ -136,7 +142,7 @@ export default function DonatePage() {
     async function verifyDonation() {
       setVerifyingPayment(true);
       setProcessing(true);
-      setError("");
+      setVerifyError("");
 
       try {
         if (token && provider === "paypal") {
@@ -181,7 +187,7 @@ export default function DonatePage() {
         setSubmitted(true);
       } catch {
         if (!cancelled) {
-          setError("We couldn't verify your donation yet. Please contact the temple before trying again.");
+          setVerifyError("We couldn't verify your donation yet. Please contact the temple before trying again.");
         }
       } finally {
         if (!cancelled) {
@@ -514,9 +520,9 @@ export default function DonatePage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-5">
         {/* Left column — form */}
         <div className="lg:col-span-3 space-y-6">
-          {error && searchParams.get("success") === "true" && (
+          {verifyError && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {error}
+              {verifyError}
             </div>
           )}
           {/* Fund */}
@@ -686,7 +692,7 @@ export default function DonatePage() {
               </div>
             )}
 
-            {error && searchParams.get("success") !== "true" && (
+            {error && (
               <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                 {error}
               </div>

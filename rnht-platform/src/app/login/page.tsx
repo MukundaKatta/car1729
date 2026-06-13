@@ -82,16 +82,24 @@ export default function LoginPage() {
     writeEmailAuthCooldownUntil(emailCooldownUntil);
   }, [emailCooldownUntil]);
 
+  // Phone OTP resend throttle (mirrors the email cooldown).
+  const [phoneCooldownUntil, setPhoneCooldownUntil] = useState(0);
+
+  // One ticker advances `now` every second while EITHER cooldown is counting
+  // down, so both the email and phone "Resend" countdowns tick and re-enable.
+  // (Previously this was gated only on the email cooldown, which froze the
+  // phone countdown forever in a pure phone-login flow.)
   useEffect(() => {
-    if (emailCooldownUntil <= Date.now()) {
-      if (emailCooldownUntil !== 0) setEmailCooldownUntil(0);
-      return;
-    }
-    const interval = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+    const latest = Math.max(emailCooldownUntil, phoneCooldownUntil);
+    if (latest <= Date.now()) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
-  }, [emailCooldownUntil]);
+  }, [emailCooldownUntil, phoneCooldownUntil]);
+
+  // Clear an expired email cooldown (also clears the persisted value).
+  useEffect(() => {
+    if (emailCooldownUntil !== 0 && emailCooldownUntil <= now) setEmailCooldownUntil(0);
+  }, [now, emailCooldownUntil]);
 
   const emailCooldownSeconds = getEmailAuthCooldownSeconds(emailCooldownUntil, now);
   const startEmailCooldown = (seconds: number) => {
@@ -99,8 +107,6 @@ export default function LoginPage() {
     setEmailCooldownUntil(Date.now() + seconds * 1000);
   };
 
-  // Phone OTP resend throttle (mirrors the email cooldown).
-  const [phoneCooldownUntil, setPhoneCooldownUntil] = useState(0);
   const phoneCooldownSeconds = getEmailAuthCooldownSeconds(phoneCooldownUntil, now);
   const startPhoneCooldown = (seconds: number) => {
     setNow(Date.now());

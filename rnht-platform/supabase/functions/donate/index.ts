@@ -294,13 +294,17 @@ async function handleVerify(req: Request): Promise<Response> {
 
   const fundLabel = fundLabels[data.fund_type] ?? "Temple Fund";
 
-  // Only flip + email on the first verification (idempotent on refresh/re-verify),
-  // so the donor never receives duplicate receipts.
-  if (data.payment_status !== "completed") {
-    await supabase
-      .from("donations")
-      .update({ payment_status: "completed" })
-      .eq("id", donationId);
+  // Atomic flip: only the verify that actually transitions pending -> completed
+  // updates a row and sends the receipt. Concurrent/refresh verifies update 0
+  // rows, so the donor never receives duplicate receipts (matches paypal-capture).
+  const { data: updated } = await supabase
+    .from("donations")
+    .update({ payment_status: "completed" })
+    .eq("id", donationId)
+    .eq("payment_status", "pending")
+    .select("id")
+    .maybeSingle();
+  if (updated) {
     await sendDonationReceipt({
       to: data.donor_email,
       donorName: data.donor_name,

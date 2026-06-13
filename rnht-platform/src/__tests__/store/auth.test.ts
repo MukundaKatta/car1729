@@ -18,12 +18,17 @@ const mockOnAuthStateChange = vi.fn();
 // Chainable query builder that tracks calls.
 // The builder is "thenable" so that `await supabase.from("x").update({}).eq(...)` resolves.
 function createQueryBuilder() {
+  // single and maybeSingle share one mock fn so a test that stubs
+  // `builder.single.mockResolvedValue(...)` also drives the profile fetch,
+  // which now calls `.maybeSingle()` (returns null instead of erroring on 0 rows).
+  const singleResult = vi.fn().mockResolvedValue({ data: null, error: null });
   const builder: any = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    single: singleResult,
+    maybeSingle: singleResult,
     update: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     // Make the builder itself thenable so `await builder` resolves to { data: null, error: null }.
