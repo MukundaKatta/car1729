@@ -302,11 +302,18 @@ export default function CalendarPage() {
 
       {/* Event List */}
       {view === "list" && (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        filteredEvents.length > 0 ? (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-12 text-center text-gray-500">
+            No upcoming events in this category right now. Check back soon or
+            switch to the month view to browse other dates.
+          </p>
+        )
       )}
     </div>
   );

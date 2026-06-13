@@ -28,40 +28,41 @@ export function ServiceCard({ service }: { service: Service }) {
 
   return (
     <>
-      <div
-        className="card cursor-pointer overflow-hidden group"
-        onClick={() => setShowModal(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setShowModal(true);
-          }
-        }}
-        aria-label={service.name}
-      >
-        {service.image_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={service.image_url}
-            alt={service.name}
-            className="h-36 w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-36 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20">
-            <span className="text-5xl opacity-60 transition-transform group-hover:scale-110">
-              {icon}
-            </span>
+      <div className="card overflow-hidden group">
+        {/* Only the image + text open the modal — a real <button> containing
+            non-interactive content. The action links below are separate, so we
+            no longer nest interactive <a>s inside a role="button" (invalid ARIA)
+            nor double-fire on keyboard activation. */}
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className="block w-full cursor-pointer text-left"
+          aria-label={`View details for ${service.name}`}
+        >
+          {service.image_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={service.image_url}
+              alt={service.name}
+              className="h-36 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-36 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20">
+              <span className="text-5xl opacity-60 transition-transform group-hover:scale-110">
+                {icon}
+              </span>
+            </div>
+          )}
+          <div className="px-4 pt-4">
+            <h3 className="font-heading font-bold text-gray-900 leading-tight">
+              {service.name}
+            </h3>
+            <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+              {service.short_description}
+            </p>
           </div>
-        )}
-        <div className="p-4">
-          <h3 className="font-heading font-bold text-gray-900 leading-tight">
-            {service.name}
-          </h3>
-          <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-            {service.short_description}
-          </p>
+        </button>
+        <div className="px-4 pb-4">
           <div className="mt-4 space-y-2">
             {registerUrl && (
               <a
@@ -69,7 +70,6 @@ export function ServiceCard({ service }: { service: Service }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-temple-red px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-temple-red-dark"
-                onClick={(e) => e.stopPropagation()}
                 aria-label={`Register for ${service.name}`}
               >
                 <ClipboardList className="h-4 w-4" />
@@ -82,7 +82,6 @@ export function ServiceCard({ service }: { service: Service }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
-                onClick={(e) => e.stopPropagation()}
                 aria-label={`Message about ${service.name} on WhatsApp`}
               >
                 <MessageCircle className="h-4 w-4" />
@@ -91,7 +90,6 @@ export function ServiceCard({ service }: { service: Service }) {
               <a
                 href="tel:+15125450473"
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
-                onClick={(e) => e.stopPropagation()}
                 aria-label={`Call the temple about ${service.name}`}
               >
                 <Phone className="h-4 w-4" />

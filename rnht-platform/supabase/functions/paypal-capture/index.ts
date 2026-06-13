@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
           status: captureData.status,
           amount: donation.amount,
           fundType: donation.fund_type,
+          fundLabel: fundLabels[donation.fund_type] ?? "Temple Fund",
         }),
         { headers: jsonHeaders },
       );

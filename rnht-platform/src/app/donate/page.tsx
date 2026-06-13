@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Heart,
@@ -154,7 +154,9 @@ export default function DonatePage() {
           if (cancelled) return;
 
           setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
-          setConfirmedFundName(data.fundType ? donationFundLabel(data.fundType) : null);
+          setConfirmedFundName(
+            data.fundLabel || (data.fundType ? donationFundLabel(data.fundType) : null),
+          );
           setSubmitted(true);
           return;
         }
@@ -204,7 +206,13 @@ export default function DonatePage() {
     (f) => f.required && !(customFieldValues[f.key] ?? "").trim(),
   );
   const amount = customAmount ? parseFloat(customAmount) : NaN;
-  const effectiveAmount = !isNaN(amount) && amount > 0 ? amount : 0;
+  // Round to whole cents and cap at a sane maximum, so we never send sub-cent
+  // values or overflow the DECIMAL(10,2) column / Stripe's integer limit.
+  const MAX_DONATION = 100000;
+  const effectiveAmount =
+    !isNaN(amount) && amount > 0
+      ? Math.min(Math.round(amount * 100) / 100, MAX_DONATION)
+      : 0;
   const displayedAmount = confirmedAmount ?? effectiveAmount;
   const displayedFundName = confirmedFundName ?? activeFund?.name ?? "Temple Fund";
 
@@ -212,7 +220,14 @@ export default function DonatePage() {
     setCustomFieldValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Synchronous guard against a same-tick double-submit (the `processing` state
+  // update is async, so two fast clicks could both pass the disabled check and
+  // create duplicate donation records).
+  const submittingRef = useRef(false);
+
   const handleDonate = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setProcessing(true);
     setError("");
     try {
@@ -274,6 +289,7 @@ export default function DonatePage() {
       setError("Payment processing failed. Please try again.");
     } finally {
       setProcessing(false);
+      submittingRef.current = false;
     }
   };
 
@@ -285,13 +301,24 @@ export default function DonatePage() {
           {t("donate.thankYou", locale)}
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Your donation of <strong>{formatCurrency(displayedAmount)}</strong> to
-          the {displayedFundName} has been received.
+          {paymentMethod === "zelle" ? (
+            <>
+              Your pledge of <strong>{formatCurrency(displayedAmount)}</strong> to
+              the {displayedFundName} has been recorded. Please complete it via
+              Zelle to finish your donation.
+            </>
+          ) : (
+            <>
+              Your donation of <strong>{formatCurrency(displayedAmount)}</strong> to
+              the {displayedFundName} has been received.
+            </>
+          )}
         </p>
         <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-800">
           <p>
-            A tax-deductible receipt will be emailed to you. RNHT is a
-            registered 501(c)(3) nonprofit organization.
+            {paymentMethod === "zelle"
+              ? "Once we receive your Zelle transfer, we'll mark it complete and email your tax-deductible receipt. RNHT is a registered 501(c)(3) nonprofit organization."
+              : "A tax-deductible receipt will be emailed to you. RNHT is a registered 501(c)(3) nonprofit organization."}
           </p>
           {isAuthenticated && (
             <p className="mt-2">
