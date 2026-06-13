@@ -99,6 +99,14 @@ export default function LoginPage() {
     setEmailCooldownUntil(Date.now() + seconds * 1000);
   };
 
+  // Phone OTP resend throttle (mirrors the email cooldown).
+  const [phoneCooldownUntil, setPhoneCooldownUntil] = useState(0);
+  const phoneCooldownSeconds = getEmailAuthCooldownSeconds(phoneCooldownUntil, now);
+  const startPhoneCooldown = (seconds: number) => {
+    setNow(Date.now());
+    setPhoneCooldownUntil(Date.now() + seconds * 1000);
+  };
+
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
@@ -191,6 +199,7 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
     } else {
+      startPhoneCooldown(60);
       setStep("phone_otp");
     }
   };
@@ -209,11 +218,13 @@ export default function LoginPage() {
   };
 
   const handleResendPhoneOtp = async () => {
+    if (phoneCooldownSeconds > 0) return;
     setError("");
     setLoading(true);
     const result = await sendPhoneOtp(normalizedPhone, authMode === "signup" ? name : "", authMode === "signup");
     setLoading(false);
     if (result.error) setError(result.error);
+    else startPhoneCooldown(60);
   };
 
   const handleGoogleSignIn = async () => {
@@ -653,10 +664,10 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={handleResendPhoneOtp}
-                disabled={loading}
+                disabled={loading || phoneCooldownSeconds > 0}
                 className="text-sm text-temple-red hover:underline disabled:opacity-50"
               >
-                Resend Code
+                {phoneCooldownSeconds > 0 ? `Resend Code in ${phoneCooldownSeconds}s` : "Resend Code"}
               </button>
             </div>
           )}

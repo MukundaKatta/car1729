@@ -847,8 +847,8 @@ function DonationsTab() {
         </div>
         <div className="card p-5 text-center">
           <RefreshCw className="mx-auto h-6 w-6 text-purple-600" />
-          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(recurringTotal)}/mo</p>
-          <p className="text-sm text-gray-500 font-accent">Recurring</p>
+          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(recurringTotal)}</p>
+          <p className="text-sm text-gray-500 font-accent">Recurring total</p>
         </div>
         <div className="card p-5 text-center">
           <Receipt className="mx-auto h-6 w-6 text-blue-600" />

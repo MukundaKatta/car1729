@@ -243,10 +243,13 @@ export default function ProfilePage() {
   };
 
   const handleAddFamilyMember = () => {
-    if (!newMember.name || !newMember.relationship) return;
+    // Trim so a whitespace-only name can't create a blank-titled card.
+    if (!newMember.name.trim() || !newMember.relationship.trim()) return;
     const member: FamilyMember = {
       id: `fm-${Date.now()}`,
       ...newMember,
+      name: newMember.name.trim(),
+      relationship: newMember.relationship.trim(),
     };
     // Persist to store (which syncs to Supabase)
     addFamilyMember(member);
@@ -332,8 +335,9 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Quick Stats (Seva Points removed — it had no data source and always
+          showed 0, which read as broken). */}
+      <div className="mt-8 grid grid-cols-3 gap-4">
         <div className="card p-4 text-center">
           <p className="text-2xl font-bold text-temple-red">{bookings.length}</p>
           <p className="text-xs text-gray-500">Total Bookings</p>
@@ -345,10 +349,6 @@ export default function ProfilePage() {
         <div className="card p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">{familyMembers.length}</p>
           <p className="text-xs text-gray-500">Family Members</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-temple-gold">0</p>
-          <p className="text-xs text-gray-500">Seva Points</p>
         </div>
       </div>
 
@@ -379,20 +379,20 @@ export default function ProfilePage() {
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" className="input-field mt-1" value={formName} onChange={(e) => setFormName(e.target.value)} />
+                <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                <input id="profile-name" type="text" autoComplete="name" className="input-field mt-1" value={formName} onChange={(e) => setFormName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" className="input-field mt-1" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
+                <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input id="profile-email" type="email" autoComplete="email" className="input-field mt-1" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <input type="tel" className="input-field mt-1" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} />
+                <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                <input id="profile-phone" type="tel" autoComplete="tel" className="input-field mt-1" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <input type="text" className="input-field mt-1" value={formAddress} onChange={(e) => setFormAddress(e.target.value)} />
+                <label htmlFor="profile-address" className="block text-sm font-medium text-gray-700">Address</label>
+                <input id="profile-address" type="text" autoComplete="street-address" className="input-field mt-1" value={formAddress} onChange={(e) => setFormAddress(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Gotra</label>

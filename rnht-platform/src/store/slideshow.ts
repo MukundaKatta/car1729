@@ -114,11 +114,18 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
   },
 
   reorderSlides: async (slides) => {
-    set({ slides });
+    const previous = useSlideshowStore.getState().slides;
+    set({ slides }); // optimistic
     if (!supabase) return;
-    // Update sort_order for each slide in DB
-    for (let i = 0; i < slides.length; i++) {
-      await supabase.from("slides").update({ sort_order: i }).eq("id", slides[i].id);
+    // Persist sort_order for each slide; if any write fails, roll back the
+    // local order so the UI doesn't drift out of sync with the database.
+    const results = await Promise.all(
+      slides.map((s, i) =>
+        supabase!.from("slides").update({ sort_order: i }).eq("id", s.id),
+      ),
+    );
+    if (results.some((r) => r.error)) {
+      set({ slides: previous });
     }
   },
 }));
