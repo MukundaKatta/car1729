@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { X, MessageCircle, Phone } from "lucide-react";
 import type { Service } from "@/types/database";
 import { usePanditjiWhatsApp } from "@/store/panditji";
+import { pushOverlay } from "@/lib/overlay-stack";
 
 /**
  * Simplified service detail modal.
@@ -28,9 +29,12 @@ export function ServiceDetailModal({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleEscape);
+    // Android back button closes the modal (this component only mounts when open).
+    const unregister = pushOverlay(onClose);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleEscape);
+      unregister();
     };
   }, [onClose]);
 

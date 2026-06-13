@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { Camera, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { pushOverlay } from "@/lib/overlay-stack";
 
 const galleryImages = [
   { src: "/gallery/gallery-01.jpg", alt: "Priest conducting ceremony with family", category: "Ceremonies" },
@@ -90,9 +91,12 @@ export default function GalleryPage() {
       else if (e.key === "ArrowRight") goNext();
     };
     document.addEventListener("keydown", handleKey);
+    // Android back button closes the lightbox instead of leaving the gallery.
+    const unregister = pushOverlay(closeLightbox);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKey);
+      unregister();
     };
   }, [lightboxIndex, closeLightbox, goPrev, goNext]);
 

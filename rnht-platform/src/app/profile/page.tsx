@@ -22,6 +22,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
 import { deleteAccountUrl, edgeFunctionHeaders } from "@/lib/edge-functions";
+import { pushOverlay } from "@/lib/overlay-stack";
 
 type Tab = "profile" | "family" | "bookings" | "donations" | "preferences";
 
@@ -77,6 +78,12 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  // Android back button: close the delete-confirm dialog instead of navigating.
+  useEffect(() => {
+    if (!showDeleteConfirm) return;
+    return pushOverlay(() => setShowDeleteConfirm(false));
+  }, [showDeleteConfirm]);
 
   const handleDeleteAccount = async () => {
     setDeleting(true);

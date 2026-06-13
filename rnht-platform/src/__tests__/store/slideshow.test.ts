@@ -20,7 +20,15 @@ vi.mock("@/lib/supabase", () => ({
       },
       insert: (row: any) => {
         mockInsert(row);
-        return { error: (mockInsert as any)._error ?? null };
+        const error = (mockInsert as any)._error ?? null;
+        return {
+          // addSlide now reads back the DB-generated row via .select().single()
+          select: () => ({
+            single: () =>
+              Promise.resolve({ data: error ? null : { id: "test-slide", ...row }, error }),
+          }),
+          error,
+        };
       },
       update: (row: any) => {
         mockUpdate(row);
@@ -128,12 +136,12 @@ describe("useSlideshowStore", () => {
         {
           id: "s1",
           type: "video",
-          url: "https://example.com/v.mp4",
+          image_url: "https://example.com/v.mp4",
           title: "Title",
           subtitle: "Sub",
           cta_text: "Click",
-          cta_link: "/link",
-          is_active: false,
+          link_url: "/link",
+          active: false,
           show_text: false,
           sort_order: 5,
         },
@@ -239,7 +247,7 @@ describe("useSlideshowStore", () => {
     });
 
     it("maps is_active=false correctly (not replaced by default)", async () => {
-      const dbRows = [{ id: "s3", is_active: false, show_text: false }];
+      const dbRows = [{ id: "s3", active: false, show_text: false }];
       mockOrder.mockResolvedValue({ data: dbRows, error: null });
 
       await useSlideshowStore.getState().fetchSlides();
@@ -254,14 +262,13 @@ describe("useSlideshowStore", () => {
     it("maps all camelCase fields to snake_case in addSlide call", async () => {
       await useSlideshowStore.getState().addSlide(testSlide);
       expect(mockInsert).toHaveBeenCalledWith({
-        id: "test-slide",
         type: "image",
-        url: "https://example.com/photo.jpg",
+        image_url: "https://example.com/photo.jpg",
         title: "Test Slide",
         subtitle: "Test subtitle",
         cta_text: "Learn More",
-        cta_link: "/test",
-        is_active: true,
+        link_url: "/test",
+        active: true,
         show_text: true,
         sort_order: 10,
       });
@@ -274,12 +281,12 @@ describe("useSlideshowStore", () => {
 
     it("maps ctaText and ctaLink in partial update", async () => {
       await useSlideshowStore.getState().updateSlide("slide-1", { ctaText: "Go", ctaLink: "/go" });
-      expect(mockUpdate).toHaveBeenCalledWith({ cta_text: "Go", cta_link: "/go" });
+      expect(mockUpdate).toHaveBeenCalledWith({ cta_text: "Go", link_url: "/go" });
     });
 
     it("maps isActive and showText in partial update", async () => {
       await useSlideshowStore.getState().updateSlide("slide-1", { isActive: false, showText: false });
-      expect(mockUpdate).toHaveBeenCalledWith({ is_active: false, show_text: false });
+      expect(mockUpdate).toHaveBeenCalledWith({ active: false, show_text: false });
     });
 
     it("maps sortOrder in partial update", async () => {

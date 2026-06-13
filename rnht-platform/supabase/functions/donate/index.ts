@@ -27,6 +27,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
 import { fundLabels } from "../_shared/fund-labels.ts";
+import { sendDonationReceipt } from "../_shared/receipt.ts";
 
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ?? "";
@@ -53,6 +54,7 @@ interface DonateRequest {
   message?: string;
   isAnonymous?: boolean;
   paymentMethod?: "stripe" | "paypal" | "zelle";
+  customFields?: Record<string, string>;
 }
 
 // If the caller is a signed-in devotee, the client passes their Supabase
@@ -152,6 +154,7 @@ async function handleCreate(req: Request): Promise<Response> {
     message,
     isAnonymous,
     paymentMethod = "stripe",
+    customFields,
   } = body;
 
   if (!amount || amount <= 0 || !donorName || !donorEmail) {
@@ -177,6 +180,7 @@ async function handleCreate(req: Request): Promise<Response> {
       is_recurring: false,
       message: message ?? null,
       is_anonymous: isAnonymous ?? false,
+      custom_fields: customFields ?? {},
     })
     .select("id")
     .single();
@@ -268,17 +272,33 @@ async function handleVerify(req: Request): Promise<Response> {
 
   const { data, error } = await supabase
     .from("donations")
-    .update({ payment_status: "completed" })
+    .select("amount, fund_type, donor_email, donor_name, payment_status")
     .eq("id", donationId)
-    .select("amount, fund_type")
     .single();
 
   if (error || !data) {
-    console.error("Supabase update error:", error);
+    console.error("Supabase fetch error:", error);
     return new Response(
       JSON.stringify({ error: "Failed to update donation" }),
       { status: 500, headers: jsonHeaders },
     );
+  }
+
+  const fundLabel = fundLabels[data.fund_type] ?? "Temple Fund";
+
+  // Only flip + email on the first verification (idempotent on refresh/re-verify),
+  // so the donor never receives duplicate receipts.
+  if (data.payment_status !== "completed") {
+    await supabase
+      .from("donations")
+      .update({ payment_status: "completed" })
+      .eq("id", donationId);
+    await sendDonationReceipt({
+      to: data.donor_email,
+      donorName: data.donor_name,
+      amount: Number(data.amount),
+      fundLabel,
+    });
   }
 
   return new Response(
@@ -286,7 +306,7 @@ async function handleVerify(req: Request): Promise<Response> {
       verified: true,
       amount: data.amount,
       fundType: data.fund_type,
-      fundLabel: fundLabels[data.fund_type] ?? "Temple Fund",
+      fundLabel,
     }),
     { headers: jsonHeaders },
   );

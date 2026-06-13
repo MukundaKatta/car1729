@@ -14,6 +14,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
+import { fundLabels } from "../_shared/fund-labels.ts";
+import { sendDonationReceipt } from "../_shared/receipt.ts";
 
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ?? "";
 const PAYPAL_SECRET = Deno.env.get("PAYPAL_SECRET") ?? "";
@@ -81,21 +83,64 @@ Deno.serve(async (req) => {
     );
     const captureData: any = await captureRes.json();
 
-    const donationId = captureData?.purchase_units?.[0]?.reference_id ?? null;
+    const unit = captureData?.purchase_units?.[0];
+    const donationId = unit?.reference_id ?? null;
+    const capturedValue = Number(
+      unit?.payments?.captures?.[0]?.amount?.value ?? NaN,
+    );
 
     if (captureData.status === "COMPLETED" && donationId) {
-      const { data } = await supabase
+      // Load the donation this order claims to pay for, and verify the captured
+      // amount matches what we recorded — prevents a replayed/forged order id
+      // from flipping an unrelated donation to "completed".
+      const { data: donation } = await supabase
         .from("donations")
-        .update({ payment_status: "completed" })
+        .select("amount, fund_type, payment_status, donor_email, donor_name")
         .eq("id", donationId)
-        .select("amount, fund_type")
         .maybeSingle();
+
+      if (!donation) {
+        return new Response(JSON.stringify({ error: "Unknown donation" }), {
+          status: 404,
+          headers: jsonHeaders,
+        });
+      }
+
+      const expected = Number(donation.amount);
+      if (!Number.isFinite(capturedValue) || Math.abs(capturedValue - expected) > 0.01) {
+        console.error("PayPal amount mismatch", { donationId, capturedValue, expected });
+        return new Response(JSON.stringify({ error: "Amount mismatch" }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
+      }
+
+      // Idempotent: only flip pending -> completed. A replay (already completed)
+      // updates zero rows and simply returns the existing record below.
+      const { data: updated } = await supabase
+        .from("donations")
+        .update({ payment_status: "completed", payment_intent_id: orderId })
+        .eq("id", donationId)
+        .eq("payment_status", "pending")
+        .select("id")
+        .maybeSingle();
+
+      // Send the receipt only on the actual transition (updated !== null), so a
+      // replayed capture doesn't email the donor twice.
+      if (updated) {
+        await sendDonationReceipt({
+          to: donation.donor_email,
+          donorName: donation.donor_name,
+          amount: expected,
+          fundLabel: fundLabels[donation.fund_type] ?? "Temple Fund",
+        });
+      }
 
       return new Response(
         JSON.stringify({
           status: captureData.status,
-          amount: data?.amount ?? null,
-          fundType: data?.fund_type ?? null,
+          amount: donation.amount,
+          fundType: donation.fund_type,
         }),
         { headers: jsonHeaders },
       );

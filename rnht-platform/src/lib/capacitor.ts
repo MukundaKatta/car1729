@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { App } from "@capacitor/app";
+import { handleOverlayBack } from "./overlay-stack";
 
 /**
  * Open a URL in the system browser (on native) or new tab (on web).
@@ -29,6 +30,9 @@ export function initBackButton(onBack: () => void): (() => void) | undefined {
   if (!Capacitor.isNativePlatform()) return undefined;
 
   const listener = App.addListener("backButton", ({ canGoBack }) => {
+    // Close any open overlay (mobile menu, modal, lightbox) first, so back
+    // dismisses it instead of navigating away or exiting the app.
+    if (handleOverlayBack()) return;
     if (canGoBack) {
       onBack();
     } else {

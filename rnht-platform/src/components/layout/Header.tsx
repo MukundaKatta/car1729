@@ -15,6 +15,7 @@ import {
 import { useLanguageStore } from "@/store/language";
 import { useAuthStore } from "@/store/auth";
 import { localeNames, t, type Locale } from "@/lib/i18n/translations";
+import { pushOverlay } from "@/lib/overlay-stack";
 
 /* ─── Hanging Temple Bell SVG ─── */
 function TempleBell({ size = "md", className = "" }: { size?: "sm" | "md" | "lg"; className?: string }) {
@@ -345,6 +346,12 @@ export function Header() {
         document.body.style.overflow = "";
       };
     }
+  }, [mobileMenuOpen]);
+
+  // Android back button: close the menu instead of leaving the page.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    return pushOverlay(() => setMobileMenuOpen(false));
   }, [mobileMenuOpen]);
 
   const isActive = (href: string) => {

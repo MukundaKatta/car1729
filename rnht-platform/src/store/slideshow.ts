@@ -26,33 +26,34 @@ type SlideshowStore = {
   reorderSlides: (slides: Slide[]) => Promise<void>;
 };
 
-// Map DB row (snake_case) to app type (camelCase)
+// Map DB row (snake_case) to app type (camelCase).
+// Column names match the actual `slides` table: image_url / link_url / active.
 function rowToSlide(row: Record<string, unknown>): Slide {
   return {
     id: row.id as string,
     type: (row.type as SlideType) || "image",
-    url: (row.url as string) || "",
+    url: (row.image_url as string) || "",
     title: (row.title as string) || "",
     subtitle: (row.subtitle as string) || "",
     ctaText: (row.cta_text as string) || "Learn More",
-    ctaLink: (row.cta_link as string) || "/services",
-    isActive: row.is_active as boolean ?? true,
-    showText: row.show_text as boolean ?? true,
+    ctaLink: (row.link_url as string) || "/services",
+    isActive: (row.active as boolean) ?? true,
+    showText: (row.show_text as boolean) ?? true,
     sortOrder: (row.sort_order as number) || 0,
   };
 }
 
-// Map app type to DB row
+// Map app type to DB row. Never sends `id` — the DB generates the uuid PK
+// (a client string id would violate the uuid column).
 function slideToRow(slide: Partial<Slide>) {
   const row: Record<string, unknown> = {};
-  if (slide.id !== undefined) row.id = slide.id;
   if (slide.type !== undefined) row.type = slide.type;
-  if (slide.url !== undefined) row.url = slide.url;
+  if (slide.url !== undefined) row.image_url = slide.url;
   if (slide.title !== undefined) row.title = slide.title;
   if (slide.subtitle !== undefined) row.subtitle = slide.subtitle;
   if (slide.ctaText !== undefined) row.cta_text = slide.ctaText;
-  if (slide.ctaLink !== undefined) row.cta_link = slide.ctaLink;
-  if (slide.isActive !== undefined) row.is_active = slide.isActive;
+  if (slide.ctaLink !== undefined) row.link_url = slide.ctaLink;
+  if (slide.isActive !== undefined) row.active = slide.isActive;
   if (slide.showText !== undefined) row.show_text = slide.showText;
   if (slide.sortOrder !== undefined) row.sort_order = slide.sortOrder;
   return row;
@@ -81,9 +82,15 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
   addSlide: async (slide) => {
     if (!supabase) return;
     const row = slideToRow(slide);
-    const { error } = await supabase.from("slides").insert(row);
-    if (!error) {
-      set((state) => ({ slides: [...state.slides, slide] }));
+    // Insert without a client id and read back the DB-generated row so state
+    // holds the real uuid (needed for later update/delete/reorder).
+    const { data, error } = await supabase
+      .from("slides")
+      .insert(row)
+      .select("*")
+      .single();
+    if (!error && data) {
+      set((state) => ({ slides: [...state.slides, rowToSlide(data)] }));
     }
   },
 
