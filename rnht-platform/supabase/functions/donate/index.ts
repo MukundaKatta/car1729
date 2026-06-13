@@ -157,12 +157,20 @@ async function handleCreate(req: Request): Promise<Response> {
     customFields,
   } = body;
 
-  if (!amount || amount <= 0 || !donorName || !donorEmail) {
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    amount > 100000 ||
+    !donorName ||
+    !donorEmail
+  ) {
     return new Response(
-      JSON.stringify({ error: "Missing required fields" }),
+      JSON.stringify({ error: "Missing or invalid required fields" }),
       { status: 400, headers: jsonHeaders },
     );
   }
+  // Authoritative server-side rounding to whole cents (never trust the client).
+  const cleanAmount = Math.round(amount * 100) / 100;
 
   const label = fundLabels[fundType] ?? "Donation";
   const userId = await resolveUserId(req);
@@ -173,7 +181,7 @@ async function handleCreate(req: Request): Promise<Response> {
       user_id: userId,
       donor_name: donorName,
       donor_email: donorEmail,
-      amount,
+      amount: cleanAmount,
       fund_type: fundType,
       payment_method: paymentMethod,
       payment_status: "pending",
@@ -205,7 +213,7 @@ async function handleCreate(req: Request): Promise<Response> {
 
   if (paymentMethod === "paypal") {
     const order = await createPayPalOrder({
-      amount,
+      amount: cleanAmount,
       description: label,
       donationId: donation.id,
     });
@@ -230,7 +238,7 @@ async function handleCreate(req: Request): Promise<Response> {
       {
         price_data: {
           currency: "usd",
-          unit_amount: Math.round(amount * 100),
+          unit_amount: Math.round(cleanAmount * 100),
           product_data: { name: label },
         },
         quantity: 1,

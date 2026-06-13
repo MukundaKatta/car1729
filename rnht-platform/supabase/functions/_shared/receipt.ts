@@ -22,8 +22,13 @@ export async function sendDonationReceipt(args: {
     return;
   }
 
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string),
+    );
   const usd = `$${Number(args.amount).toFixed(2)}`;
-  const name = args.donorName?.trim() || "Devotee";
+  const rawName = args.donorName?.trim() || "Devotee";
+  const name = esc(rawName);
   const html = `
     <div style="font-family:Arial,sans-serif;color:#333;max-width:560px;margin:0 auto">
       <h2 style="color:#7a1f2b">Thank you for your generosity, ${name} 🙏</h2>
@@ -35,7 +40,7 @@ export async function sendDonationReceipt(args: {
       <p style="color:#888;font-size:12px">Rudra Narayana Hindu Temple · Austin, TX</p>
     </div>`;
   const text =
-    `Thank you for your generosity, ${name}.\n\n` +
+    `Thank you for your generosity, ${rawName}.\n\n` +
     `We gratefully acknowledge your donation of ${usd} to the ${args.fundLabel}.\n\n` +
     `RNHT is a registered 501(c)(3) nonprofit; your donation is tax-deductible ` +
     `to the extent allowed by law. Please retain this email as your receipt.\n\n` +

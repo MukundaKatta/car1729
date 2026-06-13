@@ -42,12 +42,12 @@ vi.mock("@/store/language", () => ({
     return typeof sel === "function" ? sel(s) : s;
   },
 }));
-vi.mock("@/store/auth", () => ({
-  useAuthStore: (sel: any) => {
-    const s = { isAuthenticated: false, user: null, initialize: vi.fn() };
-    return typeof sel === "function" ? sel(s) : s;
-  },
-}));
+vi.mock("@/store/auth", () => {
+  const s = { isAuthenticated: false, user: null, initialize: vi.fn() };
+  const useAuthStore: any = (sel: any) => (typeof sel === "function" ? sel(s) : s);
+  useAuthStore.getState = () => s;
+  return { useAuthStore };
+});
 vi.mock("@/store/slideshow", () => ({
   useSlideshowStore: (sel: any) => {
     const s = {

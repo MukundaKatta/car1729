@@ -143,6 +143,15 @@ function profileRowToUserProfile(row: any): UserProfile {
   };
 }
 
+// Module-level guard so the onAuthStateChange listener is only ever registered
+// once, even if initialize() is called from several places concurrently.
+let authListenerRegistered = false;
+
+/** Test-only: reset the one-time auth-listener guard between test cases. */
+export function __resetAuthListenerForTests() {
+  authListenerRegistered = false;
+}
+
 export const useAuthStore = create<AuthStore>()((set, get) => ({
   isAuthenticated: false,
   authUser: null,
@@ -154,7 +163,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   initialized: false,
 
   initialize: async () => {
-    if (get().initialized) return;
+    // Synchronous guard: `initialized` only flips inside the async auth-change
+    // callback, so without this two concurrent initialize() calls (e.g. global
+    // + page) could both register an onAuthStateChange listener.
+    if (get().initialized || authListenerRegistered) return;
 
     // If supabase is not configured (no env vars), mark as initialized immediately
     if (!supabase) {
@@ -162,6 +174,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       return;
     }
 
+    authListenerRegistered = true;
     // Listen for auth changes (catches magic link redirects + initial session)
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {

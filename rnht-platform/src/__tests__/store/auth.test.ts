@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, __resetAuthListenerForTests } from "@/store/auth";
 import type {
   UserProfile,
   Booking,
@@ -116,6 +116,7 @@ const sampleActivity: ActivityItem = {
 };
 
 function resetStore() {
+  __resetAuthListenerForTests();
   useAuthStore.setState({
     isAuthenticated: false,
     authUser: null,

@@ -254,7 +254,7 @@ export default function DonatePage() {
           // The name field is optional in the UI, but the backend requires a
           // non-empty donorName — default so blank names don't 400 silently.
           donorName: donorName.trim() || "Anonymous",
-          donorEmail,
+          donorEmail: donorEmail.trim(),
           customFields: customFieldValues,
           paymentMethod,
         }),
@@ -699,8 +699,7 @@ export default function DonatePage() {
               className="btn-primary mt-6 w-full"
               onClick={handleDonate}
               disabled={
-                !donorEmail ||
-                !donorEmail.includes("@") ||
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail.trim()) ||
                 effectiveAmount <= 0 ||
                 requiredFieldsMissing ||
                 processing ||

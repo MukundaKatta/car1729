@@ -50,6 +50,9 @@ function buildGoogleCalendarUrl(event: Event): string {
     dates,
     details: event.description || "",
     location: event.location || "Rudra Narayana Hindu Temple, Austin, TX",
+    // Interpret the (floating) event times in the temple's timezone, so the
+    // event lands at the correct local time regardless of the viewer's zone.
+    ctz: "America/Chicago",
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;

@@ -83,6 +83,14 @@ Deno.serve(async (req) => {
     );
     const captureData: any = await captureRes.json();
 
+    if (!captureRes.ok) {
+      console.error("PayPal capture HTTP error:", captureRes.status, captureData);
+      return new Response(
+        JSON.stringify({ error: "PayPal capture failed", status: captureData?.name ?? "ERROR" }),
+        { status: 502, headers: jsonHeaders },
+      );
+    }
+
     const unit = captureData?.purchase_units?.[0];
     const donationId = unit?.reference_id ?? null;
     const capturedValue = Number(

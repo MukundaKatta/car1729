@@ -628,6 +628,7 @@ export function Header() {
                       key={code}
                       onClick={() => {
                         setLocale(code);
+                        setMobileMenuOpen(false);
                       }}
                       className={`min-h-[44px] rounded-full px-4 text-xs font-medium transition-colors ${
                         locale === code
