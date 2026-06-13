@@ -192,6 +192,11 @@ export default function DonatePage() {
     }
 
     void verifyDonation();
+    // Strip the ?success/&session_id params so a refresh (or native re-focus)
+    // doesn't re-run verification against an already-consumed session.
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
 
     return () => {
       cancelled = true;
@@ -681,7 +686,7 @@ export default function DonatePage() {
               </div>
             )}
 
-            {error && (
+            {error && searchParams.get("success") !== "true" && (
               <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                 {error}
               </div>
