@@ -26,7 +26,7 @@ describe("CommunityPage", () => {
     fireEvent.click(screen.getAllByText("Sign Up")[0]);
     fireEvent.change(screen.getByPlaceholderText("Full Name *"), { target: { value: "Rajesh Sharma" } });
     fireEvent.change(screen.getByPlaceholderText("Email *"), { target: { value: "rajesh@example.com" } });
-    fireEvent.click(screen.getAllByText("Sign Up").at(-1)!);
+    fireEvent.click(screen.getByText("Enquire"));
     expect(window.alert).toHaveBeenCalled();
   });
 

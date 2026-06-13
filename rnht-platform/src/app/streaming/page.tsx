@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Bell, Calendar, MessageCircle, Video, Youtube } from "lucide-react";
 import { canonicalPath } from "@/lib/site-metadata";
 
@@ -137,12 +136,14 @@ export default function StreamingPage() {
         </div>
         <p className="mt-4 text-sm text-gray-500">
           Past recordings live on our{" "}
-          <Link
+          <a
             href={youtubeChannelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="font-semibold text-temple-red hover:underline"
           >
             YouTube channel
-          </Link>
+          </a>
           .
         </p>
       </section>

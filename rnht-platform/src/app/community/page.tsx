@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   HeartHandshake,
   CalendarDays,
@@ -309,8 +310,16 @@ export default function CommunityPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <button className="btn-primary text-sm py-2">Volunteer to Cook</button>
-                  <button className="btn-outline text-sm py-2">Donate Supplies</button>
+                  <button
+                    disabled
+                    title="Online volunteer sign-up is coming soon"
+                    className="btn-primary text-sm py-2 opacity-50 cursor-not-allowed"
+                  >
+                    Volunteer to Cook
+                  </button>
+                  <Link href="/donate" className="btn-outline text-sm py-2">
+                    Donate Supplies
+                  </Link>
                 </div>
               </div>
             ))}
@@ -370,12 +379,14 @@ export default function CommunityPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button className="btn-outline" onClick={() => { setSelectedOpp(null); setVolunteerName(""); setVolunteerEmail(""); }}>Cancel</button>
               <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!volunteerName.trim() || !volunteerEmail.trim()} onClick={() => {
-                alert("Thank you for signing up! You'll receive a confirmation email shortly.");
+                // Online volunteer sign-up isn't wired to a backend yet — be
+                // honest instead of claiming a confirmation that never sends.
+                alert("Online volunteer sign-up is coming soon. To volunteer now, please contact the temple at (512) 545-0473 or on WhatsApp and we'll add you.");
                 setSelectedOpp(null);
                 setVolunteerName("");
                 setVolunteerEmail("");
               }}>
-                Sign Up
+                Enquire
               </button>
             </div>
           </div>

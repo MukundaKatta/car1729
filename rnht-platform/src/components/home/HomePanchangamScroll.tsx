@@ -53,9 +53,6 @@ function getDisplayDateParts(date: string, timeZone: string) {
 
 export function HomePanchangamScroll() {
   const location = usePanchangamStore((s) => s.location);
-  const detectCurrentLocation = usePanchangamStore(
-    (s) => s.detectCurrentLocation
-  );
   const [p, setP] = useState<ComputedPanchangam>(() =>
     createPanchangamLoadingState(location)
   );
@@ -67,15 +64,10 @@ export function HomePanchangamScroll() {
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
   const dateParts = getDisplayDateParts(p.date, location.timeZone);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const sessionKey = "rnht-panchangam-location-requested";
-    if (window.sessionStorage.getItem(sessionKey)) return;
-
-    window.sessionStorage.setItem(sessionKey, "1");
-    void detectCurrentLocation();
-  }, [detectCurrentLocation]);
+  // Panchangam defaults to the temple's location (Austin). We intentionally do
+  // NOT auto-request geolocation on the home page — prompting for location on
+  // first visit without user intent is poor UX (and needs a usage description
+  // on iOS). Users can set their location from the Panchangam page.
 
   useEffect(() => {
     let cancelled = false;
