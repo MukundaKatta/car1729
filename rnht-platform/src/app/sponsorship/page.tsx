@@ -194,16 +194,24 @@ export default function SponsorshipPage() {
                         </li>
                       ))}
                     </ul>
-                    <button className="btn-primary mt-4 w-full text-xs py-2.5 px-4">
-                      Sponsor
+                    <button
+                      disabled
+                      title="Online sponsorship is coming soon"
+                      className="btn-primary mt-4 w-full text-xs py-2.5 px-4 opacity-50 cursor-not-allowed"
+                    >
+                      Coming Soon
                     </button>
                   </div>
                 );
               })}
             </div>
             <div className="mt-3 text-right">
-              <button className="flex items-center gap-1 text-sm text-temple-red hover:underline ml-auto">
-                <Download className="h-4 w-4" /> Download Sponsorship PDF
+              <button
+                disabled
+                title="The sponsorship PDF is coming soon"
+                className="flex items-center gap-1 text-sm text-gray-400 cursor-not-allowed ml-auto"
+              >
+                <Download className="h-4 w-4" /> Sponsorship PDF (coming soon)
               </button>
             </div>
           </div>
@@ -237,8 +245,12 @@ export default function SponsorshipPage() {
                       <p className="text-lg font-bold text-temple-red">
                         {formatCurrency(item.price)}
                       </p>
-                      <button className="btn-primary text-xs py-2.5 px-4">
-                        Sponsor
+                      <button
+                        disabled
+                        title="Online sponsorship is coming soon"
+                        className="btn-primary text-xs py-2.5 px-4 opacity-50 cursor-not-allowed"
+                      >
+                        Coming Soon
                       </button>
                     </div>
                   </div>

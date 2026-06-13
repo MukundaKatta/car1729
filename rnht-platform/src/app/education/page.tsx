@@ -353,12 +353,14 @@ export default function EducationPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button className="btn-outline" onClick={() => { setSelectedProgram(null); setRegName(""); setRegEmail(""); }}>Cancel</button>
               <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!regName.trim() || !regEmail.trim()} onClick={() => {
-                alert("Registration submitted! You will receive a confirmation email shortly.");
+                // Online class registration isn't wired to a backend yet — be
+                // honest rather than claiming a submission that never happens.
+                alert("Online registration is coming soon. To enroll now, please contact the temple at (512) 545-0473 or on WhatsApp and we'll get you signed up.");
                 setSelectedProgram(null);
                 setRegName("");
                 setRegEmail("");
               }}>
-                {selectedProgram.fee ? `Register & Pay ${selectedProgram.feeLabel}` : "Register (Free)"}
+                {selectedProgram.fee ? `Enquire about ${selectedProgram.feeLabel}` : "Enquire (Free)"}
               </button>
             </div>
           </div>

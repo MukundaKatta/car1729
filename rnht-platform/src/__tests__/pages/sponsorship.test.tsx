@@ -202,16 +202,16 @@ describe("SponsorshipPage", () => {
       expect(screen.getAllByText("VIP seating").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("renders Sponsor buttons for each tier", () => {
+    it("renders sponsor CTAs for each tier (disabled until online sponsorship ships)", () => {
       render(<SponsorshipPage />);
-      const sponsorButtons = screen.getAllByRole("button", { name: "Sponsor" });
+      const sponsorButtons = screen.getAllByRole("button", { name: "Coming Soon" });
       // 4 tiers x 2 festivals = 8, plus deity ornament sponsor buttons
       expect(sponsorButtons.length).toBeGreaterThanOrEqual(8);
     });
 
-    it("renders Download Sponsorship PDF buttons", () => {
+    it("renders the (disabled) Sponsorship PDF buttons", () => {
       render(<SponsorshipPage />);
-      const downloadButtons = screen.getAllByText("Download Sponsorship PDF");
+      const downloadButtons = screen.getAllByText(/Sponsorship PDF \(coming soon\)/);
       expect(downloadButtons).toHaveLength(2);
     });
   });
@@ -266,9 +266,9 @@ describe("SponsorshipPage", () => {
       expect(screen.getAllByText("$75.00").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("renders Sponsor buttons for each ornament item", () => {
+    it("renders sponsor CTAs for each ornament item (disabled until online sponsorship ships)", () => {
       render(<SponsorshipPage />);
-      const sponsorButtons = screen.getAllByRole("button", { name: "Sponsor" });
+      const sponsorButtons = screen.getAllByRole("button", { name: "Coming Soon" });
       // 4 + 2 + 2 + 3 = 11 deity items + 8 festival tiers = 19 total
       expect(sponsorButtons.length).toBe(19);
     });

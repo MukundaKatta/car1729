@@ -28,7 +28,7 @@ describe("EducationPage", () => {
     expect(screen.getByText(/Register: Vedic Chanting/)).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText("Student Full Name *"), { target: { value: "Student Name" } });
     fireEvent.change(screen.getByPlaceholderText("Email *"), { target: { value: "student@example.com" } });
-    fireEvent.click(screen.getByText(/Register & Pay/));
+    fireEvent.click(screen.getByText(/Enquire about/));
     expect(window.alert).toHaveBeenCalled();
   });
 });
