@@ -5,7 +5,14 @@ _Last updated: 2026-06-13. Status of the app vs. App Store / Play Store submissi
 ## ✅ Done & verified (engineering)
 
 - **5 multi-agent audits + ~70 fixes** this cycle (criticals → polish), each gated
-  with `tsc` + the full test suite (now **735+ tests**) + lint + `next build`.
+  with `tsc` + the full test suite (now **752 tests**) + lint + `next build`.
+- **Live runtime QA** (web, real-browser): home, services + detail modal, calendar
+  (list + month grid), donate, login, community, news + article, panchangam, gallery
+  + lightbox — all healthy with strong keyboard a11y; panchangam computes the live
+  date correctly (Adhik Jyeshtha Masa override confirmed in prod).
+- **Calendar recurring events** now show a cadence ("Every Saturday",
+  "Monthly · 4th Sunday", "Monthly · Purnima (full moon)") instead of a first-
+  occurrence date that goes stale; lunar/tithi rules are named, not guessed.
 - **Web** live on Firebase Hosting; all 23 routes return 200.
 - **Supabase edge functions** (`donate`, `paypal-capture`, `delete-account`) live;
   input validation verified against production (invalid fund / bad email / over-cap
@@ -59,10 +66,10 @@ WHERE donor_email = 'mukunda.vjcs6@gmail.com'
 
 ## ℹ️ Available on request
 
-- **Build 15** — 6 minor web-only fixes (donate verify-error clearing, admin
-  approval action types, news-skeleton CLS) are live on web but predate native
-  build 14. Say the word to roll a build 15 + redistribute, or let them fold into
-  the next planned native build.
+- **Build 15** — minor web-only fixes (donate verify-error clearing, admin
+  approval action types, news-skeleton CLS, **calendar recurrence cadence**) are
+  live on web but predate the current native builds. Say the word to roll a
+  build 15 + redistribute, or let them fold into the next planned native build.
 
 ## Standard deploy (engineering reference)
 
