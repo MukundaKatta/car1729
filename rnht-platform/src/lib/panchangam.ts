@@ -108,16 +108,16 @@ const KARANA_NAMES = [
   "Kimstughna",
 ];
 
+// Approximate Gregorian-month -> masa table for the client. The astronomically
+// exact masa is derived server-side (via purnima nakshatra); the static export
+// can't run that at runtime, so this simplified per-month label is shown.
 const MASA_BY_MONTH = [
   "Pausha",
   "Magha",
   "Phalguna",
   "Chaitra",
   "Vaishakha",
-  // Client request: display Jyeshtha as the Adhika (leap) month for 2026.
-  // NOTE: this label is hardcoded for the June slot; revisit once the
-  // 2026 Adhika Jyeshtha period passes or make it date-aware.
-  "Adhik Jyeshtha",
+  "Jyeshtha",
   "Ashadha",
   "Shravana",
   "Bhadrapada",
@@ -125,6 +125,13 @@ const MASA_BY_MONTH = [
   "Kartika",
   "Margashirsha",
 ];
+
+// The temple requested the Adhika (leap) month label specifically for the 2026
+// Jyeshtha period. Scope it to that exact year+month — otherwise EVERY June
+// would wrongly read "Adhik Jyeshtha". Keyed "YYYY-M" (1-based month).
+const ADHIKA_MASA_OVERRIDES: Record<string, string> = {
+  "2026-6": "Adhik Jyeshtha",
+};
 
 const SAMVATSARA_CYCLE = [
   "Prabhava",
@@ -483,8 +490,12 @@ function segmentRange(sunrise: Date, segment: number, position: number, timeZone
 }
 
 function getMasa(date: Date, timeZone: string) {
-  const { month } = getZonedDateParts(date, timeZone);
-  return MASA_BY_MONTH[month - 1] || samplePanchangam.masa;
+  const { year, month } = getZonedDateParts(date, timeZone);
+  return (
+    ADHIKA_MASA_OVERRIDES[`${year}-${month}`] ||
+    MASA_BY_MONTH[month - 1] ||
+    samplePanchangam.masa
+  );
 }
 
 function getSamvatsara(date: Date, masa: string, timeZone: string) {

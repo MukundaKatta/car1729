@@ -169,6 +169,16 @@ async function handleCreate(req: Request): Promise<Response> {
       { status: 400, headers: jsonHeaders },
     );
   }
+  // Allowlist the fund: fund_type is plain TEXT with no DB constraint, so a
+  // direct API call could otherwise insert arbitrary fund names. fundLabels is
+  // the canonical fund registry (drives the Stripe line item + receipt label),
+  // so every legitimate fund is a key here — reject anything else.
+  if (!fundType || !(fundType in fundLabels)) {
+    return new Response(
+      JSON.stringify({ error: "Unknown donation fund" }),
+      { status: 400, headers: jsonHeaders },
+    );
+  }
   // Authoritative server-side rounding to whole cents (never trust the client).
   const cleanAmount = Math.round(amount * 100) / 100;
 
