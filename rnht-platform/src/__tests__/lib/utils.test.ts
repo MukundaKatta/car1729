@@ -72,3 +72,21 @@ describe("formatTime", () => {
     expect(result).toMatch(/12:15\s*AM/i);
   });
 });
+
+// Null/undefined guards — a missing date used to render "Invalid Date" or the
+// 1969 epoch; both now return a neutral placeholder.
+describe("formatDate / formatTime null safety", () => {
+  it("returns -- for null/undefined/empty date", () => {
+    expect(formatDate(null)).toBe("--");
+    expect(formatDate(undefined)).toBe("--");
+    expect(formatDate("")).toBe("--");
+    expect(formatTime(null)).toBe("--");
+    expect(formatTime(undefined)).toBe("--");
+    expect(formatTime("")).toBe("--");
+  });
+
+  it("still formats valid dates normally", () => {
+    expect(formatDate(new Date(2026, 2, 15))).toContain("2026");
+    expect(formatTime("2026-03-15T14:30:00")).toMatch(/2:30\s*PM/i);
+  });
+});
