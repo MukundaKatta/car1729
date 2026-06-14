@@ -51,7 +51,8 @@ export default function AdminEventsPage() {
       confirmMessage: "Are you sure you want to delete this event?",
       approvalReason: `Delete event "${event.title}"`,
       run: async () => {
-        await supabase.from("events").delete().eq("id", event.id);
+        const { error: delErr } = await supabase.from("events").delete().eq("id", event.id);
+        if (delErr) { setError(delErr.message); return; }
         await refresh();
       },
     });

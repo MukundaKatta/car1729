@@ -161,6 +161,11 @@ function SlideEditor({
   const slides = useSlideshowStore((s) => s.slides);
 
   const isNew = !slide;
+  // New slides go after the current max sort_order — using slides.length can
+  // collide with an existing order after deletes/reorders (nondeterministic tie).
+  const nextSortOrder = slides.length
+    ? Math.max(...slides.map((s) => s.sortOrder)) + 1
+    : 0;
   const [form, setForm] = useState<Omit<Slide, "id">>({
     type: slide?.type || "image",
     url: slide?.url || "",
@@ -170,17 +175,21 @@ function SlideEditor({
     ctaLink: slide?.ctaLink || "/services",
     isActive: slide?.isActive ?? true,
     showText: slide?.showText ?? true,
-    sortOrder: slide?.sortOrder ?? slides.length,
+    sortOrder: slide?.sortOrder ?? nextSortOrder,
   });
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (isNew) {
-      await addSlide({
-        ...form,
-        id: `slide-${Date.now()}`,
-      });
-    } else {
-      await updateSlide(slide.id, form);
+    setSaveError("");
+    setSaving(true);
+    const ok = isNew
+      ? await addSlide({ ...form, id: `slide-${Date.now()}` })
+      : await updateSlide(slide.id, form);
+    setSaving(false);
+    if (!ok) {
+      setSaveError("Couldn't save the slide. Check your connection and try again.");
+      return;
     }
     onClose();
   };
@@ -327,17 +336,20 @@ function SlideEditor({
           </label>
         </div>
 
+        {saveError && (
+          <p className="px-6 text-sm text-red-600" role="alert">{saveError}</p>
+        )}
         <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
           <button onClick={onClose} className="btn-outline">
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={!form.title}
+            disabled={!form.title || saving}
             className="btn-primary"
           >
             <Save className="mr-2 h-4 w-4" />
-            {isNew ? "Add Slide" : "Save Changes"}
+            {saving ? "Saving..." : isNew ? "Add Slide" : "Save Changes"}
           </button>
         </div>
       </div>
@@ -517,9 +529,11 @@ export default function AdminSlideshowPage() {
                 {/* Actions */}
                 <div className="flex shrink-0 gap-1">
                   <button
-                    onClick={() =>
-                      updateSlide(slide.id, { isActive: !slide.isActive })
-                    }
+                    onClick={async () => {
+                      setReorderError(null);
+                      const ok = await updateSlide(slide.id, { isActive: !slide.isActive });
+                      if (!ok) setReorderError("Couldn't update the slide's visibility. Please try again.");
+                    }}
                     className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                     aria-label={
                       slide.isActive ? "Hide slide" : "Show slide"
@@ -543,9 +557,11 @@ export default function AdminSlideshowPage() {
                   {deleteConfirm === slide.id ? (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => {
-                          removeSlide(slide.id);
+                        onClick={async () => {
+                          setReorderError(null);
+                          const ok = await removeSlide(slide.id);
                           setDeleteConfirm(null);
+                          if (!ok) setReorderError("Couldn't delete the slide. Please try again.");
                         }}
                         className="rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-100"
                       >

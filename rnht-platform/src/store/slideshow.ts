@@ -20,9 +20,11 @@ type SlideshowStore = {
   slides: Slide[];
   loading: boolean;
   fetchSlides: () => Promise<void>;
-  addSlide: (slide: Slide) => Promise<void>;
-  updateSlide: (id: string, updates: Partial<Slide>) => Promise<void>;
-  removeSlide: (id: string) => Promise<void>;
+  // Mutations return true on success, false on a failed/blocked write so the
+  // admin UI can surface the failure instead of falsely reporting success.
+  addSlide: (slide: Slide) => Promise<boolean>;
+  updateSlide: (id: string, updates: Partial<Slide>) => Promise<boolean>;
+  removeSlide: (id: string) => Promise<boolean>;
   reorderSlides: (slides: Slide[]) => Promise<boolean>;
 };
 
@@ -80,7 +82,7 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
   },
 
   addSlide: async (slide) => {
-    if (!supabase) return;
+    if (!supabase) return false;
     const row = slideToRow(slide);
     // Insert without a client id and read back the DB-generated row so state
     // holds the real uuid (needed for later update/delete/reorder).
@@ -89,28 +91,28 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
       .insert(row)
       .select("*")
       .single();
-    if (!error && data) {
-      set((state) => ({ slides: [...state.slides, rowToSlide(data)] }));
-    }
+    if (error || !data) return false;
+    set((state) => ({ slides: [...state.slides, rowToSlide(data)] }));
+    return true;
   },
 
   updateSlide: async (id, updates) => {
-    if (!supabase) return;
+    if (!supabase) return false;
     const row = slideToRow(updates);
     const { error } = await supabase.from("slides").update(row).eq("id", id);
-    if (!error) {
-      set((state) => ({
-        slides: state.slides.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-      }));
-    }
+    if (error) return false;
+    set((state) => ({
+      slides: state.slides.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+    }));
+    return true;
   },
 
   removeSlide: async (id) => {
-    if (!supabase) return;
+    if (!supabase) return false;
     const { error } = await supabase.from("slides").delete().eq("id", id);
-    if (!error) {
-      set((state) => ({ slides: state.slides.filter((s) => s.id !== id) }));
-    }
+    if (error) return false;
+    set((state) => ({ slides: state.slides.filter((s) => s.id !== id) }));
+    return true;
   },
 
   reorderSlides: async (slides) => {

@@ -143,8 +143,18 @@ export default function AdminPriestsPage() {
 
     // If setting a new head, demote others first (partial unique index
     // enforces single head, so we can't have two `true` rows at once).
+    // Abort if the demote fails so we don't proceed on a false premise.
+    // (Full atomicity of demote+write needs a DB transaction/RPC — see backlog.)
     if (form.is_head) {
-      await supabase.from("priests").update({ is_head: false }).eq("is_head", true);
+      const { error: demoteErr } = await supabase
+        .from("priests")
+        .update({ is_head: false })
+        .eq("is_head", true);
+      if (demoteErr) {
+        setSaving(false);
+        setError(demoteErr.message);
+        return;
+      }
     }
 
     const { error: writeErr } = form.id
