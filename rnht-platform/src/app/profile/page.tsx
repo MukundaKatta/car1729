@@ -126,6 +126,12 @@ export default function ProfilePage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
+
+  // Android back button: close the Add Family dialog instead of navigating.
+  useEffect(() => {
+    if (!showAddFamily) return;
+    return pushOverlay(() => setShowAddFamily(false));
+  }, [showAddFamily]);
   const [bookingFilter, setBookingFilter] = useState<"all" | "upcoming" | "completed">("all");
 
   // Profile form controlled state

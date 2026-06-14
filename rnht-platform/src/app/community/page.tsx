@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { pushOverlay } from "@/lib/overlay-stack";
 import Link from "next/link";
 import {
   HeartHandshake,
@@ -117,17 +118,21 @@ export default function CommunityPage() {
   useEffect(() => {
     if (!selectedOpp) return;
     document.body.style.overflow = "hidden";
+    const close = () => {
+      setSelectedOpp(null);
+      setVolunteerName("");
+      setVolunteerEmail("");
+    };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedOpp(null);
-        setVolunteerName("");
-        setVolunteerEmail("");
-      }
+      if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", handleKey);
+    // Android hardware back closes the modal (instead of navigating away).
+    const unregister = pushOverlay(close);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKey);
+      unregister();
     };
   }, [selectedOpp]);
 

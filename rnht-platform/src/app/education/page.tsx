@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { pushOverlay } from "@/lib/overlay-stack";
 import {
   BookOpen,
   Clock,
@@ -209,17 +210,21 @@ export default function EducationPage() {
   useEffect(() => {
     if (!selectedProgram) return;
     document.body.style.overflow = "hidden";
+    const close = () => {
+      setSelectedProgram(null);
+      setRegName("");
+      setRegEmail("");
+    };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedProgram(null);
-        setRegName("");
-        setRegEmail("");
-      }
+      if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", handleKey);
+    // Android hardware back closes the modal (instead of navigating away).
+    const unregister = pushOverlay(close);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKey);
+      unregister();
     };
   }, [selectedProgram]);
 
