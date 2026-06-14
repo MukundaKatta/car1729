@@ -1,6 +1,6 @@
 # RNHT Launch Readiness
 
-_Last updated: 2026-06-13. Status of the app vs. App Store / Play Store submission._
+_Last updated: 2026-06-14. Status of the app vs. App Store / Play Store submission._
 
 ## ✅ Done & verified (engineering)
 
@@ -19,11 +19,24 @@ _Last updated: 2026-06-13. Status of the app vs. App Store / Play Store submissi
   all rejected with 400, no rows written).
 - **Database integrity** (live): `is_admin` immutability trigger present, `profiles`
   UPDATE policy has `WITH CHECK`, every public table has RLS, 6 active funds.
-- **Native**: Android build 14 distributed (Firebase App Distribution); iOS build 14
-  on TestFlight (internal testers live).
 - Security highlights closed: privilege-escalation lock, in-app account deletion
   reachable (Apple 5.1.1(v)), tax-receipt XSS escaping, native payment reconcile,
   fund-type allowlist.
+- **Native audit + build 16 (2026-06-14)** — a multi-agent native launch-readiness
+  audit (23 confirmed findings) caught **two real blockers**, both fixed and
+  **runtime-validated on the iOS Simulator + Android emulator**:
+  - **Supabase env was not baked into the mobile bundle** → auth + donations were
+    dead on device. `build-mobile.sh` now loads `.env.local` and **fails fast** if
+    the `NEXT_PUBLIC_SUPABASE_*` vars are missing, so an env-less native build can
+    never ship again. Validated on device: dashboard loads real data ("Namaste,
+    Mukunda!", $11 Total Donated), donate opens Stripe checkout, login is live.
+  - **Android app name was "My App"** (Capacitor template default) → set to
+    "RNHT Temple" (APK manifest verified); stale `com.getcapacitor.myapp`
+    package/scheme corrected to `org.rnht.app`.
+  - Also: Android hardware **back button now closes user-facing modals**
+    (education/community/profile); dropped obsolete iOS `armv7` capability; removed
+    a latent `'use server'` action. Build bumped to **16** (Android versionCode 16,
+    iOS CURRENT_PROJECT_VERSION 16). **Not yet distributed** — see below.
 
 ## 🔴 Blockers that need YOU (not engineering bugs)
 
@@ -64,12 +77,36 @@ WHERE donor_email = 'mukunda.vjcs6@gmail.com'
 -- SELECT amount, fund_type, payment_status, donor_email FROM donations ORDER BY created_at DESC;
 ```
 
+## 🟠 Native follow-ups (from the 2026-06-14 audit — not blockers)
+
+The native architecture is otherwise sound (audit confirmed Google correctly
+hidden on native, opt-in music, double-submit guard, session persistence). Worth
+doing, in priority order:
+
+1. **Payment return + settlement hardening (H1 + M1 + M2).** After paying, the
+   Stripe/PayPal success page loads inside the in-app browser and only reconciles
+   when the donor manually closes it (no deep link). Robust fix = Stripe/PayPal
+   **webhooks** (server-side source of truth) + a tiny auto-closing return page +
+   an `App` resume listener that persists the pending donation id. **Needs a real
+   device to confirm** in-app-browser close timing. Recoverable today (an amber
+   banner tells donors to return), so not blocking.
+2. **Verify the Supabase email template emits `{{ .Token }}`** (Auth → Email
+   Templates → Magic Link) — the native in-app email-code sign-in depends on it.
+   Can't be checked from the repo; verify in the dashboard before launch.
+3. **Admin modals back button** (booking/event/slideshow) — internal tooling;
+   apply the same `pushOverlay` registration the user-facing modals now have.
+4. Polish: Android status-bar/header color seam; profile Add-Family modal keyboard
+   overflow on small phones; relabel calendar "Download" → "View".
+
 ## ℹ️ Available on request
 
-- **Build 15** — minor web-only fixes (donate verify-error clearing, admin
-  approval action types, news-skeleton CLS, **calendar recurrence cadence**) are
-  live on web but predate the current native builds. Say the word to roll a
-  build 15 + redistribute, or let them fold into the next planned native build.
+- **Build 16** is built + runtime-verified on simulator/emulator but **not yet
+  distributed**. It carries everything above plus the web-only fixes (donate
+  verify-error clearing, admin approval action types, news-skeleton CLS, calendar
+  recurrence cadence). Say the word to archive + upload iOS to TestFlight and
+  distribute the Android AAB — note iOS external testing is still gated on build 13
+  clearing Beta App Review, and an App Store *submission* still needs the live
+  Stripe key.
 
 ## Standard deploy (engineering reference)
 
