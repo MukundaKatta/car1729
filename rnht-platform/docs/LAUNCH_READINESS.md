@@ -57,9 +57,14 @@ _Last updated: 2026-06-14. Status of the app vs. App Store / Play Store submissi
 
 ## 🟡 In Apple's hands
 
-- iOS **external** testers: build 13 is in Apple **Beta App Review**. Once it
-  clears (or you cancel its submission in App Store Connect → TestFlight), build 14
-  can be submitted for external testing.
+- **Beta is live on both platforms — build 17** (Android via Firebase App
+  Distribution to the 4 testers; iOS uploaded to TestFlight → internal testers
+  after Apple processing). Build 16 → 17 added: native Supabase env fix, Android
+  app name, calendar cadence, Android back-button, admin error-handling,
+  family-member edit.
+- iOS **external** testers are still gated: build 13 is in Apple **Beta App
+  Review**, and only one build can be in review at a time. Cancel build 13 in
+  App Store Connect → TestFlight, then submit build 17 for external testing.
 
 ## 🧹 Test-data cleanup (review, then run with the service role)
 
