@@ -6,8 +6,17 @@
 #   the 2026 calendar PDF (opened from the web instead) and the unreferenced
 #   slideshow images (slides load from Supabase).
 # Required env: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY.
+# These come from .env.local (public anon values) or the real environment (CI).
 set -e
 cd "$(dirname "$0")/.."
+
+# Load local public env if present so the values are inlined into the static bundle.
+if [ -f .env.local ]; then set -a; . ./.env.local; set +a; fi
+# Fail fast — a silently-empty NEXT_PUBLIC_* var produces a bundle with no Supabase
+# config (dead auth/donations on device). set -e cannot catch that, so guard here.
+: "${NEXT_PUBLIC_SUPABASE_URL:?must be set (add it to .env.local — see .env.local.example — or export it). Refusing to build an env-less native bundle.}"
+: "${NEXT_PUBLIC_SUPABASE_ANON_KEY:?must be set (add it to .env.local or export it). Refusing to build an env-less native bundle.}"
+
 mv src/app/api /tmp/rnht-api-aside
 trap 'mv /tmp/rnht-api-aside src/app/api' EXIT
 rm -rf .next out
