@@ -56,11 +56,13 @@ export function HomePanchangamScroll() {
   const [p, setP] = useState<ComputedPanchangam>(() =>
     createPanchangamLoadingState(location)
   );
+  const [hasError, setHasError] = useState(false);
+  const calendarYear = new Date().getFullYear();
   // Absolute URL so the PDF also works inside the native apps, where the
   // 12 MB file is stripped from the bundled assets (build-mobile.sh) and
   // opens via the in-app browser instead.
-  const calendarPdfHref = "https://rnht-platform.web.app/downloads/2026-rnht.pdf";
-  const calendarPreviewHref = "/downloads/preview/2026-rnht-preview.jpg";
+  const calendarPdfHref = `https://rnht-platform.web.app/downloads/${calendarYear}-rnht.pdf`;
+  const calendarPreviewHref = `/downloads/preview/${calendarYear}-rnht-preview.jpg`;
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
   const dateParts = getDisplayDateParts(p.date, location.timeZone);
 
@@ -73,6 +75,7 @@ export function HomePanchangamScroll() {
     let cancelled = false;
 
     async function loadPanchangam() {
+      setHasError(false);
       setP(createPanchangamLoadingState(location));
 
       try {
@@ -84,6 +87,7 @@ export function HomePanchangamScroll() {
         console.error("Failed to load live Panchangam", error);
         if (!cancelled) {
           setP(createPanchangamLoadingState(location));
+          setHasError(true);
         }
       }
     }
@@ -141,6 +145,15 @@ export function HomePanchangamScroll() {
             Vedic almanac for {p.location} on {formattedDate}
           </p>
         </div>
+
+        {hasError && (
+          <div
+            role="alert"
+            className="mx-auto mt-6 max-w-xl rounded-xl border border-temple-red/30 bg-[#FDF1EE] px-4 py-3 text-center text-sm font-semibold text-temple-maroon"
+          >
+            Unable to load panchangam — try a different location or refresh
+          </div>
+        )}
 
         <div className="mt-10 grid items-start gap-6 sm:mt-12 lg:grid-cols-3">
           <Link
@@ -280,7 +293,7 @@ export function HomePanchangamScroll() {
           <a
             href={calendarPdfHref}
             download
-            aria-label="Download 2026 RNHT calendar PDF"
+            aria-label={`Download ${calendarYear} RNHT calendar PDF`}
             className="group relative flex flex-col rounded-3xl border border-temple-gold/30 bg-gradient-to-br from-temple-maroon to-temple-maroon-deep p-5 shadow-premium transition-all duration-300 hover:-translate-y-1 hover:border-temple-gold/50 hover:shadow-premium-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold sm:p-6"
           >
             <div className="flex items-start justify-between">
@@ -293,7 +306,7 @@ export function HomePanchangamScroll() {
               Temple Calendar
             </p>
             <h3 className="mt-2 font-heading text-2xl font-bold text-white">
-              2026 RNHT Calendar
+              {calendarYear} RNHT Calendar
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/75">
               Full year of festival dates, observances, and temple milestones.
@@ -302,7 +315,7 @@ export function HomePanchangamScroll() {
             <div className="relative mt-5 overflow-hidden rounded-xl border border-temple-gold/20 bg-temple-maroon-deep/60">
               <Image
                 src={calendarPreviewHref}
-                alt=""
+                alt={`${calendarYear} RNHT Calendar preview`}
                 width={1600}
                 height={1200}
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"

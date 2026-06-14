@@ -38,6 +38,10 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
   },
 ];
 
+// Temple Zelle contact number — kept in one place so the three places that
+// surface it (success screen, payment panel, Zelle section) stay in sync.
+const ZELLE_PHONE = "(512) 545-0473";
+
 const donationFundLabels: Record<string, string> = {
   general: "General Temple Fund",
   building: "Building Fund",
@@ -429,7 +433,7 @@ export default function DonatePage() {
           {paymentMethod === "zelle" && (
             <p className="mt-2 font-semibold">
               Please send your Zelle payment of {formatCurrency(displayedAmount)}{" "}
-              to (512) 545-0473
+              to {ZELLE_PHONE}
             </p>
           )}
         </div>
@@ -482,7 +486,7 @@ export default function DonatePage() {
             <img
               src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/nitya-pooja-seva.jpg`}
               alt="Nitya Pooja Seva — $365 yearly offering for daily worship services"
-              className="w-full rounded-xl border border-temple-gold/30 object-cover shadow-[0_0_40px_rgba(197,151,62,0.2)]"
+              className="aspect-[4/3] w-full rounded-xl border border-temple-gold/30 object-cover shadow-[0_0_40px_rgba(197,151,62,0.2)]"
             />
           </div>
           <div className="text-center lg:text-left">
@@ -610,7 +614,11 @@ export default function DonatePage() {
         {/* Left column — form */}
         <div className="lg:col-span-3 space-y-6">
           {verifyError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div
+              aria-live="polite"
+              aria-atomic="true"
+              className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+            >
               {verifyError}
             </div>
           )}
@@ -636,6 +644,7 @@ export default function DonatePage() {
                     onChange={() => {
                       setFundTypeSlug(fund.slug);
                       setCustomFieldValues({});
+                      setError("");
                     }}
                     className="mt-1 text-temple-red"
                   />
@@ -654,7 +663,10 @@ export default function DonatePage() {
           <div className="card p-5">
             <h2 className="font-heading text-lg font-bold text-gray-900">Amount</h2>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="donation-amount"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Enter amount (USD)
               </label>
               <div className="relative mt-1">
@@ -662,9 +674,11 @@ export default function DonatePage() {
                   $
                 </span>
                 <input
+                  id="donation-amount"
                   type="number"
                   inputMode="decimal"
                   min="1"
+                  max="100000"
                   step="0.01"
                   placeholder="Enter any amount"
                   className="input-field pl-7"
@@ -672,6 +686,13 @@ export default function DonatePage() {
                   onChange={(e) => setCustomAmount(e.target.value)}
                 />
               </div>
+              {!isNaN(amount) && amount > MAX_DONATION && (
+                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                  The maximum online donation is{" "}
+                  {formatCurrency(MAX_DONATION)}. Your donation will be capped at
+                  this amount — please contact the temple to give more.
+                </p>
+              )}
             </div>
           </div>
 
@@ -687,10 +708,14 @@ export default function DonatePage() {
             </p>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="donor-email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="donor-email"
                   type="email"
                   className="input-field mt-1"
                   value={donorEmail}
@@ -703,10 +728,14 @@ export default function DonatePage() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="donor-name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Full Name
                 </label>
                 <input
+                  id="donor-name"
                   type="text"
                   className="input-field mt-1"
                   value={donorName}
@@ -716,11 +745,15 @@ export default function DonatePage() {
               </div>
               {customFields.map((field) => (
                 <div key={field.key}>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor={`custom-field-${field.key}`}
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     {field.label}
                     {field.required && <span className="text-red-500">*</span>}
                   </label>
                   <input
+                    id={`custom-field-${field.key}`}
                     type={field.type === "number" ? "number" : "text"}
                     className="input-field mt-1"
                     value={customFieldValues[field.key] ?? ""}
@@ -773,7 +806,7 @@ export default function DonatePage() {
             {paymentMethod === "zelle" && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 <p>
-                  <strong>Phone:</strong> (512) 545-0473
+                  <strong>Phone:</strong> {ZELLE_PHONE}
                 </p>
                 <p>
                   <strong>Name:</strong> Rudra Narayana Hindu Temple
@@ -782,7 +815,11 @@ export default function DonatePage() {
             )}
 
             {error && (
-              <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800"
+              >
                 {error}
               </div>
             )}
@@ -831,7 +868,7 @@ export default function DonatePage() {
         </h3>
         <p className="mt-2 text-sm text-gray-600">
           Send donations directly via Zelle to:{" "}
-          <strong className="text-temple-maroon">(512) 545-0473</strong>
+          <strong className="text-temple-maroon">{ZELLE_PHONE}</strong>
         </p>
       </div>
     </div>

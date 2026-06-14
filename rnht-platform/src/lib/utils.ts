@@ -12,7 +12,8 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "--";
   // If it's a YYYY-MM-DD string, parse as local time to avoid timezone shift
   const d = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
     ? new Date(date + "T00:00:00")
@@ -25,7 +26,8 @@ export function formatDate(date: Date | string): string {
   });
 }
 
-export function formatTime(date: Date | string): string {
+export function formatTime(date: Date | string | null | undefined): string {
+  if (!date) return "--";
   return new Date(date).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",

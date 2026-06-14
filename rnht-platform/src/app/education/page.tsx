@@ -244,7 +244,7 @@ export default function EducationPage() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-temple-red ${
               selectedCategory === cat.id
                 ? "bg-temple-red text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -342,13 +342,28 @@ export default function EducationPage() {
             </div>
             <div className="mt-6 space-y-3">
               <h3 className="text-sm font-semibold text-gray-700">Student Information</h3>
-              <input type="text" className="input-field" placeholder="Student Full Name *" value={regName} onChange={(e) => setRegName(e.target.value)} />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input type="email" className="input-field" placeholder="Email *" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
-                <input type="tel" className="input-field" placeholder="Phone" />
+              <div>
+                <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700">Student Full Name *</label>
+                <input id="reg-name" type="text" className="input-field mt-1" placeholder="Student Full Name *" value={regName} onChange={(e) => setRegName(e.target.value)} />
               </div>
-              <input type="text" className="input-field" placeholder="Parent/Guardian Name (for children)" />
-              <textarea className="input-field" rows={2} placeholder="Any special requirements or notes..." />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700">Email *</label>
+                  <input id="reg-email" type="email" className="input-field mt-1" placeholder="Email *" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                </div>
+                <div>
+                  <label htmlFor="reg-phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input id="reg-phone" type="tel" className="input-field mt-1" placeholder="Phone" />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="reg-guardian" className="block text-sm font-medium text-gray-700">Parent/Guardian Name (for children)</label>
+                <input id="reg-guardian" type="text" className="input-field mt-1" placeholder="Parent/Guardian Name (for children)" />
+              </div>
+              <div>
+                <label htmlFor="reg-notes" className="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea id="reg-notes" className="input-field mt-1" rows={2} placeholder="Any special requirements or notes..." />
+              </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="btn-outline" onClick={() => { setSelectedProgram(null); setRegName(""); setRegEmail(""); }}>Cancel</button>

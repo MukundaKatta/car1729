@@ -409,19 +409,19 @@ export default function ProfilePage() {
                 <input id="profile-address" type="text" autoComplete="street-address" className="input-field mt-1" value={formAddress} onChange={(e) => setFormAddress(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Gotra</label>
-                <input type="text" className="input-field mt-1" value={formGotra} onChange={(e) => setFormGotra(e.target.value)} />
+                <label htmlFor="profile-gotra" className="block text-sm font-medium text-gray-700">Gotra</label>
+                <input id="profile-gotra" type="text" className="input-field mt-1" value={formGotra} onChange={(e) => setFormGotra(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nakshatra</label>
-                <select className="input-field mt-1" value={formNakshatra} onChange={(e) => setFormNakshatra(e.target.value)}>
+                <label htmlFor="profile-nakshatra" className="block text-sm font-medium text-gray-700">Nakshatra</label>
+                <select id="profile-nakshatra" className="input-field mt-1" value={formNakshatra} onChange={(e) => setFormNakshatra(e.target.value)}>
                   <option value="">Select...</option>
                   {nakshatras.map((n) => (<option key={n} value={n}>{n}</option>))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Rashi</label>
-                <select className="input-field mt-1" value={formRashi} onChange={(e) => setFormRashi(e.target.value)}>
+                <label htmlFor="profile-rashi" className="block text-sm font-medium text-gray-700">Rashi</label>
+                <select id="profile-rashi" className="input-field mt-1" value={formRashi} onChange={(e) => setFormRashi(e.target.value)}>
                   <option value="">Select...</option>
                   {rashis.map((r) => (<option key={r} value={r}>{r}</option>))}
                 </select>
@@ -444,6 +444,7 @@ export default function ProfilePage() {
         {/* Family Tab */}
         {activeTab === "family" && (
           <div className="space-y-4">
+            <h2 className="font-heading text-lg font-bold text-gray-900">Family</h2>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
                 Add family members for quick Sankalp during pooja bookings.
@@ -533,6 +534,7 @@ export default function ProfilePage() {
         {/* Bookings Tab */}
         {activeTab === "bookings" && (
           <div className="space-y-4">
+            <h2 className="font-heading text-lg font-bold text-gray-900">Bookings</h2>
             <div className="flex flex-wrap gap-2">
               {(["all", "upcoming", "completed"] as const).map((filter) => (
                 <button
@@ -594,6 +596,7 @@ export default function ProfilePage() {
         {/* Donations Tab */}
         {activeTab === "donations" && (
           <div className="space-y-4">
+            <h2 className="font-heading text-lg font-bold text-gray-900">Donations</h2>
             <div className="card bg-gradient-to-r from-green-50 to-emerald-50 p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -639,9 +642,10 @@ export default function ProfilePage() {
         {/* Preferences Tab */}
         {activeTab === "preferences" && (
           <div className="space-y-6">
+            <h2 className="font-heading text-lg font-bold text-gray-900">Preferences</h2>
             <div className="card p-5">
-              <h3 className="font-heading text-lg font-bold text-gray-900">Preferred Language</h3>
-              <select className="input-field mt-3 max-w-xs">
+              <h3 id="pref-language-label" className="font-heading text-lg font-bold text-gray-900">Preferred Language</h3>
+              <select id="pref-language" aria-labelledby="pref-language-label" className="input-field mt-3 max-w-xs">
                 <option>English</option>
                 <option>Telugu</option>
                 <option>Hindi</option>
@@ -692,8 +696,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Dietary Restrictions (for Prasadam)</label>
-                  <select className="input-field mt-1 max-w-xs">
+                  <label htmlFor="pref-dietary" className="block text-sm font-medium text-gray-700">Dietary Restrictions (for Prasadam)</label>
+                  <select id="pref-dietary" className="input-field mt-1 max-w-xs">
                     <option>None</option>
                     <option>Vegan</option>
                     <option>No Nuts</option>

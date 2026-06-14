@@ -18,6 +18,7 @@ export default function PanchangamPage() {
     createPanchangamLoadingState(location)
   );
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   // Geolocation is requested ONLY when the devotee taps "Use current location"
   // (see the button below) — never automatically on mount. Auto-prompting was
@@ -29,6 +30,7 @@ export default function PanchangamPage() {
 
     async function loadPanchangam() {
       setLoading(true);
+      setHasError(false);
       setComputed(createPanchangamLoadingState(location));
 
       try {
@@ -41,6 +43,7 @@ export default function PanchangamPage() {
         console.error("Failed to load live Panchangam", error);
         if (!cancelled) {
           setComputed(createPanchangamLoadingState(location));
+          setHasError(true);
           setLoading(false);
         }
       }
@@ -177,12 +180,20 @@ export default function PanchangamPage() {
       </div>
 
       <div className="mt-8">
-        {loading && (
+        {loading && !hasError && (
           <p className="mb-4 text-sm text-gray-500">
             Calculating live Panchangam for {location.label}...
           </p>
         )}
-        <PanchangamWidget panchangam={computed} />
+        {hasError ? (
+          <div className="rounded-2xl border border-temple-red/30 bg-[#FDF1EE] p-6 text-center">
+            <p className="font-semibold text-temple-maroon">
+              Unable to load panchangam — try a different location or refresh
+            </p>
+          </div>
+        ) : (
+          <PanchangamWidget panchangam={computed} />
+        )}
       </div>
     </div>
   );

@@ -82,7 +82,9 @@ describe("PrivacyPage", () => {
 
   it("displays the last updated date", () => {
     render(<PrivacyPage />);
-    expect(screen.getByText("Last updated 22 Feb 2025")).toBeInTheDocument();
+    expect(screen.getByText(/Last updated/)).toBeInTheDocument();
+    // Asserts a formatted date (e.g. "13 Jun 2026") is rendered, not a stale literal
+    expect(screen.getByText(/\d{1,2}\s+\w{3}\s+\d{4}/)).toBeInTheDocument();
   });
 
   // Section headings

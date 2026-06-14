@@ -40,7 +40,7 @@ describe("StreamingPage", () => {
     const link = screen.getByRole("link", {
       name: /join the whatsapp updates/i,
     });
-    expect(link).toHaveAttribute("href", "https://wa.me/15125450473");
+    expect(link).toHaveAttribute("href", "https://wa.me/message/P3YRA2XY3GI7F1");
   });
 
   it("shows the regular live darshan schedule", () => {

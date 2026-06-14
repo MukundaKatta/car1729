@@ -49,7 +49,7 @@ export function NewsAndUpdates({ limit = 3, compact = false }: Props) {
         )}
         <div className={`mt-6 grid gap-4 ${compact ? "" : "sm:grid-cols-3"}`}>
           {Array.from({ length: limit }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-2xl bg-temple-ivory" />
+            <div key={i} className="h-80 animate-pulse rounded-2xl bg-temple-ivory" />
           ))}
         </div>
       </div>
@@ -89,7 +89,7 @@ export function NewsAndUpdates({ limit = 3, compact = false }: Props) {
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={post.hero_image_url}
-              alt=""
+              alt={post.title}
               className="h-40 w-full object-cover"
             />
           ) : (

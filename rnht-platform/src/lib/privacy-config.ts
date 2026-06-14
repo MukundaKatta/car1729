@@ -1,0 +1,1 @@
+export const PRIVACY_POLICY_UPDATED = "2026-06-13";

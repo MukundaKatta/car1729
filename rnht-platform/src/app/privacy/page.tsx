@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { canonicalPath } from "@/lib/site-metadata";
+import { PRIVACY_POLICY_UPDATED } from "@/lib/privacy-config";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -13,7 +14,13 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="section-heading">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-gray-500">Last updated 22 Feb 2025</p>
+      <p className="mt-2 text-sm text-gray-500">
+        Last updated{" "}
+        {new Date(`${PRIVACY_POLICY_UPDATED}T00:00:00`).toLocaleDateString(
+          "en-GB",
+          { day: "numeric", month: "short", year: "numeric" }
+        )}
+      </p>
 
       <div className="mt-8 prose prose-sm max-w-none text-gray-700 space-y-6">
         <h2 className="text-lg font-bold text-gray-900">Cookie Policy</h2>

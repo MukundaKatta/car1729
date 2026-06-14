@@ -107,6 +107,7 @@ const announcements = [
 ];
 
 export default function CommunityPage() {
+  const currentYear = new Date().getFullYear();
   const [activeTab, setActiveTab] = useState<CommunityTab>("volunteer");
   const [selectedOpp, setSelectedOpp] = useState<string | null>(null);
   const [volunteerName, setVolunteerName] = useState("");
@@ -210,7 +211,7 @@ export default function CommunityPage() {
               <div className="card sticky top-[calc(var(--header-h,96px)+8px)] p-5">
                 <h2 className="flex items-center gap-2 font-heading text-lg font-bold text-gray-900">
                   <Trophy className="h-5 w-5 text-temple-gold" />
-                  Top Volunteers (2026)
+                  Top Volunteers ({currentYear})
                 </h2>
                 <div className="mt-4 space-y-3">
                   {topVolunteers.length === 0 ? (
@@ -356,10 +357,19 @@ export default function CommunityPage() {
               {volunteerOpportunities.find((o) => o.id === selectedOpp)?.title}
             </p>
             <div className="mt-4 space-y-3">
-              <input type="text" className="input-field" placeholder="Full Name *" value={volunteerName} onChange={(e) => setVolunteerName(e.target.value)} />
+              <div>
+                <label htmlFor="vol-name" className="block text-sm font-medium text-gray-700">Full Name *</label>
+                <input id="vol-name" type="text" className="input-field mt-1" placeholder="Full Name *" value={volunteerName} onChange={(e) => setVolunteerName(e.target.value)} />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <input type="email" className="input-field" placeholder="Email *" value={volunteerEmail} onChange={(e) => setVolunteerEmail(e.target.value)} />
-                <input type="tel" className="input-field" placeholder="Phone" />
+                <div>
+                  <label htmlFor="vol-email" className="block text-sm font-medium text-gray-700">Email *</label>
+                  <input id="vol-email" type="email" className="input-field mt-1" placeholder="Email *" value={volunteerEmail} onChange={(e) => setVolunteerEmail(e.target.value)} />
+                </div>
+                <div>
+                  <label htmlFor="vol-phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input id="vol-phone" type="tel" className="input-field mt-1" placeholder="Phone" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -374,7 +384,10 @@ export default function CommunityPage() {
                     </label>
                   ))}
               </div>
-              <textarea className="input-field" rows={2} placeholder="Any experience or notes..." />
+              <div>
+                <label htmlFor="vol-notes" className="block text-sm font-medium text-gray-700">Experience / Notes</label>
+                <textarea id="vol-notes" className="input-field mt-1" rows={2} placeholder="Any experience or notes..." />
+              </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="btn-outline" onClick={() => { setSelectedOpp(null); setVolunteerName(""); setVolunteerEmail(""); }}>Cancel</button>

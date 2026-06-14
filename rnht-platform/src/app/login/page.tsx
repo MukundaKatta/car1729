@@ -168,8 +168,10 @@ export default function LoginPage() {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     setLoading(false);
+    // Don't eagerly navigate here — let the auth store catch up and drive the
+    // redirect via the isAuthenticated effect below, so navigation waits for
+    // auth state instead of racing ahead of it.
     if (session?.user) {
-      router.replace("/dashboard");
       return;
     }
     setError("We do not see an active session yet. Please open the latest email and click the confirmation link in the same browser.");
@@ -324,7 +326,12 @@ export default function LoginPage() {
         <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           {/* Error display */}
           {error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div
+              role="alert"
+              aria-live="polite"
+              aria-atomic="true"
+              className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
@@ -472,15 +479,16 @@ export default function LoginPage() {
             <div className="space-y-4">
               <button
                 onClick={() => { setStep("method"); setError(""); }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="rounded text-sm text-gray-500 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 &larr; Back
               </button>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email-name" className="block text-sm font-medium text-gray-700">
                   Your Name
                 </label>
                 <input
+                  id="email-name"
                   type="text"
                   className="input-field mt-1"
                   placeholder="Enter your name"
@@ -495,10 +503,11 @@ export default function LoginPage() {
                 </p>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
                   Email Address
                 </label>
                 <input
+                  id="email-address"
                   type="email"
                   className="input-field mt-1"
                   placeholder="you@example.com"
@@ -549,15 +558,16 @@ export default function LoginPage() {
             <div className="space-y-4">
               <button
                 onClick={() => { setStep("method"); setError(""); }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="rounded text-sm text-gray-500 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 &larr; Back
               </button>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor="phone-name" className="block text-sm font-medium text-gray-700">
                   Your Name
                 </label>
                 <input
+                  id="phone-name"
                   type="text"
                   className="input-field mt-1"
                   placeholder="Enter your name"
@@ -572,10 +582,11 @@ export default function LoginPage() {
                 </p>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700">
                   Phone Number
                 </label>
                 <input
+                  id="phone-number"
                   type="tel"
                   className="input-field mt-1"
                   placeholder="(512) 555-0123"
@@ -587,9 +598,14 @@ export default function LoginPage() {
                   country code (e.g. +44 7700 900123).
                 </p>
               </div>
+              {phoneCooldownSeconds > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Please wait {phoneCooldownSeconds}s before sending another code.
+                </div>
+              )}
               <button
                 className="btn-primary w-full flex items-center justify-center gap-2"
-                disabled={!phone.trim() || (authMode === "signup" && !name.trim()) || loading}
+                disabled={!phone.trim() || (authMode === "signup" && !name.trim()) || loading || phoneCooldownSeconds > 0}
                 onClick={handleSendPhoneOtp}
               >
                 {loading ? (
@@ -598,7 +614,11 @@ export default function LoginPage() {
                     Sending Code...
                   </>
                 ) : (
-                  authMode === "signup" ? "Create Account with Phone" : "Send Verification Code"
+                  phoneCooldownSeconds > 0
+                    ? `Try Again in ${phoneCooldownSeconds}s`
+                    : authMode === "signup"
+                      ? "Create Account with Phone"
+                      : "Send Verification Code"
                 )}
               </button>
             </div>
@@ -613,7 +633,7 @@ export default function LoginPage() {
                   setError("");
                   setOtp(["", "", "", "", "", ""]);
                 }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="rounded text-sm text-gray-500 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 &larr; Back
               </button>
@@ -674,7 +694,7 @@ export default function LoginPage() {
                   setError("");
                   setEmailCode("");
                 }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="rounded text-sm text-gray-500 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 &larr; Back
               </button>
@@ -688,11 +708,12 @@ export default function LoginPage() {
                   completes inside the native apps (the email link signs you
                   in in the system browser, not the app). */}
               <div className="rounded-xl border border-temple-gold/30 bg-white px-4 py-4 text-left">
-                <p className="text-sm font-medium text-temple-maroon">
+                <label htmlFor="email-otp" className="text-sm font-medium text-temple-maroon">
                   Enter the verification code from the email
-                </p>
+                </label>
                 <div className="mt-3 flex gap-2">
                   <input
+                    id="email-otp"
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"

@@ -50,10 +50,14 @@ export default function CalendarPage() {
   // Load the live events table (admin-managed), same source the homepage uses.
   // Falls back to the bundled sample events when the backend is empty/down.
   const [events, setEvents] = useState(sampleEvents);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     let cancelled = false;
     async function loadEvents() {
-      if (!supabase) return;
+      if (!supabase) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
       const { data, error } = await supabase
         .from("events")
         .select("*")
@@ -61,6 +65,7 @@ export default function CalendarPage() {
       if (!cancelled && !error && data && data.length) {
         setEvents(data as typeof sampleEvents);
       }
+      if (!cancelled) setLoading(false);
     }
     loadEvents();
     return () => {
@@ -152,7 +157,27 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {view === "calendar" && (
+      {view === "calendar" && loading && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-11 w-11 animate-pulse rounded-lg bg-temple-ivory" />
+            <div className="h-7 w-40 animate-pulse rounded bg-temple-ivory" />
+            <div className="h-11 w-11 animate-pulse rounded-lg bg-temple-ivory" />
+          </div>
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-7 gap-px bg-gray-200">
+              {Array.from({ length: 42 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="min-h-[48px] animate-pulse bg-temple-ivory sm:min-h-[80px]"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === "calendar" && !loading && (
         <div className="mt-6">
           {/* Month Navigation */}
           <div className="flex items-center justify-between mb-4">
@@ -301,7 +326,15 @@ export default function CalendarPage() {
       )}
 
       {/* Event List */}
-      {view === "list" && (
+      {view === "list" && loading && (
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 animate-pulse rounded-2xl bg-temple-ivory" />
+          ))}
+        </div>
+      )}
+
+      {view === "list" && !loading && (
         filteredEvents.length > 0 ? (
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredEvents.map((event) => (

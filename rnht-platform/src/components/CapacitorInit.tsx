@@ -58,15 +58,24 @@ export function CapacitorInit() {
 
     // When the in-app payment browser closes (donor returns from Stripe/PayPal),
     // refresh their data so a just-completed donation shows in the dashboard.
-    const browserListener = Browser.addListener("browserFinished", () => {
-      const { isAuthenticated, fetchUserData } = useAuthStore.getState();
-      if (isAuthenticated) void fetchUserData();
-    });
+    // Await the listener handle and guard against a fast unmount so the
+    // resolved listener can't leak after cleanup runs.
+    let browserListenerCancelled = false;
+    let browserListenerHandle: { remove: () => void } | null = null;
+    void (async () => {
+      const listener = await Browser.addListener("browserFinished", () => {
+        const { isAuthenticated, fetchUserData } = useAuthStore.getState();
+        if (isAuthenticated) void fetchUserData();
+      });
+      if (browserListenerCancelled) listener.remove();
+      else browserListenerHandle = listener;
+    })();
 
     return () => {
       cleanup?.();
       document.removeEventListener("click", handleLinkClick, true);
-      browserListener.then((l) => l.remove());
+      browserListenerCancelled = true;
+      browserListenerHandle?.remove();
     };
   }, [router]);
 

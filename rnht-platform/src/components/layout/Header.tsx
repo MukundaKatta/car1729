@@ -408,7 +408,7 @@ export function Header() {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-lg px-4 py-2.5 text-[15px] font-semibold text-gray-700 transition-all duration-200 hover:bg-temple-gold/10 hover:text-temple-red"
+                className="relative rounded-lg px-4 py-2.5 text-[15px] font-semibold text-gray-700 transition-all duration-200 hover:bg-temple-gold/10 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 {item.name}
               </a>
@@ -416,7 +416,7 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red ${
+                className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2 ${
                   isActive(item.href)
                     ? "text-temple-maroon"
                     : "text-gray-700 hover:bg-temple-gold/10"
@@ -484,7 +484,7 @@ export function Header() {
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setShowLangPicker(!showLangPicker)}
-              className="hidden sm:flex items-center gap-1 rounded-full p-2.5 text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon"
+              className="hidden sm:flex items-center gap-1 rounded-full p-2.5 text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               title="Language"
               aria-label="Select language"
             >
@@ -537,7 +537,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-temple-maroon/70 transition-colors hover:bg-temple-gold/15 lg:hidden"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-temple-maroon/70 transition-colors hover:bg-temple-gold/15 lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >

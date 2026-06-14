@@ -154,14 +154,12 @@ export default function GalleryPage() {
       {/* Photo Grid */}
       <div className="mt-8 columns-2 gap-2 sm:gap-4 sm:columns-3 lg:columns-4">
         {filtered.map((img, i) => (
-          <div
+          <button
             key={img.src}
-            className="mb-4 break-inside-avoid cursor-pointer overflow-hidden rounded-xl group"
-            role="button"
-            tabIndex={0}
+            type="button"
+            className="mb-4 break-inside-avoid cursor-pointer overflow-hidden rounded-xl group bg-transparent border-0 p-0 text-left w-full"
             aria-label={`View ${img.alt}`}
             onClick={() => openLightbox(i)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openLightbox(i); } }}
           >
             <Image
               src={img.src}
@@ -170,7 +168,7 @@ export default function GalleryPage() {
               height={300}
               className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
             />
-          </div>
+          </button>
         ))}
       </div>
 

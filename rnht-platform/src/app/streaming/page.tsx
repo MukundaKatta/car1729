@@ -36,7 +36,7 @@ const upcomingHighlights = [
 
 const youtubeChannelUrl =
   "https://www.youtube.com/@rudranarayanahindutemple";
-const whatsappGroupUrl = "https://wa.me/15125450473";
+const whatsappGroupUrl = "https://wa.me/message/P3YRA2XY3GI7F1";
 
 export default function StreamingPage() {
   return (

@@ -118,9 +118,9 @@ describe("LoginPage", () => {
     expect(await screen.findByText("Invalid email")).toBeInTheDocument();
   });
 
-  it("checks for a confirmed email session and redirects", async () => {
+  it("checks for a confirmed email session and waits for auth state to redirect", async () => {
     mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: "u-1" } } } });
-    render(<LoginPage />);
+    const { rerender } = render(<LoginPage />);
     fireEvent.click(screen.getByText("Sign In with Email"));
     fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send Sign-In Link" }));
@@ -128,6 +128,19 @@ describe("LoginPage", () => {
     await screen.findByText(/we sent a confirmation link to/i);
     fireEvent.click(screen.getByRole("button", { name: "I Clicked the Sign-In Link" }));
 
+    // A confirmed session is found, but navigation is deferred until the auth
+    // store reports the user as authenticated — no eager redirect, no error.
+    await waitFor(() => {
+      expect(mockGetSession).toHaveBeenCalled();
+    });
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText(/we do not see an active session yet/i)
+    ).not.toBeInTheDocument();
+
+    // Once the store catches up, the isAuthenticated effect drives the redirect.
+    authState.isAuthenticated = true;
+    rerender(<LoginPage />);
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith("/dashboard");
     });

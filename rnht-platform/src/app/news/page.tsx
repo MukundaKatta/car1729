@@ -66,7 +66,9 @@ export default function NewsPage() {
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={active.hero_image_url}
-              alt=""
+              alt={active.title}
+              width={1600}
+              height={900}
               className="aspect-[16/9] w-full rounded-2xl object-cover"
             />
           )}

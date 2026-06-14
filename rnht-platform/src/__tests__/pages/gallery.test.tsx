@@ -152,7 +152,7 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
     // Click the first image's parent div
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     // Lightbox should be visible - a larger image appears
     const allImages = screen.getAllByRole("img");
     // 25 grid images + 1 lightbox image = 26
@@ -162,7 +162,7 @@ describe("GalleryPage", () => {
   it("shows image alt text as caption in lightbox", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     // The first image alt is used as caption
     expect(
       screen.getByText("Priest conducting ceremony with family")
@@ -172,7 +172,7 @@ describe("GalleryPage", () => {
   it("navigates to next image in lightbox", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     // Find the next button (ChevronRight)
     const buttons = screen.getAllByRole("button");
     // The right arrow button is the one on the right side
@@ -190,7 +190,7 @@ describe("GalleryPage", () => {
   it("navigates to previous image in lightbox", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     // Find the prev button (ChevronLeft)
     const buttons = screen.getAllByRole("button");
     const prevButton = buttons.find(
@@ -207,7 +207,7 @@ describe("GalleryPage", () => {
   it("closes lightbox when clicking close button", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     expect(screen.getAllByRole("img")).toHaveLength(26);
     // Find close button (top-right with X)
     const buttons = screen.getAllByRole("button");
@@ -222,7 +222,7 @@ describe("GalleryPage", () => {
   it("closes lightbox when clicking the backdrop", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     expect(screen.getAllByRole("img")).toHaveLength(26);
     // Click the backdrop (the fixed overlay)
     const backdrop = document.querySelector(".fixed.inset-0");
@@ -256,7 +256,7 @@ describe("GalleryPage", () => {
     const images = screen.getAllByRole("img");
     // Priests category has 2 images
     expect(images).toHaveLength(2);
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     // 2 grid + 1 lightbox = 3
     expect(screen.getAllByRole("img")).toHaveLength(3);
   });
@@ -299,7 +299,7 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     fireEvent.click(screen.getByRole("button", { name: "Priests" }));
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
 
     // First image caption
     expect(screen.getByText("Both priests seated with deity idols")).toBeInTheDocument();
@@ -321,7 +321,7 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     fireEvent.click(screen.getByRole("button", { name: "Priests" }));
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[1].closest("div.mb-4")!);
+    fireEvent.click(images[1].closest("button")!);
 
     // Second image caption
     expect(screen.getByText("Pandit Aditya Sharma with Shiva yantra")).toBeInTheDocument();
@@ -342,7 +342,7 @@ describe("GalleryPage", () => {
   it("lightbox image content area click does not close lightbox", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     expect(screen.getAllByRole("img")).toHaveLength(26);
 
     // Click on the image container (not the backdrop)
@@ -356,7 +356,7 @@ describe("GalleryPage", () => {
   it("lightbox shows correct image source for first image", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     const allImages = screen.getAllByRole("img");
     // The lightbox image (last one) should have the full-size source
     const lightboxImg = allImages[allImages.length - 1];
@@ -389,21 +389,21 @@ describe("GalleryPage", () => {
   it("lightbox opens on second image and shows correct caption", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[1].closest("div.mb-4")!);
+    fireEvent.click(images[1].closest("button")!);
     expect(screen.getByText("Priest performing pooja at mandapam")).toBeInTheDocument();
   });
 
   it("lightbox opens on last image and shows correct caption", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[24].closest("div.mb-4")!);
+    fireEvent.click(images[24].closest("button")!);
     expect(screen.getByText("Ram Parivar event - priest addressing devotees")).toBeInTheDocument();
   });
 
   it("next from last image wraps to first", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[24].closest("div.mb-4")!);
+    fireEvent.click(images[24].closest("button")!);
     expect(screen.getByText("Ram Parivar event - priest addressing devotees")).toBeInTheDocument();
 
     const buttons = screen.getAllByRole("button");
@@ -417,7 +417,7 @@ describe("GalleryPage", () => {
   it("prev from first image wraps to last", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
-    fireEvent.click(images[0].closest("div.mb-4")!);
+    fireEvent.click(images[0].closest("button")!);
     expect(screen.getByText("Priest conducting ceremony with family")).toBeInTheDocument();
 
     const buttons = screen.getAllByRole("button");
