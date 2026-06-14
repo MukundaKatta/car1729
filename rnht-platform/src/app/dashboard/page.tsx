@@ -11,6 +11,7 @@ import {
   writeEmailAuthCooldownUntil,
 } from "@/lib/email-auth-cooldown";
 import { useAuthStore } from "@/store/auth";
+import { normalizePhone } from "@/lib/phone";
 import {
   User,
   Heart,
@@ -37,18 +38,6 @@ import {
 } from "lucide-react";
 
 type Tab = "overview" | "bookings" | "donations" | "profile";
-
-/** Normalize to E.164. Same behaviour as login page. */
-function normalizePhone(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const hasPlus = trimmed.startsWith("+");
-  const digits = trimmed.replace(/\D/g, "");
-  if (!digits) return null;
-  const e164 = hasPlus ? `+${digits}` : `+1${digits}`;
-  if (!/^\+\d{8,15}$/.test(e164)) return null;
-  return e164;
-}
 
 /* ─── Login Form (shown when not authenticated) ─── */
 function LoginForm() {
@@ -952,7 +941,8 @@ function ProfileTab() {
   const handleAddMember = () => {
     if (!newMember.name.trim() || !newMember.relationship.trim()) return;
     addFamilyMember({
-      id: "fm-" + Date.now(),
+      // UUID, not a timestamp — avoids same-millisecond id collisions.
+      id: "fm-" + crypto.randomUUID(),
       name: newMember.name,
       relationship: newMember.relationship,
       gotra: newMember.gotra || undefined,
@@ -1115,6 +1105,17 @@ function ProfileTab() {
         <LogOut className="h-4 w-4" />
         Sign Out
       </button>
+
+      {/* Account management — Apple Guideline 5.1.1(v) requires in-app account
+          deletion to be reachable via normal navigation. The full delete flow
+          lives on /profile; link to it so a reviewer/user can find it. */}
+      <Link
+        href="/profile"
+        className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-temple-maroon"
+      >
+        <Trash2 className="h-4 w-4" />
+        Account settings &amp; delete account
+      </Link>
     </div>
   );
 }

@@ -47,9 +47,15 @@ export async function POST(request: Request) {
     const body = (await request.json()) as DonateRequest;
     const { amount, fundType, donorName, donorEmail, message, isAnonymous, isRecurring, recurringFrequency, paymentMethod = "stripe" } = body;
 
-    if (!amount || amount <= 0 || !donorName || !donorEmail) {
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      amount > 100000 ||
+      !donorName ||
+      !donorEmail
+    ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing or invalid required fields" },
         { status: 400 }
       );
     }

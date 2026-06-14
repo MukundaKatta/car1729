@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Heart,
@@ -236,6 +236,86 @@ export default function DonatePage() {
   // create duplicate donation records).
   const submittingRef = useRef(false);
 
+  // Native payment reconciliation. On native, the Stripe/PayPal redirect lands
+  // inside the in-app browser overlay (not the app WebView), so the ?success
+  // verify effect never fires and a paid donation would stay "pending" forever.
+  // We stash the created session/order id when opening the overlay, then verify
+  // it when the user returns (Browser "browserFinished").
+  const nativePaymentRef = useRef<{
+    provider: "stripe" | "paypal";
+    id: string;
+    amount: number;
+    fundName: string;
+  } | null>(null);
+
+  const reconcileNativePayment = useCallback(async () => {
+    const pending = nativePaymentRef.current;
+    if (!pending || !pending.id) return;
+    setVerifyingPayment(true);
+    try {
+      let ok = false;
+      let amount = pending.amount;
+      let fundName = pending.fundName;
+      if (pending.provider === "paypal") {
+        const res = await fetch(paypalCaptureUrl(), {
+          method: "POST",
+          headers: edgeFunctionHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ orderId: pending.id }),
+        });
+        const d = await res.json();
+        ok = res.ok && d.status === "COMPLETED";
+        if (ok) {
+          if (Number(d.amount) > 0) amount = Number(d.amount);
+          if (d.fundLabel) fundName = d.fundLabel;
+        }
+      } else {
+        const res = await fetch(donateVerifyUrl(pending.id), {
+          headers: edgeFunctionHeaders(),
+        });
+        const d = await res.json();
+        ok = res.ok && d.verified;
+        if (ok) {
+          if (Number(d.amount) > 0) amount = Number(d.amount);
+          if (d.fundLabel) fundName = d.fundLabel;
+        }
+      }
+      if (ok) {
+        nativePaymentRef.current = null;
+        setConfirmedAmount(amount);
+        setConfirmedFundName(fundName);
+        setSubmitted(true);
+        if (isAuthenticated) void fetchUserData();
+      } else {
+        // Cancelled / not completed — re-enable the form so the user can retry.
+        setNativePaymentOpened(false);
+      }
+    } catch {
+      setNativePaymentOpened(false);
+    } finally {
+      setVerifyingPayment(false);
+      setProcessing(false);
+    }
+  }, [isAuthenticated, fetchUserData]);
+
+  // Re-verify a native payment when the donor returns from the in-app browser.
+  useEffect(() => {
+    if (!isNative()) return;
+    let cancelled = false;
+    let handle: { remove: () => void } | null = null;
+    void (async () => {
+      const { Browser } = await import("@capacitor/browser");
+      const listener = await Browser.addListener("browserFinished", () => {
+        void reconcileNativePayment();
+      });
+      if (cancelled) listener.remove();
+      else handle = listener;
+    })();
+    return () => {
+      cancelled = true;
+      handle?.remove();
+    };
+  }, [reconcileNativePayment]);
+
   const handleDonate = async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -284,9 +364,18 @@ export default function DonatePage() {
           // app stays mounted underneath. When the user returns we refresh so
           // the completed donation shows in their dashboard.
           const { Browser } = await import("@capacitor/browser");
+          // Stash the created payment id so we can verify it when the donor
+          // returns (browserFinished) — the redirect happens in the overlay.
+          nativePaymentRef.current = {
+            provider: paymentMethod === "paypal" ? "paypal" : "stripe",
+            id: data.sessionId || data.orderId || "",
+            amount: effectiveAmount,
+            fundName:
+              activeFund?.name ??
+              donationFundLabel(activeFund?.slug ?? fundTypeSlug),
+          };
           await Browser.open({ url: data.url });
           setNativePaymentOpened(true);
-          if (isAuthenticated) void fetchUserData();
           return;
         }
         window.location.href = data.url;
@@ -714,7 +803,10 @@ export default function DonatePage() {
                 effectiveAmount <= 0 ||
                 requiredFieldsMissing ||
                 processing ||
-                verifyingPayment
+                verifyingPayment ||
+                // Stay disabled after the native payment overlay opens until the
+                // donor returns (reconcile clears it on cancel / shows success).
+                nativePaymentOpened
               }
             >
               {processing

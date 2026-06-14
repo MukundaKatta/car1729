@@ -246,7 +246,9 @@ export default function ProfilePage() {
     // Trim so a whitespace-only name can't create a blank-titled card.
     if (!newMember.name.trim() || !newMember.relationship.trim()) return;
     const member: FamilyMember = {
-      id: `fm-${Date.now()}`,
+      // UUID, not a millisecond timestamp — two quick adds in the same ms would
+      // otherwise collide and a single remove would delete both.
+      id: `fm-${crypto.randomUUID()}`,
       ...newMember,
       name: newMember.name.trim(),
       relationship: newMember.relationship.trim(),

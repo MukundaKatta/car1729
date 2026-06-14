@@ -14,6 +14,7 @@ const mockSignInWithOtp = vi.fn();
 const mockVerifyOtp = vi.fn();
 const mockSignOut = vi.fn();
 const mockOnAuthStateChange = vi.fn();
+const mockUpdateUser = vi.fn().mockResolvedValue({ data: {}, error: null });
 
 // Chainable query builder that tracks calls.
 // The builder is "thenable" so that `await supabase.from("x").update({}).eq(...)` resolves.
@@ -58,6 +59,7 @@ vi.mock("@/lib/supabase", () => ({
       verifyOtp: (...args: any[]) => mockVerifyOtp(...args),
       signOut: (...args: any[]) => mockSignOut(...args),
       onAuthStateChange: (...args: any[]) => mockOnAuthStateChange(...args),
+      updateUser: (...args: any[]) => mockUpdateUser(...args),
     },
     from: (table: string) => mockFrom(table),
   },

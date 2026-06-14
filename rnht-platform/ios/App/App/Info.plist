@@ -49,5 +49,7 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used only to show the Panchangam (Hindu almanac) timings — sunrise, sunset, and auspicious periods — for where you are. It is never stored or shared.</string>
 </dict>
 </plist>

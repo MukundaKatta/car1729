@@ -399,6 +399,17 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     if (error) return { error: error.message };
 
+    // If the email changed, also update the AUTH identity. OTP / magic-link
+    // sign-in matches against auth.users.email, so writing only profiles.email
+    // would leave the user unable to sign in with their new address. (Supabase
+    // may require the user to confirm the new email before it takes effect.)
+    if (updates.email !== undefined && updates.email !== authUser.email) {
+      const { error: authErr } = await supabase.auth.updateUser({
+        email: updates.email,
+      });
+      if (authErr) return { error: authErr.message };
+    }
+
     set((state) => ({
       user: state.user ? { ...state.user, ...updates } : null,
     }));
@@ -410,7 +421,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     const authUser = get().authUser;
     if (!user || !authUser) return;
 
-    const updated = [...user.familyMembers, member];
+    const previous = user.familyMembers;
+    const updated = [...previous, member];
     set({ user: { ...user, familyMembers: updated } });
 
     if (supabase) {
@@ -418,7 +430,16 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         .from("profiles")
         .update({ family_members: updated })
         .eq("id", authUser.id)
-        .then();
+        .then(({ error }) => {
+          // The write was previously fire-and-forget, so a failed save (RLS /
+          // offline) silently reverted only on the next reload. Roll back the
+          // optimistic update and log so the UI stays consistent with the DB.
+          if (error) {
+            console.error("addFamilyMember persist failed:", error);
+            const cur = get().user;
+            if (cur) set({ user: { ...cur, familyMembers: previous } });
+          }
+        });
     }
   },
 
@@ -427,7 +448,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     const authUser = get().authUser;
     if (!user || !authUser) return;
 
-    const updated = user.familyMembers.filter((m) => m.id !== id);
+    const previous = user.familyMembers;
+    const updated = previous.filter((m) => m.id !== id);
     set({ user: { ...user, familyMembers: updated } });
 
     if (supabase) {
@@ -435,7 +457,13 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         .from("profiles")
         .update({ family_members: updated })
         .eq("id", authUser.id)
-        .then();
+        .then(({ error }) => {
+          if (error) {
+            console.error("removeFamilyMember persist failed:", error);
+            const cur = get().user;
+            if (cur) set({ user: { ...cur, familyMembers: previous } });
+          }
+        });
     }
   },
 

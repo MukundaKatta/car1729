@@ -50,10 +50,19 @@ Deno.serve(async (req) => {
 
     // Retain donation rows for the temple's financial/tax records, but strip
     // the personal link so the deleted account leaves no PII association.
-    await admin
+    // Check the error: if the de-link fails we must NOT proceed to delete the
+    // auth user, or those donations would be orphaned to a now-missing account.
+    const { error: unlinkErr } = await admin
       .from("donations")
       .update({ user_id: null })
       .eq("user_id", userId);
+    if (unlinkErr) {
+      console.error("delete-account unlink error:", unlinkErr);
+      return new Response(JSON.stringify({ error: "Failed to delete account" }), {
+        status: 500,
+        headers: jsonHeaders,
+      });
+    }
 
     // Delete the auth user (cascades profile + user-owned rows via FK).
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);

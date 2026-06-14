@@ -54,6 +54,17 @@ function usd(n: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
 
+// Escape donor-controlled values before interpolating into the HTML email.
+// Resend does NOT auto-escape, and donor_name / fund_type are stored raw, so an
+// unescaped name like `<img src=x onerror=...>` would otherwise execute in mail
+// clients that render HTML. Mirrors the esc() in supabase/functions/_shared/receipt.ts.
+function esc(s: string): string {
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string),
+  );
+}
+
 function renderHtml(payload: SummaryPayload): string {
   const rows = payload.donations
     .map((d) => {
@@ -65,7 +76,7 @@ function renderHtml(payload: SummaryPayload): string {
       return `
         <tr>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;">${date}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;">${d.fund_type}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee;">${esc(d.fund_type)}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${usd(Number(d.amount))}</td>
         </tr>`;
     })
@@ -84,7 +95,7 @@ function renderHtml(payload: SummaryPayload): string {
         </tr>
         <tr>
           <td style="padding:28px 32px;">
-            <p>Namaste${payload.name ? " " + payload.name : ""},</p>
+            <p>Namaste${payload.name ? " " + esc(payload.name) : ""},</p>
             <p>
               Thank you for your generous contributions to ${TEMPLE_NAME} this year.
               We are grateful for your continued support of our mission.

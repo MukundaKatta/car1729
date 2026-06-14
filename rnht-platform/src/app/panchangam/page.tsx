@@ -19,15 +19,10 @@ export default function PanchangamPage() {
   );
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const sessionKey = "rnht-panchangam-location-requested";
-    if (window.sessionStorage.getItem(sessionKey)) return;
-
-    window.sessionStorage.setItem(sessionKey, "1");
-    void detectCurrentLocation();
-  }, [detectCurrentLocation]);
+  // Geolocation is requested ONLY when the devotee taps "Use current location"
+  // (see the button below) — never automatically on mount. Auto-prompting was
+  // both a privacy concern and, on iOS, required a usage-description string;
+  // the page falls back to DEFAULT_LOCATION (Georgetown, TX) until the user opts in.
 
   useEffect(() => {
     let cancelled = false;

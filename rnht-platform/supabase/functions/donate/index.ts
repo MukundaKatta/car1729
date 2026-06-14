@@ -221,7 +221,9 @@ async function handleCreate(req: Request): Promise<Response> {
       .from("donations")
       .update({ payment_intent_id: order.id })
       .eq("id", donation.id);
-    return new Response(JSON.stringify({ url: order.approvalUrl }), {
+    // Return orderId so the native app can capture/verify on return (the
+    // redirect happens inside the in-app browser, which the WebView can't read).
+    return new Response(JSON.stringify({ url: order.approvalUrl, orderId: order.id }), {
       headers: jsonHeaders,
     });
   }
@@ -249,7 +251,9 @@ async function handleCreate(req: Request): Promise<Response> {
     cancel_url: `${APP_URL}/donate`,
   });
 
-  return new Response(JSON.stringify({ url: session.url }), {
+  // Return sessionId so the native app can verify on return (the success_url
+  // redirect lands in the in-app browser, which the app WebView can't observe).
+  return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
     headers: jsonHeaders,
   });
 }

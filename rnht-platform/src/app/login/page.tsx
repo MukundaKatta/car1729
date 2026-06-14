@@ -7,6 +7,7 @@ import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2
 import { useAuthStore } from "@/store/auth";
 import { supabase } from "@/lib/supabase";
 import { isNative } from "@/lib/capacitor";
+import { normalizePhone } from "@/lib/phone";
 import {
   getEmailAuthCooldownSeconds,
   readEmailAuthCooldownUntil,
@@ -24,23 +25,6 @@ const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
  * - If no "+", assumes US and prepends "+1"
  * - Returns null if the result isn't a plausible E.164 number
  */
-function normalizePhone(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const hasPlus = trimmed.startsWith("+");
-  const digits = trimmed.replace(/\D/g, "");
-  if (!digits) return null;
-  if (hasPlus) {
-    // International: full E.164 with country code, 11–15 digits total.
-    const e164 = `+${digits}`;
-    if (!/^\+\d{11,15}$/.test(e164)) return null;
-    return e164;
-  }
-  // No "+": assume US — require exactly 10 digits (reject 7-digit fragments).
-  if (digits.length !== 10) return null;
-  return `+1${digits}`;
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -265,9 +249,12 @@ export default function LoginPage() {
       return;
     }
     const newOtp = [...otp];
-    newOtp[index] = value;
+    // Strip non-digits so a typed/pasted letter can't fill a box and enable
+    // Verify (matches the multi-char paste path and the dashboard OTP input).
+    const digit = value.replace(/\D/g, "")[0] || "";
+    newOtp[index] = digit;
     setOtp(newOtp);
-    if (value && index < 5) {
+    if (digit && index < 5) {
       const next = document.getElementById(`otp-${index + 1}`);
       next?.focus();
     }
@@ -396,7 +383,7 @@ export default function LoginPage() {
                   : "Returning devotees can sign in here using phone, email, or Google."}
               </div>
               <button
-                onClick={() => setStep("phone")}
+                onClick={() => { setError(""); setStep("phone"); }}
                 className="group flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-maroon hover:bg-temple-maroon hover:text-white"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-colors group-hover:bg-white/15 group-hover:text-white">
@@ -416,7 +403,7 @@ export default function LoginPage() {
               </button>
 
               <button
-                onClick={() => setStep("email")}
+                onClick={() => { setError(""); setStep("email"); }}
                 className="group flex w-full items-center gap-4 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-temple-maroon hover:bg-temple-maroon hover:text-white"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-white/15 group-hover:text-white">

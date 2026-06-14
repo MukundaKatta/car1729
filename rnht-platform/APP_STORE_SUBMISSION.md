@@ -171,8 +171,16 @@ In App Store Connect > App Privacy, declare the following:
   - Purpose: **App Functionality**
   - Tracking: **No**
 
+#### 5. Location (optional)
+- **Coarse/Precise Location** — requested ONLY when the devotee taps
+  "Use current location" on the Panchangam screen, to localize almanac
+  timings (sunrise/sunset, auspicious periods). Never requested automatically.
+  - Linked to User Identity: **No**
+  - Used for Tracking: **No**
+  - Purpose: **App Functionality**
+  - iOS usage string: `NSLocationWhenInUseUsageDescription` (Info.plist).
+
 ### Data NOT Collected
-- Location data
 - Health & Fitness data
 - Browsing history
 - Search history

@@ -58,8 +58,11 @@ export default function ServicesPage() {
 
       if (
         searchQuery &&
-        !service.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !service.short_description
+        // Guard against null/undefined live-catalog fields — a single row with a
+        // missing name or short_description would otherwise throw inside the
+        // filter and blank the whole page.
+        !(service.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(service.short_description ?? "")
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
       ) {
