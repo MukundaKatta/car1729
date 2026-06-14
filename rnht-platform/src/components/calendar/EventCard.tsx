@@ -1,6 +1,7 @@
-import { Calendar, Clock, MapPin, Users, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, CalendarPlus, Repeat } from "lucide-react";
 import type { Event } from "@/types/database";
 import { formatDate } from "@/lib/utils";
+import { describeRecurrence } from "@/lib/recurrence";
 
 const eventTypeColors: Record<
   string,
@@ -62,6 +63,13 @@ export function EventCard({ event }: { event: Event }) {
   const colors =
     eventTypeColors[event.event_type] || eventTypeColors.community;
 
+  // For recurring events the start_date is only the first occurrence, so it
+  // goes stale ("March 14" forever). Show the cadence instead; fall back to the
+  // absolute date if the rule is missing/unparseable.
+  const cadence = event.is_recurring
+    ? describeRecurrence(event.recurrence_rule)
+    : null;
+
   return (
     <article className="card overflow-hidden group">
       <div
@@ -86,8 +94,17 @@ export function EventCard({ event }: { event: Event }) {
         )}
         <div className="mt-4 space-y-2 text-sm text-gray-500">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" aria-hidden="true" />
-            <span>{formatDate(event.start_date)}</span>
+            {cadence ? (
+              <>
+                <Repeat className="h-4 w-4" aria-hidden="true" />
+                <span>{cadence}</span>
+              </>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4" aria-hidden="true" />
+                <span>{formatDate(event.start_date)}</span>
+              </>
+            )}
           </div>
           {event.start_time && (
             <div className="flex items-center gap-2">
