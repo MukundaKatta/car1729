@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { HeartHandshake, Plus, Edit2, Trash2 } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth";
 import type { VolunteerOpportunity } from "@/types/database";
 
 type FormState = {
@@ -30,6 +32,9 @@ const emptyForm: FormState = {
 };
 
 export default function AdminVolunteersPage() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [items, setItems] = useState<VolunteerOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -108,9 +113,16 @@ export default function AdminVolunteersPage() {
 
   async function remove(item: VolunteerOpportunity) {
     if (!supabase) return;
-    if (!confirm(`Delete "${item.title}"?`)) return;
-    await supabase.from("volunteer_opportunities").delete().eq("id", item.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_service",
+      resourceLabel: item.title,
+      confirmMessage: `Delete "${item.title}"?`,
+      approvalReason: `Delete volunteer opportunity "${item.title}"`,
+      run: async () => {
+        await supabase.from("volunteer_opportunities").delete().eq("id", item.id);
+        await refresh();
+      },
+    });
   }
 
   return (
@@ -129,6 +141,30 @@ export default function AdminVolunteersPage() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

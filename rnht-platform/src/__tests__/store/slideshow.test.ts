@@ -35,7 +35,15 @@ vi.mock("@/lib/supabase", () => ({
         return {
           eq: (...eqArgs: any[]) => {
             mockUpdateEq(...eqArgs);
-            return { error: (mockUpdate as any)._error ?? null };
+            // `_errorForId` lets a test fail the update for one specific row id
+            // (used to simulate a mid-reorder partial failure); otherwise fall
+            // back to the blanket `_error`.
+            const failIds: string[] = (mockUpdate as any)._errorForId ?? [];
+            const error =
+              eqArgs[0] === "id" && failIds.includes(eqArgs[1])
+                ? new Error("Update failed")
+                : (mockUpdate as any)._error ?? null;
+            return { error };
           },
         };
       },
@@ -73,6 +81,7 @@ describe("useSlideshowStore", () => {
     // Reset mock errors
     (mockInsert as any)._error = null;
     (mockUpdate as any)._error = null;
+    (mockUpdate as any)._errorForId = [];
     (mockDelete as any)._error = null;
     // Default mock return for order (fetchSlides)
     mockOrder.mockResolvedValue({ data: [], error: null });
@@ -301,7 +310,9 @@ describe("useSlideshowStore", () => {
         { ...testSlide, id: "a", sortOrder: 0 },
         { ...testSlide, id: "b", sortOrder: 1 },
       ];
-      await useSlideshowStore.getState().reorderSlides(slides);
+      const ok = await useSlideshowStore.getState().reorderSlides(slides);
+      // On success it returns true
+      expect(ok).toBe(true);
       // update should have been called twice (once per slide)
       expect(mockUpdate).toHaveBeenCalledTimes(2);
       expect(mockUpdate).toHaveBeenCalledWith({ sort_order: 0 });
@@ -310,6 +321,29 @@ describe("useSlideshowStore", () => {
       expect(mockUpdateEq).toHaveBeenCalledWith("id", "b");
       // State should be updated immediately
       expect(useSlideshowStore.getState().slides).toEqual(slides);
+    });
+
+    it("rolls back order and returns false when a mid-reorder write fails", async () => {
+      const original = useSlideshowStore.getState().slides;
+      // Fail the write for the second slide ("b"), simulating a partial failure.
+      (mockUpdate as any)._errorForId = ["b"];
+
+      const slides = [
+        { ...testSlide, id: "a", sortOrder: 0 },
+        { ...testSlide, id: "b", sortOrder: 1 },
+        { ...testSlide, id: "c", sortOrder: 2 },
+      ];
+      const ok = await useSlideshowStore.getState().reorderSlides(slides);
+
+      // Reports failure to the caller.
+      expect(ok).toBe(false);
+      // Stops on the first error: "a" then "b" are attempted, but not "c".
+      expect(mockUpdate).toHaveBeenCalledTimes(2);
+      expect(mockUpdateEq).toHaveBeenCalledWith("id", "a");
+      expect(mockUpdateEq).toHaveBeenCalledWith("id", "b");
+      expect(mockUpdateEq).not.toHaveBeenCalledWith("id", "c");
+      // Local order is rolled back to the pre-reorder state.
+      expect(useSlideshowStore.getState().slides).toEqual(original);
     });
   });
 });

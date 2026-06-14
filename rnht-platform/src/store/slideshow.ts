@@ -23,7 +23,7 @@ type SlideshowStore = {
   addSlide: (slide: Slide) => Promise<void>;
   updateSlide: (id: string, updates: Partial<Slide>) => Promise<void>;
   removeSlide: (id: string) => Promise<void>;
-  reorderSlides: (slides: Slide[]) => Promise<void>;
+  reorderSlides: (slides: Slide[]) => Promise<boolean>;
 };
 
 // Map DB row (snake_case) to app type (camelCase).
@@ -116,16 +116,22 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
   reorderSlides: async (slides) => {
     const previous = useSlideshowStore.getState().slides;
     set({ slides }); // optimistic
-    if (!supabase) return;
-    // Persist sort_order for each slide; if any write fails, roll back the
-    // local order so the UI doesn't drift out of sync with the database.
-    const results = await Promise.all(
-      slides.map((s, i) =>
-        supabase!.from("slides").update({ sort_order: i }).eq("id", s.id),
-      ),
-    );
-    if (results.some((r) => r.error)) {
-      set({ slides: previous });
+    if (!supabase) return true;
+    // Persist sort_order sequentially, stopping on the first error. Running
+    // these in parallel could leave a mix of old/new sort_order if one write
+    // fails mid-flight; sequential awaits keep the rollback unambiguous.
+    for (let i = 0; i < slides.length; i++) {
+      const { error } = await supabase
+        .from("slides")
+        .update({ sort_order: i })
+        .eq("id", slides[i].id);
+      if (error) {
+        // Roll back the local order so the UI doesn't drift out of sync with
+        // the database, and report failure to the caller.
+        set({ slides: previous });
+        return false;
+      }
     }
+    return true;
   },
 }));

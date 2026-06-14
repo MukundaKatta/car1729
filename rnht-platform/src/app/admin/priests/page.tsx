@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Users, Plus, Edit2, Trash2, Star } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth";
 import type { Priest } from "@/types/database";
 
 type FormState = {
@@ -40,6 +42,9 @@ const emptyForm: FormState = {
 };
 
 export default function AdminPriestsPage() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [priests, setPriests] = useState<Priest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -91,13 +96,33 @@ export default function AdminPriestsPage() {
       setError("Name is required.");
       return;
     }
-    setSaving(true);
-
     const toArray = (csv: string) =>
       csv
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
+
+    const specializations = toArray(form.specializations);
+    const languages = toArray(form.languages);
+
+    if (specializations.length < 1 || specializations.length > 20) {
+      setError("Add between 1 and 20 specializations.");
+      return;
+    }
+    if (specializations.some((s) => s.length > 100)) {
+      setError("Each specialization must be 100 characters or fewer.");
+      return;
+    }
+    if (languages.length < 1 || languages.length > 20) {
+      setError("Add between 1 and 20 languages.");
+      return;
+    }
+    if (languages.some((s) => s.length > 50)) {
+      setError("Each language must be 50 characters or fewer.");
+      return;
+    }
+
+    setSaving(true);
 
     const payload = {
       name: form.name.trim(),
@@ -109,8 +134,8 @@ export default function AdminPriestsPage() {
       email: form.email || null,
       years_experience:
         form.years_experience === "" ? null : Number(form.years_experience),
-      specializations: toArray(form.specializations),
-      languages: toArray(form.languages),
+      specializations,
+      languages,
       is_head: form.is_head,
       is_active: form.is_active,
       sort_order: form.sort_order,
@@ -137,9 +162,16 @@ export default function AdminPriestsPage() {
 
   async function remove(priest: Priest) {
     if (!supabase) return;
-    if (!confirm(`Delete "${priest.name}"?`)) return;
-    await supabase.from("priests").delete().eq("id", priest.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_priest",
+      resourceLabel: priest.name,
+      confirmMessage: `Delete "${priest.name}"? This can't be undone.`,
+      approvalReason: `Delete priest "${priest.name}"`,
+      run: async () => {
+        await supabase.from("priests").delete().eq("id", priest.id);
+        await refresh();
+      },
+    });
   }
 
   return (
@@ -158,6 +190,30 @@ export default function AdminPriestsPage() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -258,6 +314,7 @@ export default function AdminPriestsPage() {
               <input
                 type="text"
                 className="input-field mt-1"
+                maxLength={2100}
                 value={form.specializations}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, specializations: e.target.value }))
@@ -272,6 +329,7 @@ export default function AdminPriestsPage() {
               <input
                 type="text"
                 className="input-field mt-1"
+                maxLength={1100}
                 value={form.languages}
                 onChange={(e) => setForm((f) => ({ ...f, languages: e.target.value }))}
                 placeholder="English, Telugu, Tamil, Sanskrit"

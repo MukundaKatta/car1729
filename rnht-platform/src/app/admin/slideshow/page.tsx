@@ -350,6 +350,7 @@ export default function AdminSlideshowPage() {
     useSlideshowStore();
   const [editingSlide, setEditingSlide] = useState<Slide | null | "new">(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [reorderError, setReorderError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSlides();
@@ -357,7 +358,7 @@ export default function AdminSlideshowPage() {
 
   const sortedSlides = [...slides].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const moveSlide = (index: number, direction: "up" | "down") => {
+  const moveSlide = async (index: number, direction: "up" | "down") => {
     const newSlides = [...sortedSlides];
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= newSlides.length) return;
@@ -365,9 +366,13 @@ export default function AdminSlideshowPage() {
       newSlides[swapIndex],
       newSlides[index],
     ];
-    reorderSlides(
+    setReorderError(null);
+    const ok = await reorderSlides(
       newSlides.map((s, i) => ({ ...s, sortOrder: i }))
     );
+    if (!ok) {
+      setReorderError("Failed to save the new slide order. Please try again.");
+    }
   };
 
   return (
@@ -397,6 +402,12 @@ export default function AdminSlideshowPage() {
           Add Slide
         </button>
       </div>
+
+      {reorderError && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {reorderError}
+        </div>
+      )}
 
       {/* Slide List */}
       <div className="mt-8 space-y-3">

@@ -4,15 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
-const bookings = [
-  { id: "RNHT-A1B2C", service: "Ganapathi Homam", devotee: "Ramesh Kumar", email: "ramesh@email.com", phone: "(555) 111-2222", date: "2026-03-15", time: "10:00 AM", amount: 101, status: "confirmed", gotra: "Bharadwaja", nakshatra: "Ashwini" },
-  { id: "RNHT-D3E4F", service: "Abhishekam", devotee: "Lakshmi Devi", email: "lakshmi@email.com", phone: "(555) 333-4444", date: "2026-03-14", time: "11:00 AM", amount: 51, status: "confirmed", gotra: "Kashyapa", nakshatra: "Rohini" },
-  { id: "RNHT-G5H6I", service: "Archana", devotee: "Suresh Patel", email: "suresh@email.com", phone: "(555) 555-6666", date: "2026-03-13", time: "9:00 AM", amount: 11, status: "completed", gotra: "Vasishtha", nakshatra: "Pushya" },
-  { id: "RNHT-J7K8L", service: "Gruhapravesam (Standard)", devotee: "Priya Sharma", email: "priya@email.com", phone: "(555) 777-8888", date: "2026-03-16", time: "9:00 AM", amount: 351, status: "pending", gotra: "Atri", nakshatra: "Uttara" },
-  { id: "RNHT-M9N0O", service: "Satyanarayana Vratam", devotee: "Venkat Rao", email: "venkat@email.com", phone: "(555) 999-0000", date: "2026-03-12", time: "10:00 AM", amount: 51, status: "completed", gotra: "Gautama", nakshatra: "Swati" },
-  { id: "RNHT-P1Q2R", service: "Navagraha Homam", devotee: "Anitha Reddy", email: "anitha@email.com", phone: "(555) 123-4567", date: "2026-03-17", time: "9:00 AM", amount: 151, status: "confirmed", gotra: "Jamadagni", nakshatra: "Moola" },
-];
+type Booking = {
+  id: string;
+  service: string;
+  devotee: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  amount: number;
+  status: string;
+  gotra: string;
+  nakshatra: string;
+};
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -22,12 +28,57 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminBookingsPage() {
-  const [bookingsData, setBookingsData] = useState(bookings);
+  const [bookingsData, setBookingsData] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [selectedBooking, setSelectedBooking] = useState<
-    (typeof bookings)[0] | null
-  >(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  async function refresh() {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(
+        "id, devotee_name, devotee_email, devotee_phone, booking_date, booking_time, status, total_amount, gotra, nakshatra, services(name)"
+      )
+      .order("created_at", { ascending: false });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+    const rows = (data ?? []).map((r) => {
+      // Supabase types the joined relation loosely; defensively narrow.
+      const rel = (r as unknown as { services: { name: string } | { name: string }[] | null }).services;
+      const serviceName = Array.isArray(rel) ? (rel[0]?.name ?? null) : (rel?.name ?? null);
+      const row = r as Record<string, unknown>;
+      return {
+        id: row.id as string,
+        service: serviceName ?? "—",
+        devotee: (row.devotee_name as string) ?? "",
+        email: (row.devotee_email as string) ?? "",
+        phone: (row.devotee_phone as string) ?? "",
+        date: (row.booking_date as string) ?? "",
+        time: (row.booking_time as string) ?? "",
+        amount: Number(row.total_amount ?? 0),
+        status: (row.status as string) ?? "pending",
+        gotra: (row.gotra as string) ?? "",
+        nakshatra: (row.nakshatra as string) ?? "",
+      };
+    });
+    setBookingsData(rows);
+    setError(null);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   // Escape key handler and body scroll lock for booking modal
   useEffect(() => {
@@ -43,7 +94,16 @@ export default function AdminBookingsPage() {
     };
   }, [selectedBooking]);
 
-  const updateBookingStatus = (bookingId: string, newStatus: string) => {
+  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status: newStatus })
+      .eq("id", bookingId);
+    if (error) {
+      setError(error.message);
+      return;
+    }
     setBookingsData((prev) =>
       prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
     );
@@ -75,11 +135,13 @@ export default function AdminBookingsPage() {
         Back to Dashboard
       </Link>
 
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        <strong>Note:</strong> Showing sample data. Real booking data integration coming soon.
-      </div>
-
       <h1 className="mt-4 section-heading">Booking Management</h1>
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="mt-6 flex flex-col gap-4 sm:flex-row">
@@ -135,41 +197,55 @@ export default function AdminBookingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {filteredBookings.map((booking) => (
-              <tr key={booking.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm font-mono text-gray-900">
-                  {booking.id}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-900">
-                  {booking.service}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">
-                  {booking.devotee}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
-                  {booking.date} at {booking.time}
-                </td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                  {formatCurrency(booking.amount)}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[booking.status]}`}
-                  >
-                    {booking.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => setSelectedBooking(booking)}
-                    className="text-sm text-temple-red hover:underline"
-                    aria-label={`View booking ${booking.id}`}
-                  >
-                    View
-                  </button>
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
+                  Loading…
                 </td>
               </tr>
-            ))}
+            ) : filteredBookings.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
+                  No bookings found.
+                </td>
+              </tr>
+            ) : (
+              filteredBookings.map((booking) => (
+                <tr key={booking.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-mono text-gray-900">
+                    {booking.id}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {booking.service}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">
+                    {booking.devotee}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
+                    {booking.date} at {booking.time}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                    {formatCurrency(booking.amount)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[booking.status] ?? "bg-gray-100 text-gray-800"}`}
+                    >
+                      {booking.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => setSelectedBooking(booking)}
+                      className="text-sm text-temple-red hover:underline"
+                      aria-label={`View booking ${booking.id}`}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -201,7 +277,7 @@ export default function AdminBookingsPage() {
                   <span className="text-gray-500">Status</span>
                   <p>
                     <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[selectedBooking.status]}`}
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[selectedBooking.status] ?? "bg-gray-100 text-gray-800"}`}
                     >
                       {selectedBooking.status}
                     </span>

@@ -23,16 +23,27 @@ const categoriesData = [
 
 function makeBuilder(table: string) {
   const data = table === "services" ? servicesData : categoriesData;
-  return {
-    select: vi.fn(() => ({
+  // A thenable that also exposes `.order()` so callers can either await the
+  // select directly (e.g. `.select("slug")`) or chain `.order(...)`.
+  function selectResult() {
+    const result: any = {
       order: vi.fn(() => ({
         order: vi.fn(async () => ({ data, error: null })),
-        then: undefined,
+        then: (resolve: any) => resolve({ data, error: null }),
       })),
-    })),
+      then: (resolve: any) => resolve({ data, error: null }),
+    };
+    return result;
+  }
+  return {
+    select: vi.fn(() => selectResult()),
     insert: vi.fn(async () => ({ error: null })),
+    upsert: vi.fn(async () => ({ error: null })),
     update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
-    delete: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+    delete: vi.fn(() => ({
+      eq: vi.fn(async () => ({ error: null })),
+      in: vi.fn(async () => ({ error: null })),
+    })),
   };
 }
 
@@ -111,5 +122,46 @@ describe("AdminServicesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit ganapathi pooja/i }));
     expect(screen.getByText("Edit Service")).toBeInTheDocument();
     expect(screen.getByDisplayValue("ganapathi-pooja")).toBeInTheDocument();
+  });
+
+  it("rolls back upserted categories when the services upsert fails during sync", async () => {
+    const categoryDeleteIn = vi.fn(async () => ({ error: null }));
+    const categoriesBuilder: any = {
+      select: vi.fn(() => ({
+        // pre-existing snapshot: no categories existed before the sync, so every
+        // synced slug counts as newly created and is eligible for rollback.
+        then: (resolve: any) => resolve({ data: [], error: null }),
+        order: vi.fn(() => ({
+          then: (resolve: any) => resolve({ data: categoriesData, error: null }),
+        })),
+      })),
+      upsert: vi.fn(async () => ({ error: null })),
+      delete: vi.fn(() => ({ in: categoryDeleteIn })),
+    };
+    const servicesBuilder: any = {
+      select: vi.fn(() => ({
+        order: vi.fn(() => ({
+          order: vi.fn(async () => ({ data: servicesData, error: null })),
+        })),
+        then: (resolve: any) => resolve({ data: [], error: null }),
+      })),
+      upsert: vi.fn(async () => ({ error: { message: "services upsert failed" } })),
+    };
+
+    mockFrom.mockImplementation((table: string) =>
+      table === "services" ? servicesBuilder : categoriesBuilder
+    );
+
+    render(<AdminServicesPage />);
+    await screen.findByText("Manage Services");
+    fireEvent.click(screen.getByText("Sync Catalog"));
+
+    expect(await screen.findByText("services upsert failed")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(categoriesBuilder.delete).toHaveBeenCalled();
+      expect(categoryDeleteIn).toHaveBeenCalled();
+    });
+    // Flag is cleared after rollback completes (button returns to idle label).
+    expect(screen.getByText("Sync Catalog")).toBeInTheDocument();
   });
 });

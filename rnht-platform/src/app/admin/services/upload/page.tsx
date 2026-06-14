@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Upload, Loader2, Trash2, Check } from "lucide-react";
+import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth";
 import type { ServicePdf } from "@/types/database";
 
 /**
@@ -20,6 +22,9 @@ import type { ServicePdf } from "@/types/database";
 const BUCKET = "service-pdfs";
 
 export default function AdminServicesUploadPage() {
+  const adminEmail = useAuthStore((state) => state.authUser?.email ?? state.user?.email ?? null);
+  const { adminRole, pendingApprovals, dismissPendingApproval, confirmOrQueue } =
+    useSensitiveAdminApproval(adminEmail);
   const [pdfs, setPdfs] = useState<ServicePdf[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -113,11 +118,17 @@ export default function AdminServicesUploadPage() {
 
   async function remove(pdf: ServicePdf) {
     if (!supabase) return;
-    if (!confirm(`Delete "${pdf.file_name}"? This also removes the file from storage.`))
-      return;
-    await supabase.storage.from(BUCKET).remove([pdf.storage_path]);
-    await supabase.from("service_pdfs").delete().eq("id", pdf.id);
-    refresh();
+    await confirmOrQueue({
+      action: "delete_service",
+      resourceLabel: pdf.file_name,
+      confirmMessage: `Delete "${pdf.file_name}"? This also removes the file from storage.`,
+      approvalReason: `Delete services PDF "${pdf.file_name}"`,
+      run: async () => {
+        await supabase.storage.from(BUCKET).remove([pdf.storage_path]);
+        await supabase.from("service_pdfs").delete().eq("id", pdf.id);
+        await refresh();
+      },
+    });
   }
 
   return (
@@ -142,6 +153,30 @@ export default function AdminServicesUploadPage() {
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {pendingApprovals.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Sensitive changes require approver review for your role ({adminRole}).
+          </p>
+          <ul className="mt-2 space-y-2">
+            {pendingApprovals.slice(0, 3).map((approval) => (
+              <li key={approval.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {approval.reason} · requested {new Date(approval.requestedAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-amber-800 underline"
+                  onClick={() => dismissPendingApproval(approval.id)}
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

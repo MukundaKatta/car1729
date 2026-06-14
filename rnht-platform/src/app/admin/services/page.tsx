@@ -180,6 +180,24 @@ export default function AdminServicesPage() {
     setError(null);
     setSyncingCatalog(true);
 
+    // Snapshot which category slugs already exist so that, if the services
+    // upsert later fails, we can roll back ONLY the categories this sync just
+    // created — never categories that pre-dated the sync (other services may
+    // depend on them).
+    const { data: preExistingCategories, error: preExistingError } = await supabase
+      .from("service_categories")
+      .select("slug");
+
+    if (preExistingError) {
+      setError(preExistingError.message);
+      setSyncingCatalog(false);
+      return;
+    }
+
+    const preExistingSlugs = new Set(
+      (preExistingCategories ?? []).map((category) => category.slug)
+    );
+
     const categoryPayload = sampleCategories.map((category) => ({
       name: category.name,
       slug: category.slug,
@@ -198,12 +216,27 @@ export default function AdminServicesPage() {
       return;
     }
 
+    // Slugs newly inserted by this sync (i.e. not present beforehand). Used to
+    // undo the categories upsert if the services upsert fails below.
+    const newlyCreatedCategorySlugs = categoryPayload
+      .map((category) => category.slug)
+      .filter((slug) => !preExistingSlugs.has(slug));
+
+    async function rollbackCreatedCategories() {
+      if (!supabase || newlyCreatedCategorySlugs.length === 0) return;
+      await supabase
+        .from("service_categories")
+        .delete()
+        .in("slug", newlyCreatedCategorySlugs);
+    }
+
     const { data: liveCategories, error: liveCategoriesError } = await supabase
       .from("service_categories")
       .select("*")
       .order("sort_order");
 
     if (liveCategoriesError || !liveCategories) {
+      await rollbackCreatedCategories();
       setError(liveCategoriesError?.message || "Unable to load service categories.");
       setSyncingCatalog(false);
       return;
@@ -255,13 +288,17 @@ export default function AdminServicesPage() {
       .from("services")
       .upsert(servicePayload as never, { onConflict: "slug" });
 
-    setSyncingCatalog(false);
-
     if (servicesError) {
+      // Categories + services must land atomically. Undo the categories this
+      // sync just created before surfacing the error, then clear the flag.
+      await rollbackCreatedCategories();
       setError(servicesError.message);
+      setSyncingCatalog(false);
       return;
     }
 
+    // Only clear the syncing flag once both upserts have succeeded.
+    setSyncingCatalog(false);
     await refresh();
   }
 

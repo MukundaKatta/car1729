@@ -1,7 +1,82 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
+
+const eventsData = [
+  {
+    id: "evt-1",
+    title: "Ugadi Celebrations 2026",
+    description: "Telugu New Year festivities",
+    event_type: "festival",
+    start_date: "2026-03-29",
+    end_date: "2026-03-29",
+    start_time: "09:00",
+    end_time: "14:00",
+    location: "RNHT Main Temple Hall",
+    image_url: null,
+    is_recurring: false,
+    recurrence_rule: null,
+    rsvp_enabled: true,
+    rsvp_count: 45,
+    created_at: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: "evt-2",
+    title: "Sri Rama Navami",
+    description: "Celebrating the birth of Lord Rama",
+    event_type: "festival",
+    start_date: "2026-04-06",
+    end_date: "2026-04-06",
+    start_time: "10:00",
+    end_time: "13:00",
+    location: "RNHT Main Temple Hall",
+    image_url: null,
+    is_recurring: false,
+    recurrence_rule: null,
+    rsvp_enabled: true,
+    rsvp_count: 30,
+    created_at: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: "evt-3",
+    title: "Weekly Bhajan Sandhya",
+    description: "Devotional singing every Friday",
+    event_type: "regular_pooja",
+    start_date: "2026-01-09",
+    end_date: null,
+    start_time: "18:00",
+    end_time: "19:30",
+    location: "RNHT Main Temple Hall",
+    image_url: null,
+    is_recurring: true,
+    recurrence_rule: "FREQ=WEEKLY",
+    rsvp_enabled: false,
+    rsvp_count: 0,
+    created_at: "2026-01-01T00:00:00Z",
+  },
+];
+
+const { mockFrom, insertMock, updateMock, deleteMock, updateEqMock, deleteEqMock } =
+  vi.hoisted(() => ({
+    mockFrom: vi.fn(),
+    insertMock: vi.fn(),
+    updateMock: vi.fn(),
+    deleteMock: vi.fn(),
+    updateEqMock: vi.fn(),
+    deleteEqMock: vi.fn(),
+  }));
+
+function makeBuilder() {
+  return {
+    select: vi.fn(() => ({
+      order: vi.fn(async () => ({ data: eventsData, error: null })),
+    })),
+    insert: insertMock,
+    update: updateMock,
+    delete: deleteMock,
+  };
+}
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
@@ -20,25 +95,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    auth: {
-      onAuthStateChange: vi.fn(),
-      signInWithOtp: vi.fn().mockResolvedValue({ error: null }),
-      verifyOtp: vi.fn().mockResolvedValue({ error: null }),
-      signOut: vi.fn().mockResolvedValue({}),
-      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => ({ data: null }),
-          order: () => ({ data: [], limit: () => ({ data: [] }) }),
-        }),
-        order: () => ({ data: [] }),
-      }),
-      insert: () => ({ then: vi.fn() }),
-      update: () => ({ eq: () => ({ then: vi.fn() }) }),
-      delete: () => ({ eq: () => ({ then: vi.fn() }) }),
-    }),
+    from: mockFrom,
     storage: {
       from: () => ({
         upload: vi.fn().mockResolvedValue({ error: null }),
@@ -49,83 +106,33 @@ vi.mock("@/lib/supabase", () => ({
     },
   },
 }));
-vi.mock("@/store/cart", () => ({
-  useCartStore: (sel: any) => {
-    const s = {
-      items: [],
-      addItem: vi.fn(),
-      removeItem: vi.fn(),
-      updateItem: vi.fn(),
-      clearCart: vi.fn(),
-      getTotal: () => 0,
-      getItemCount: () => 0,
-    };
-    return typeof sel === "function" ? sel(s) : s;
-  },
-}));
-vi.mock("@/store/language", () => ({
-  useLanguageStore: (sel: any) => {
-    const s = { locale: "en", setLocale: vi.fn() };
-    return typeof sel === "function" ? sel(s) : s;
-  },
-}));
 vi.mock("@/store/auth", () => ({
-  useAuthStore: (sel: any) => {
-    const s = {
-      isAuthenticated: false,
-      user: null,
-      authUser: null,
-      bookings: [],
-      donations: [],
-      activities: [],
-      loading: false,
-      initialized: true,
-      initialize: vi.fn(),
-      sendOtp: vi.fn().mockResolvedValue({}),
-      verifyOtp: vi.fn().mockResolvedValue({}),
-      logout: vi.fn(),
-      addDonation: vi.fn(),
-      addBooking: vi.fn(),
-      updateProfile: vi.fn(),
-      addFamilyMember: vi.fn(),
-      removeFamilyMember: vi.fn(),
-      fetchUserData: vi.fn(),
+  useAuthStore: (selector: any) => {
+    const state = {
+      authUser: { email: "approver@rnht.org" },
+      user: { email: "approver@rnht.org" },
     };
-    return typeof sel === "function" ? sel(s) : s;
+    return typeof selector === "function" ? selector(state) : state;
   },
-}));
-vi.mock("@/store/slideshow", () => ({
-  useSlideshowStore: (sel: any) => {
-    const s = {
-      slides: [],
-      loading: false,
-      fetchSlides: vi.fn(),
-      addSlide: vi.fn(),
-      updateSlide: vi.fn(),
-      removeSlide: vi.fn(),
-      reorderSlides: vi.fn(),
-    };
-    return typeof sel === "function" ? sel(s) : s;
-  },
-}));
-
-// Mock the EventCard component to avoid its own dependencies
-vi.mock("@/components/calendar/EventCard", () => ({
-  EventCard: ({ event }: any) => (
-    <div data-testid="event-card">{event.title}</div>
-  ),
 }));
 
 import AdminEventsPage from "@/app/admin/events/page";
 
 beforeEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
+  mockFrom.mockImplementation(() => makeBuilder());
+  insertMock.mockResolvedValue({ error: null });
+  updateEqMock.mockResolvedValue({ error: null });
+  deleteEqMock.mockResolvedValue({ error: null });
+  updateMock.mockImplementation(() => ({ eq: updateEqMock }));
+  deleteMock.mockImplementation(() => ({ eq: deleteEqMock }));
 });
 
 describe("AdminEventsPage", () => {
-  it("renders without crashing", () => {
+  it("renders without crashing", async () => {
     render(<AdminEventsPage />);
     expect(screen.getByText("Manage Events")).toBeInTheDocument();
+    await screen.findByText("Ugadi Celebrations 2026");
   });
 
   it("shows back to dashboard link pointing to /admin", () => {
@@ -139,6 +146,14 @@ describe("AdminEventsPage", () => {
     expect(screen.getByText("Add Event")).toBeInTheDocument();
   });
 
+  it("does not show the local-only warning banner", async () => {
+    render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
+    expect(
+      screen.queryByText(/local only/i)
+    ).not.toBeInTheDocument();
+  });
+
   it("shows events table with all headers", () => {
     render(<AdminEventsPage />);
     expect(screen.getByText("Event")).toBeInTheDocument();
@@ -148,51 +163,43 @@ describe("AdminEventsPage", () => {
     expect(screen.getByText("Actions")).toBeInTheDocument();
   });
 
-  it("displays events from sample data with titles and descriptions", () => {
+  it("loads and renders events from supabase", async () => {
     render(<AdminEventsPage />);
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
+    expect(await screen.findByText("Ugadi Celebrations 2026")).toBeInTheDocument();
     expect(screen.getByText("Sri Rama Navami")).toBeInTheDocument();
     expect(screen.getByText("Weekly Bhajan Sandhya")).toBeInTheDocument();
-    expect(screen.getByText("Yoga & Meditation Session")).toBeInTheDocument();
-    // Data rows + header row
-    const rows = screen.getAllByRole("row");
-    expect(rows.length).toBe(8); // 1 header + 7 events
+    expect(mockFrom).toHaveBeenCalledWith("events");
   });
 
-  it("displays event type labels correctly", () => {
+  it("displays event type labels correctly", async () => {
     render(<AdminEventsPage />);
-    // Festival events
+    await screen.findByText("Ugadi Celebrations 2026");
     const festivalLabels = screen.getAllByText("Festival");
     expect(festivalLabels.length).toBeGreaterThanOrEqual(1);
-    // Regular Pooja
-    const poojaLabels = screen.getAllByText("Regular Pooja");
-    expect(poojaLabels.length).toBeGreaterThanOrEqual(1);
-    // Community Event
-    expect(screen.getByText("Community Event")).toBeInTheDocument();
-    // Class
-    expect(screen.getByText("Class")).toBeInTheDocument();
+    expect(screen.getByText("Regular Pooja")).toBeInTheDocument();
   });
 
-  it("shows (recurring) label for recurring events", () => {
+  it("shows (recurring) label for recurring events", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Weekly Bhajan Sandhya");
     const recurringLabels = screen.getAllByText("(recurring)");
-    // evt-3, evt-4, evt-5, evt-6 are recurring
-    expect(recurringLabels.length).toBe(4);
+    expect(recurringLabels.length).toBe(1); // evt-3 is recurring
   });
 
-  it("displays event date and time in the table", () => {
+  it("displays event date and time in the table", async () => {
     render(<AdminEventsPage />);
-    // evt-1 has start_date 2026-03-29, start_time 09:00
+    await screen.findByText("Ugadi Celebrations 2026");
     expect(screen.getByText(/2026-03-29/)).toBeInTheDocument();
     expect(screen.getByText(/at 09:00/)).toBeInTheDocument();
   });
 
-  it("shows RSVP count for events with RSVP enabled and dash for disabled", () => {
+  it("shows RSVP count for events with RSVP enabled and dash for disabled", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
     // evt-1 has rsvp_count=45, rsvp_enabled=true
     expect(screen.getByText("45")).toBeInTheDocument();
     // evt-3 has rsvp_enabled=false, should show dash
-    const dashes = screen.getAllByText("\u2014");
+    const dashes = screen.getAllByText("—");
     expect(dashes.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -214,7 +221,6 @@ describe("AdminEventsPage", () => {
     expect(screen.getByText("Start Time")).toBeInTheDocument();
     expect(screen.getByText("End Time")).toBeInTheDocument();
     expect(screen.getByText("Location")).toBeInTheDocument();
-    // Default location value
     expect(
       screen.getByDisplayValue("RNHT Main Temple Hall")
     ).toBeInTheDocument();
@@ -261,14 +267,12 @@ describe("AdminEventsPage", () => {
     render(<AdminEventsPage />);
     fireEvent.click(screen.getByText("Add Event"));
 
-    // Fill in title
     const titleInput = screen
       .getByText("Event Title *")
       .closest("div")!
       .querySelector("input")!;
     fireEvent.change(titleInput, { target: { value: "New Test Event" } });
 
-    // Fill in date
     const dateInput = screen
       .getByText("Date *")
       .closest("div")!
@@ -280,18 +284,18 @@ describe("AdminEventsPage", () => {
     expect(submitBtn).not.toBeDisabled();
   });
 
-  it("fills in all form fields and saves a new event", () => {
+  it("inserts a new event via supabase when saving the add form", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
+
     fireEvent.click(screen.getByText("Add Event"));
 
-    // Fill title
     const titleInput = screen
       .getByText("Event Title *")
       .closest("div")!
       .querySelector("input")!;
     fireEvent.change(titleInput, { target: { value: "Brand New Festival" } });
 
-    // Fill description
     const descTextarea = screen
       .getByText("Description")
       .closest("div")!
@@ -300,168 +304,197 @@ describe("AdminEventsPage", () => {
       target: { value: "A wonderful celebration" },
     });
 
-    // Change event type
-    const typeSelect = screen.getByDisplayValue(
-      "Festival"
-    ) as HTMLSelectElement;
+    const typeSelect = screen.getByDisplayValue("Festival") as HTMLSelectElement;
     fireEvent.change(typeSelect, { target: { value: "community" } });
 
-    // Fill date
     const dateInput = screen
       .getByText("Date *")
       .closest("div")!
       .querySelector("input")!;
     fireEvent.change(dateInput, { target: { value: "2026-06-15" } });
 
-    // Fill start time
     const startTimeInput = screen
       .getByText("Start Time")
       .closest("div")!
       .querySelector("input")!;
     fireEvent.change(startTimeInput, { target: { value: "10:00" } });
 
-    // Fill end time
     const endTimeInput = screen
       .getByText("End Time")
       .closest("div")!
       .querySelector("input")!;
     fireEvent.change(endTimeInput, { target: { value: "14:00" } });
 
-    // Change location
     const locationInput = screen.getByDisplayValue("RNHT Main Temple Hall");
-    fireEvent.change(locationInput, {
-      target: { value: "Community Center" },
-    });
+    fireEvent.change(locationInput, { target: { value: "Community Center" } });
 
-    // Uncheck RSVP
     const rsvpCheckbox = screen.getByRole("checkbox");
     fireEvent.click(rsvpCheckbox);
     expect(rsvpCheckbox).not.toBeChecked();
 
-    // Click save
     const addBtns = screen.getAllByText("Add Event");
     const submitBtn = addBtns[addBtns.length - 1];
     fireEvent.click(submitBtn);
 
-    // Modal should close
-    expect(screen.queryByText("Add New Event")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(insertMock).toHaveBeenCalledTimes(1);
+    });
+    const payload = insertMock.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      title: "Brand New Festival",
+      description: "A wonderful celebration",
+      event_type: "community",
+      start_date: "2026-06-15",
+      start_time: "10:00",
+      end_time: "14:00",
+      location: "Community Center",
+      rsvp_enabled: false,
+    });
+    // Should not send columns that don't exist on the table
+    expect(payload).not.toHaveProperty("id");
+    expect(payload).not.toHaveProperty("rsvp_count");
+    expect(payload).not.toHaveProperty("created_at");
 
-    // New event should appear in table
-    expect(screen.getByText("Brand New Festival")).toBeInTheDocument();
-    expect(
-      screen.getByText("A wonderful celebration")
-    ).toBeInTheDocument();
+    // Modal closes after a successful save
+    await waitFor(() => {
+      expect(screen.queryByText("Add New Event")).not.toBeInTheDocument();
+    });
   });
 
   // --- Modal: Edit Event ---
 
-  it("opens edit modal with pre-filled data when clicking edit button", () => {
+  it("opens edit modal with pre-filled data when clicking edit button", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
 
-    // Find the first edit button (Edit2 icon buttons)
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit ugadi celebrations 2026/i })
+    );
 
-    // Should show "Edit Event" title
     expect(screen.getByText("Edit Event")).toBeInTheDocument();
-    // Should show "Save Changes" instead of "Add Event" on submit
     expect(screen.getByText("Save Changes")).toBeInTheDocument();
-
-    // First event is "Ugadi Celebrations 2026"
     expect(
       screen.getByDisplayValue("Ugadi Celebrations 2026")
     ).toBeInTheDocument();
   });
 
-  it("saves changes to an edited event", () => {
+  it("updates an event via supabase when saving the edit form", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
 
-    // Click edit on first event
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit ugadi celebrations 2026/i })
+    );
 
-    // Change the title
     const titleInput = screen.getByDisplayValue("Ugadi Celebrations 2026");
     fireEvent.change(titleInput, {
       target: { value: "Ugadi Celebrations Updated" },
     });
 
-    // Save
     fireEvent.click(screen.getByText("Save Changes"));
 
-    // Modal should close
-    expect(screen.queryByText("Edit Event")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledTimes(1);
+    });
+    expect(updateMock.mock.calls[0][0]).toMatchObject({
+      title: "Ugadi Celebrations Updated",
+    });
+    expect(updateEqMock).toHaveBeenCalledWith("id", "evt-1");
 
-    // Updated title should appear in table
-    expect(
-      screen.getByText("Ugadi Celebrations Updated")
-    ).toBeInTheDocument();
-    // Original title should no longer be there
-    expect(
-      screen.queryByText("Ugadi Celebrations 2026")
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Edit Event")).not.toBeInTheDocument();
+    });
   });
 
-  it("preserves rsvp_count when editing an event", () => {
+  it("edit modal pre-fills description and location for an event", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Sri Rama Navami");
 
-    // evt-1 has rsvp_count 45
-    expect(screen.getByText("45")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit sri rama navami/i })
+    );
 
-    // Edit the first event
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
-    fireEvent.click(screen.getByText("Save Changes"));
+    expect(screen.getByDisplayValue("Sri Rama Navami")).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("RNHT Main Temple Hall")
+    ).toBeInTheDocument();
+    const descTextarea = screen
+      .getByText("Description")
+      .closest("div")!
+      .querySelector("textarea")!;
+    expect(descTextarea.value).toContain("Lord Rama");
+  });
 
-    // RSVP count should still show
-    expect(screen.getByText("45")).toBeInTheDocument();
+  it("edit modal pre-fills start/end times", async () => {
+    render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit ugadi celebrations 2026/i })
+    );
+
+    expect(screen.getByDisplayValue("09:00")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("14:00")).toBeInTheDocument();
+  });
+
+  it("edit modal pre-fills event type and date", async () => {
+    render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit ugadi celebrations 2026/i })
+    );
+
+    const typeSelect = screen.getByDisplayValue("Festival") as HTMLSelectElement;
+    expect(typeSelect.value).toBe("festival");
+    expect(screen.getByDisplayValue("2026-03-29")).toBeInTheDocument();
+  });
+
+  it("edit modal pre-fills rsvp_enabled state", async () => {
+    render(<AdminEventsPage />);
+    await screen.findByText("Weekly Bhajan Sandhya");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit weekly bhajan sandhya/i })
+    );
+
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).not.toBeChecked();
   });
 
   // --- Delete Event ---
 
-  it("deletes an event when confirm returns true", () => {
+  it("deletes an event via supabase when confirm returns true", async () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
 
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
-
-    // Click delete on first event
-    const deleteButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-red-50");
-    });
-    fireEvent.click(deleteButtons[0]);
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete ugadi celebrations 2026/i })
+    );
 
     expect(confirmSpy).toHaveBeenCalledWith(
       "Are you sure you want to delete this event?"
     );
-    // Event should be removed
-    expect(
-      screen.queryByText("Ugadi Celebrations 2026")
-    ).not.toBeInTheDocument();
-    // Other events should still be there
-    expect(screen.getByText("Sri Rama Navami")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(deleteMock).toHaveBeenCalledTimes(1);
+    });
+    expect(deleteEqMock).toHaveBeenCalledWith("id", "evt-1");
 
     confirmSpy.mockRestore();
   });
 
-  it("does not delete an event when confirm returns false", () => {
+  it("does not delete an event when confirm returns false", async () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
 
-    const deleteButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-red-50");
-    });
-    fireEvent.click(deleteButtons[0]);
+    fireEvent.click(
+      screen.getByRole("button", { name: /delete ugadi celebrations 2026/i })
+    );
 
     expect(confirmSpy).toHaveBeenCalled();
-    // Event should still be present
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
+    expect(deleteMock).not.toHaveBeenCalled();
 
     confirmSpy.mockRestore();
   });
@@ -473,7 +506,7 @@ describe("AdminEventsPage", () => {
     fireEvent.click(screen.getByText("Add Event"));
 
     const checkbox = screen.getByRole("checkbox");
-    expect(checkbox).toBeChecked(); // default is true
+    expect(checkbox).toBeChecked();
 
     fireEvent.click(checkbox);
     expect(checkbox).not.toBeChecked();
@@ -488,163 +521,41 @@ describe("AdminEventsPage", () => {
     render(<AdminEventsPage />);
     fireEvent.click(screen.getByText("Add Event"));
 
-    const typeSelect = screen.getByDisplayValue(
-      "Festival"
-    ) as HTMLSelectElement;
+    const typeSelect = screen.getByDisplayValue("Festival") as HTMLSelectElement;
 
     fireEvent.change(typeSelect, { target: { value: "regular_pooja" } });
-    expect((typeSelect as HTMLSelectElement).value).toBe("regular_pooja");
+    expect(typeSelect.value).toBe("regular_pooja");
 
     fireEvent.change(typeSelect, { target: { value: "community" } });
-    expect((typeSelect as HTMLSelectElement).value).toBe("community");
+    expect(typeSelect.value).toBe("community");
 
     fireEvent.change(typeSelect, { target: { value: "class" } });
-    expect((typeSelect as HTMLSelectElement).value).toBe("class");
+    expect(typeSelect.value).toBe("class");
 
     fireEvent.change(typeSelect, { target: { value: "festival" } });
-    expect((typeSelect as HTMLSelectElement).value).toBe("festival");
+    expect(typeSelect.value).toBe("festival");
   });
 
   // --- Add Event button resets editing state ---
 
-  it("clicking Add Event after editing opens a blank form", () => {
+  it("clicking Add Event after editing opens a blank form", async () => {
     render(<AdminEventsPage />);
+    await screen.findByText("Ugadi Celebrations 2026");
 
-    // First, open edit modal
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
+    fireEvent.click(
+      screen.getByRole("button", { name: /edit ugadi celebrations 2026/i })
+    );
     expect(screen.getByText("Edit Event")).toBeInTheDocument();
 
-    // Close it
     fireEvent.click(screen.getByText("Cancel"));
 
-    // Now click Add Event
     fireEvent.click(screen.getByText("Add Event"));
     expect(screen.getByText("Add New Event")).toBeInTheDocument();
 
-    // Title input should be empty
     const titleInput = screen
       .getByText("Event Title *")
       .closest("div")!
       .querySelector("input")!;
     expect(titleInput.value).toBe("");
-  });
-
-  // --- Multiple operations ---
-
-  it("can add a new event and then delete it", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<AdminEventsPage />);
-
-    // Add a new event
-    fireEvent.click(screen.getByText("Add Event"));
-    const titleInput = screen
-      .getByText("Event Title *")
-      .closest("div")!
-      .querySelector("input")!;
-    fireEvent.change(titleInput, { target: { value: "Temp Event" } });
-    const dateInput = screen
-      .getByText("Date *")
-      .closest("div")!
-      .querySelector("input")!;
-    fireEvent.change(dateInput, { target: { value: "2026-12-01" } });
-    const addBtns = screen.getAllByText("Add Event");
-    fireEvent.click(addBtns[addBtns.length - 1]);
-
-    expect(screen.getByText("Temp Event")).toBeInTheDocument();
-
-    // Now delete the last event (the one we just added)
-    const deleteButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-red-50");
-    });
-    // Last delete button corresponds to the newly added event
-    fireEvent.click(deleteButtons[deleteButtons.length - 1]);
-    expect(screen.queryByText("Temp Event")).not.toBeInTheDocument();
-
-    confirmSpy.mockRestore();
-  });
-
-  it("edit modal pre-fills description and location for an event", () => {
-    render(<AdminEventsPage />);
-
-    // Edit second event (Sri Rama Navami)
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[1]);
-
-    expect(screen.getByDisplayValue("Sri Rama Navami")).toBeInTheDocument();
-    // Check location is pre-filled
-    expect(
-      screen.getByDisplayValue("RNHT Main Temple Hall")
-    ).toBeInTheDocument();
-    // Check description textarea is pre-filled
-    const descTextarea = screen
-      .getByText("Description")
-      .closest("div")!
-      .querySelector("textarea")!;
-    expect(descTextarea.value).toContain("Lord Rama");
-  });
-
-  it("edit modal pre-fills start/end times", () => {
-    render(<AdminEventsPage />);
-
-    // Edit first event (Ugadi): start_time 09:00, end_time 14:00
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
-
-    expect(screen.getByDisplayValue("09:00")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("14:00")).toBeInTheDocument();
-  });
-
-  it("edit modal pre-fills event type and date", () => {
-    render(<AdminEventsPage />);
-
-    // Edit first event (Ugadi): event_type festival, start_date 2026-03-29
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    fireEvent.click(editButtons[0]);
-
-    const typeSelect = screen.getByDisplayValue(
-      "Festival"
-    ) as HTMLSelectElement;
-    expect(typeSelect.value).toBe("festival");
-    expect(screen.getByDisplayValue("2026-03-29")).toBeInTheDocument();
-  });
-
-  it("edit modal pre-fills rsvp_enabled state", () => {
-    render(<AdminEventsPage />);
-
-    // Edit evt-3 (Weekly Bhajan Sandhya): rsvp_enabled = false
-    const editButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-blue-50");
-    });
-    // evt-3 is the 3rd event (index 2)
-    fireEvent.click(editButtons[2]);
-
-    const checkbox = screen.getByRole("checkbox");
-    expect(checkbox).not.toBeChecked();
-  });
-
-  it("total row count decreases after deleting an event", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<AdminEventsPage />);
-
-    const rowsBefore = screen.getAllByRole("row").length;
-
-    const deleteButtons = screen.getAllByRole("button").filter((btn) => {
-      return btn.querySelector("svg") && btn.className.includes("hover:bg-red-50");
-    });
-    fireEvent.click(deleteButtons[0]);
-
-    const rowsAfter = screen.getAllByRole("row").length;
-    expect(rowsAfter).toBe(rowsBefore - 1);
-
-    confirmSpy.mockRestore();
   });
 });

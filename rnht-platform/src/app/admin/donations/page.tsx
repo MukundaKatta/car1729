@@ -92,10 +92,20 @@ function DonationTypesTab() {
       setError("Name is required.");
       return;
     }
+    const slug = form.slug.trim() || slugify(form.name);
+    const { data: existing } = await supabase
+      .from("donation_types")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (existing && existing.id !== form.id) {
+      setError("This slug is already in use");
+      return;
+    }
     setSaving(true);
     const payload = {
       name: form.name.trim(),
-      slug: form.slug.trim() || slugify(form.name),
+      slug,
       description: form.description || null,
       custom_fields: form.custom_fields,
       is_active: form.is_active,

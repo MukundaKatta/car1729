@@ -1,7 +1,92 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
+
+const sampleRows = [
+  {
+    id: "RNHT-A1B2C",
+    devotee_name: "Ramesh Kumar",
+    devotee_email: "ramesh@email.com",
+    devotee_phone: "(555) 111-2222",
+    booking_date: "2026-03-15",
+    booking_time: "10:00 AM",
+    status: "confirmed",
+    total_amount: 101,
+    gotra: "Bharadwaja",
+    nakshatra: "Ashwini",
+    services: { name: "Ganapathi Homam" },
+  },
+  {
+    id: "RNHT-D3E4F",
+    devotee_name: "Lakshmi Devi",
+    devotee_email: "lakshmi@email.com",
+    devotee_phone: "(555) 333-4444",
+    booking_date: "2026-03-14",
+    booking_time: "11:00 AM",
+    status: "confirmed",
+    total_amount: 51,
+    gotra: "Kashyapa",
+    nakshatra: "Rohini",
+    services: { name: "Abhishekam" },
+  },
+  {
+    id: "RNHT-G5H6I",
+    devotee_name: "Suresh Patel",
+    devotee_email: "suresh@email.com",
+    devotee_phone: "(555) 555-6666",
+    booking_date: "2026-03-13",
+    booking_time: "9:00 AM",
+    status: "completed",
+    total_amount: 11,
+    gotra: "Vasishtha",
+    nakshatra: "Pushya",
+    services: { name: "Archana" },
+  },
+  {
+    id: "RNHT-J7K8L",
+    devotee_name: "Priya Sharma",
+    devotee_email: "priya@email.com",
+    devotee_phone: "(555) 777-8888",
+    booking_date: "2026-03-16",
+    booking_time: "9:00 AM",
+    status: "pending",
+    total_amount: 351,
+    gotra: "Atri",
+    nakshatra: "Uttara",
+    services: { name: "Gruhapravesam (Standard)" },
+  },
+  {
+    id: "RNHT-M9N0O",
+    devotee_name: "Venkat Rao",
+    devotee_email: "venkat@email.com",
+    devotee_phone: "(555) 999-0000",
+    booking_date: "2026-03-12",
+    booking_time: "10:00 AM",
+    status: "completed",
+    total_amount: 51,
+    gotra: "Gautama",
+    nakshatra: "Swati",
+    services: { name: "Satyanarayana Vratam" },
+  },
+  {
+    id: "RNHT-P1Q2R",
+    devotee_name: "Anitha Reddy",
+    devotee_email: "anitha@email.com",
+    devotee_phone: "(555) 123-4567",
+    booking_date: "2026-03-17",
+    booking_time: "9:00 AM",
+    status: "confirmed",
+    total_amount: 151,
+    gotra: "Jamadagni",
+    nakshatra: "Moola",
+    services: { name: "Navagraha Homam" },
+  },
+];
+
+const updateEq = vi.fn().mockResolvedValue({ error: null });
+const updateFn = vi.fn(() => ({ eq: updateEq }));
+const orderFn = vi.fn().mockResolvedValue({ data: sampleRows, error: null });
 
 vi.mock("next/link", () => ({ default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a> }));
 vi.mock("next/image", () => ({ default: (props: any) => <img {...props} /> }));
@@ -12,17 +97,21 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    auth: { onAuthStateChange: vi.fn(), signInWithOtp: vi.fn().mockResolvedValue({ error: null }), verifyOtp: vi.fn().mockResolvedValue({ error: null }), signOut: vi.fn().mockResolvedValue({}), signInWithOAuth: vi.fn().mockResolvedValue({ error: null }) },
-    from: () => ({ select: () => ({ eq: () => ({ single: () => ({ data: null }), order: () => ({ data: [], limit: () => ({ data: [] }) }) }), order: () => ({ data: [] }) }), insert: () => ({ then: vi.fn() }), update: () => ({ eq: () => ({ then: vi.fn() }) }), delete: () => ({ eq: () => ({ then: vi.fn() }) }) }),
-    storage: { from: () => ({ upload: vi.fn().mockResolvedValue({ error: null }), getPublicUrl: () => ({ data: { publicUrl: "https://example.com/img.jpg" } }) }) },
+    from: () => ({
+      select: () => ({ order: orderFn }),
+      update: updateFn,
+    }),
   },
 }));
-vi.mock("@/store/cart", () => ({ useCartStore: (sel: any) => { const s = { items: [], addItem: vi.fn(), removeItem: vi.fn(), updateItem: vi.fn(), clearCart: vi.fn(), getTotal: () => 0, getItemCount: () => 0 }; return typeof sel === 'function' ? sel(s) : s; }}));
-vi.mock("@/store/language", () => ({ useLanguageStore: (sel: any) => { const s = { locale: "en", setLocale: vi.fn() }; return typeof sel === 'function' ? sel(s) : s; }}));
-vi.mock("@/store/auth", () => ({ useAuthStore: (sel: any) => { const s = { isAuthenticated: false, user: null, authUser: null, bookings: [], donations: [], activities: [], loading: false, initialized: true, initialize: vi.fn(), sendOtp: vi.fn().mockResolvedValue({}), verifyOtp: vi.fn().mockResolvedValue({}), logout: vi.fn(), addDonation: vi.fn(), addBooking: vi.fn(), updateProfile: vi.fn(), addFamilyMember: vi.fn(), removeFamilyMember: vi.fn(), fetchUserData: vi.fn() }; return typeof sel === 'function' ? sel(s) : s; }}));
-vi.mock("@/store/slideshow", () => ({ useSlideshowStore: (sel: any) => { const s = { slides: [], loading: false, fetchSlides: vi.fn(), addSlide: vi.fn(), updateSlide: vi.fn(), removeSlide: vi.fn(), reorderSlides: vi.fn() }; return typeof sel === 'function' ? sel(s) : s; }}));
 
 import AdminBookingsPage from "@/app/admin/bookings/page";
+
+beforeEach(() => {
+  updateEq.mockClear();
+  updateFn.mockClear();
+  orderFn.mockClear();
+  orderFn.mockResolvedValue({ data: sampleRows, error: null });
+});
 
 describe("AdminBookingsPage", () => {
   it("renders without crashing", () => {
@@ -47,14 +136,16 @@ describe("AdminBookingsPage", () => {
     expect(select).toBeInTheDocument();
   });
 
-  it("displays all bookings in table", () => {
+  it("loads and displays bookings from the DB", async () => {
     render(<AdminBookingsPage />);
-    expect(screen.getByText("RNHT-A1B2C")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("RNHT-A1B2C")).toBeInTheDocument());
     expect(screen.getByText("RNHT-D3E4F")).toBeInTheDocument();
     expect(screen.getByText("RNHT-G5H6I")).toBeInTheDocument();
     expect(screen.getByText("RNHT-J7K8L")).toBeInTheDocument();
     expect(screen.getByText("RNHT-M9N0O")).toBeInTheDocument();
     expect(screen.getByText("RNHT-P1Q2R")).toBeInTheDocument();
+    // service name from the joined services relation
+    expect(screen.getByText("Ganapathi Homam")).toBeInTheDocument();
   });
 
   it("shows table headers", () => {
@@ -63,14 +154,26 @@ describe("AdminBookingsPage", () => {
     expect(screen.getByText("Actions")).toBeInTheDocument();
   });
 
-  it("shows View buttons for each booking", () => {
+  it("shows an empty state when there are no bookings", async () => {
+    orderFn.mockResolvedValueOnce({ data: [], error: null });
     render(<AdminBookingsPage />);
-    const viewButtons = screen.getAllByText("View");
-    expect(viewButtons.length).toBe(6);
+    await waitFor(() => expect(screen.getByText("No bookings found.")).toBeInTheDocument());
   });
 
-  it("opens booking detail modal when clicking View", () => {
+  it("shows an error message when the DB query fails", async () => {
+    orderFn.mockResolvedValueOnce({ data: null, error: { message: "boom" } });
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getByText("boom")).toBeInTheDocument());
+  });
+
+  it("shows View buttons for each booking", async () => {
+    render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
+  });
+
+  it("opens booking detail modal when clicking View", async () => {
+    render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[0]);
     expect(screen.getByText("Booking Details")).toBeInTheDocument();
@@ -84,22 +187,37 @@ describe("AdminBookingsPage", () => {
     expect(screen.getByText("Bharadwaja")).toBeInTheDocument();
   });
 
-  it("shows confirm button for confirmed bookings in modal", () => {
+  it("shows mark completed button for confirmed bookings in modal", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[0]); // First booking is confirmed
     expect(screen.getByText("Mark Completed")).toBeInTheDocument();
   });
 
-  it("shows confirm button for pending bookings in modal", () => {
+  it("shows confirm button for pending bookings in modal", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[3]); // RNHT-J7K8L is pending
     expect(screen.getByText("Confirm")).toBeInTheDocument();
   });
 
-  it("closes modal when clicking Close", () => {
+  it("persists status updates via supabase", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
+    const viewButtons = screen.getAllByText("View");
+    fireEvent.click(viewButtons[3]); // RNHT-J7K8L is pending
+    fireEvent.click(screen.getByText("Confirm"));
+    await waitFor(() => {
+      expect(updateFn).toHaveBeenCalledWith({ status: "confirmed" });
+      expect(updateEq).toHaveBeenCalledWith("id", "RNHT-J7K8L");
+    });
+  });
+
+  it("closes modal when clicking Close", async () => {
+    render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[0]);
     expect(screen.getByText("Booking Details")).toBeInTheDocument();
@@ -107,16 +225,18 @@ describe("AdminBookingsPage", () => {
     expect(screen.queryByText("Booking Details")).not.toBeInTheDocument();
   });
 
-  it("closes modal when clicking x button", () => {
+  it("closes modal when clicking x button", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[0]);
     fireEvent.click(screen.getByText("×"));
     expect(screen.queryByText("Booking Details")).not.toBeInTheDocument();
   });
 
-  it("filters bookings by search query", () => {
+  it("filters bookings by search query", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getByText("RNHT-A1B2C")).toBeInTheDocument());
     fireEvent.change(screen.getByPlaceholderText("Search by name, ID, or service..."), {
       target: { value: "Ramesh" },
     });
@@ -124,8 +244,9 @@ describe("AdminBookingsPage", () => {
     expect(screen.queryByText("RNHT-D3E4F")).not.toBeInTheDocument();
   });
 
-  it("filters bookings by status", () => {
+  it("filters bookings by status", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getByText("RNHT-A1B2C")).toBeInTheDocument());
     fireEvent.change(screen.getByDisplayValue("All Status"), {
       target: { value: "pending" },
     });
@@ -133,8 +254,9 @@ describe("AdminBookingsPage", () => {
     expect(screen.queryByText("RNHT-A1B2C")).not.toBeInTheDocument();
   });
 
-  it("shows cancel button in modal for non-completed/cancelled bookings", () => {
+  it("shows cancel button in modal for non-completed/cancelled bookings", async () => {
     render(<AdminBookingsPage />);
+    await waitFor(() => expect(screen.getAllByText("View").length).toBe(6));
     const viewButtons = screen.getAllByText("View");
     fireEvent.click(viewButtons[0]); // confirmed booking
     // "Cancel" button should be present inside the modal
