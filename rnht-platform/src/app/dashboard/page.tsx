@@ -1110,7 +1110,7 @@ function ProfileTab() {
           deletion to be reachable via normal navigation. The full delete flow
           lives on /profile; link to it so a reviewer/user can find it. */}
       <Link
-        href="/profile"
+        href="/profile?tab=preferences"
         className="mt-3 flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-temple-maroon"
       >
         <Trash2 className="h-4 w-4" />

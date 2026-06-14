@@ -9,6 +9,7 @@ vi.mock("next/link", () => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), back: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 let authState: any;

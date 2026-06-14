@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   User,
   Users,
@@ -115,7 +115,14 @@ export default function ProfilePage() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  // Allow deep-linking to a specific tab (e.g. /profile?tab=preferences from the
+  // dashboard "delete account" link, so account deletion is reachable directly).
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab") as Tab | null;
+  const initialTab: Tab = tabs.some((t) => t.id === requestedTab)
+    ? (requestedTab as Tab)
+    : "profile";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
@@ -282,6 +289,7 @@ export default function ProfilePage() {
     amount: d.amount,
     method: d.method,
     recurring: d.recurring,
+    status: d.status,
   }));
 
   const filteredBookings = bookings.filter((b) => {
@@ -290,7 +298,11 @@ export default function ProfilePage() {
     return b.status === "completed";
   });
 
-  const totalDonated = donations.reduce((s, d) => s + d.amount, 0);
+  // Only completed gifts count toward the giving total — matches the dashboard
+  // (a pending Zelle pledge or unverified card payment must not inflate it).
+  const totalDonated = donations
+    .filter((d) => d.status === "completed" || d.status === undefined)
+    .reduce((s, d) => s + d.amount, 0);
 
   // Derive initials from user name
   const initials = (user?.name || "")
