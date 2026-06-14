@@ -14,12 +14,20 @@ export default function AuthCallbackPage() {
       return;
     }
 
-    let handled = false;
+    // Navigate at most once. The check-and-set is synchronous (single-threaded
+    // JS), so the listener and the timeout's async getSession can't both replace
+    // — previously the timeout checked the flag BEFORE its await, leaving a
+    // window for a double router.replace.
+    let navigated = false;
+    const goToDashboard = () => {
+      if (navigated) return;
+      navigated = true;
+      router.replace("/dashboard");
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
-        handled = true;
-        router.replace("/dashboard");
+        goToDashboard();
       } else if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
         // Ignore these events
       }
@@ -27,10 +35,11 @@ export default function AuthCallbackPage() {
 
     // Fallback: check session after timeout
     const timeout = setTimeout(async () => {
-      if (handled) return;
+      if (navigated) return;
       const { data: { session } } = await supabase.auth.getSession();
+      if (navigated) return;
       if (session) {
-        router.replace("/dashboard");
+        goToDashboard();
       } else {
         setError(true);
       }

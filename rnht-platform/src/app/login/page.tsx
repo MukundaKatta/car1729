@@ -709,7 +709,11 @@ export default function LoginPage() {
                       setError("");
                       const result = await verifyOtp(email, emailCode);
                       setLoading(false);
+                      // On success, advance to the success screen immediately
+                      // (mirrors the phone-OTP path) instead of leaving the user
+                      // on the code form waiting for a background session check.
                       if (result.error) setError(result.error);
+                      else setStep("success");
                     }}
                   >
                     Verify

@@ -162,7 +162,11 @@ async function handleCreate(req: Request): Promise<Response> {
     amount <= 0 ||
     amount > 100000 ||
     !donorName ||
-    !donorEmail
+    !donorEmail ||
+    // Validate email format server-side too — a direct API call bypasses the
+    // client regex, and a malformed address silently breaks the tax receipt
+    // while the donation is still marked completed.
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail.trim())
   ) {
     return new Response(
       JSON.stringify({ error: "Missing or invalid required fields" }),
@@ -313,7 +317,9 @@ async function handleVerify(req: Request): Promise<Response> {
   // rows, so the donor never receives duplicate receipts (matches paypal-capture).
   const { data: updated } = await supabase
     .from("donations")
-    .update({ payment_status: "completed" })
+    // Persist the Stripe session id too, so completed donations are linkable to
+    // their checkout session for audit/lookup (mirrors the PayPal capture path).
+    .update({ payment_status: "completed", payment_intent_id: sessionId })
     .eq("id", donationId)
     .eq("payment_status", "pending")
     .select("id")
@@ -330,7 +336,8 @@ async function handleVerify(req: Request): Promise<Response> {
   return new Response(
     JSON.stringify({
       verified: true,
-      amount: data.amount,
+      // Supabase returns DECIMAL as a string — coerce so the client gets a number.
+      amount: Number(data.amount),
       fundType: data.fund_type,
       fundLabel,
     }),

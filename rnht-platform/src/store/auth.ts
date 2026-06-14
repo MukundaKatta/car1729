@@ -218,13 +218,21 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   verifyOtp: async (email, token) => {
     if (!supabase) return { error: "Authentication is not configured" };
     set({ loading: true });
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
       type: "email",
     });
     set({ loading: false });
     if (error) return normalizeAuthError(error.message, "email");
+    // Set auth state immediately from the verified session instead of waiting for
+    // the async onAuthStateChange listener — otherwise the UI hangs on the code
+    // form until the listener (or a fallback timeout) fires. The listener still
+    // runs and idempotently re-sets the same state.
+    if (data?.user) {
+      set({ authUser: data.user, isAuthenticated: true, initialized: true });
+      get().fetchUserData();
+    }
     return {};
   },
 
@@ -248,13 +256,17 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   verifyPhoneOtp: async (phone, token) => {
     if (!supabase) return { error: "Authentication is not configured" };
     set({ loading: true });
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       phone,
       token,
       type: "sms",
     });
     set({ loading: false });
     if (error) return normalizeAuthError(error.message, "phone");
+    if (data?.user) {
+      set({ authUser: data.user, isAuthenticated: true, initialized: true });
+      get().fetchUserData();
+    }
     return {};
   },
 

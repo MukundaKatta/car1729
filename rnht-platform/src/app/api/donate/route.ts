@@ -52,12 +52,18 @@ export async function POST(request: Request) {
       amount <= 0 ||
       amount > 100000 ||
       !donorName ||
-      !donorEmail
+      !donorEmail ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(donorEmail).trim())
     ) {
       return NextResponse.json(
         { error: "Missing or invalid required fields" },
         { status: 400 }
       );
+    }
+    // Allowlist the fund (matches the Supabase edge function) — fund_type is
+    // unconstrained TEXT, so reject anything not in the canonical registry.
+    if (!fundType || !(fundType in fundLabels)) {
+      return NextResponse.json({ error: "Unknown donation fund" }, { status: 400 });
     }
 
     const supabase = getServiceSupabase();

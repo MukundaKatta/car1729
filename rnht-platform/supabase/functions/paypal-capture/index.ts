@@ -147,7 +147,8 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           status: captureData.status,
-          amount: donation.amount,
+          // DECIMAL comes back as a string from Supabase — coerce to number.
+          amount: Number(donation.amount),
           fundType: donation.fund_type,
           fundLabel: fundLabels[donation.fund_type] ?? "Temple Fund",
         }),
