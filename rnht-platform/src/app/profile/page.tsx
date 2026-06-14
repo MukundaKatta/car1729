@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   Plus,
+  Pencil,
   Trash2,
   Download,
   BookOpen,
@@ -71,6 +72,7 @@ export default function ProfilePage() {
     donations: storeDonations,
     updateProfile,
     addFamilyMember,
+    editFamilyMember,
     removeFamilyMember,
   } = useAuthStore();
   const [saveError, setSaveError] = useState("");
@@ -125,12 +127,17 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
+  // null = adding a new member; an id = editing that existing member.
+  const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
 
-  // Android back button: close the Add Family dialog instead of navigating.
+  // Android back button: close the Add/Edit Family dialog instead of navigating.
   useEffect(() => {
     if (!showAddFamily) return;
-    return pushOverlay(() => setShowAddFamily(false));
+    return pushOverlay(() => {
+      setShowAddFamily(false);
+      setEditingFamilyId(null);
+    });
   }, [showAddFamily]);
   const [bookingFilter, setBookingFilter] = useState<"all" | "upcoming" | "completed">("all");
 
@@ -255,21 +262,49 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddFamilyMember = () => {
+  const blankMember = { name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" };
+
+  const openAddFamilyMember = () => {
+    setEditingFamilyId(null);
+    setNewMember(blankMember);
+    setShowAddFamily(true);
+  };
+
+  const openEditFamilyMember = (member: FamilyMember) => {
+    setEditingFamilyId(member.id);
+    setNewMember({
+      name: member.name,
+      relationship: member.relationship,
+      gotra: member.gotra ?? "",
+      nakshatra: member.nakshatra ?? "",
+      rashi: member.rashi ?? "",
+      dob: member.dob ?? "",
+    });
+    setShowAddFamily(true);
+  };
+
+  const closeFamilyModal = () => {
+    setShowAddFamily(false);
+    setEditingFamilyId(null);
+    setNewMember(blankMember);
+  };
+
+  const handleSaveFamilyMember = () => {
     // Trim so a whitespace-only name can't create a blank-titled card.
     if (!newMember.name.trim() || !newMember.relationship.trim()) return;
-    const member: FamilyMember = {
-      // UUID, not a millisecond timestamp — two quick adds in the same ms would
-      // otherwise collide and a single remove would delete both.
-      id: `fm-${crypto.randomUUID()}`,
+    const fields = {
       ...newMember,
       name: newMember.name.trim(),
       relationship: newMember.relationship.trim(),
     };
-    // Persist to store (which syncs to Supabase)
-    addFamilyMember(member);
-    setNewMember({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
-    setShowAddFamily(false);
+    if (editingFamilyId) {
+      editFamilyMember(editingFamilyId, fields);
+    } else {
+      // UUID, not a millisecond timestamp — two quick adds in the same ms would
+      // otherwise collide and a single remove would delete both.
+      addFamilyMember({ id: `fm-${crypto.randomUUID()}`, ...fields });
+    }
+    closeFamilyModal();
   };
 
   const handleDeleteFamilyMember = (id: string) => {
@@ -455,7 +490,7 @@ export default function ProfilePage() {
               <p className="text-sm text-gray-600">
                 Add family members for quick Sankalp during pooja bookings.
               </p>
-              <button className="btn-primary flex items-center gap-2 text-sm" onClick={() => setShowAddFamily(true)}>
+              <button className="btn-primary flex items-center gap-2 text-sm" onClick={openAddFamilyMember}>
                 <Plus className="h-4 w-4" /> Add Member
               </button>
             </div>
@@ -466,9 +501,14 @@ export default function ProfilePage() {
                     <h3 className="font-semibold text-gray-900">{member.name}</h3>
                     <p className="text-sm text-gray-500">{member.relationship}</p>
                   </div>
-                  <button onClick={() => handleDeleteFamilyMember(member.id)} className="rounded p-1 text-gray-400 hover:text-red-500">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex gap-1">
+                    <button onClick={() => openEditFamilyMember(member)} className="rounded p-1 text-gray-400 hover:text-temple-red" aria-label={`Edit ${member.name}`}>
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => handleDeleteFamilyMember(member.id)} className="rounded p-1 text-gray-400 hover:text-red-500" aria-label={`Remove ${member.name}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                   <div><span className="text-gray-500">Gotra:</span> <span className="font-medium">{member.gotra}</span></div>
@@ -506,9 +546,9 @@ export default function ProfilePage() {
               </div>
             </div>
             {showAddFamily && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="Add Family Member" onClick={() => setShowAddFamily(false)}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label={editingFamilyId ? "Edit Family Member" : "Add Family Member"} onClick={closeFamilyModal}>
                 <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="font-heading text-lg font-bold">Add Family Member</h3>
+                  <h3 className="font-heading text-lg font-bold">{editingFamilyId ? "Edit Family Member" : "Add Family Member"}</h3>
                   <div className="mt-4 space-y-3">
                     <input type="text" className="input-field" placeholder="Full Name" aria-label="Full Name" value={newMember.name} onChange={(e) => setNewMember((p) => ({ ...p, name: e.target.value }))} />
                     <select className="input-field" aria-label="Relationship" value={newMember.relationship} onChange={(e) => setNewMember((p) => ({ ...p, relationship: e.target.value }))}>
@@ -528,8 +568,8 @@ export default function ProfilePage() {
                     <input type="date" className="input-field" aria-label="Date of Birth" value={newMember.dob} onChange={(e) => setNewMember((p) => ({ ...p, dob: e.target.value }))} />
                   </div>
                   <div className="mt-6 flex justify-end gap-3">
-                    <button className="btn-outline" onClick={() => setShowAddFamily(false)}>Cancel</button>
-                    <button className="btn-primary" onClick={handleAddFamilyMember} disabled={!newMember.name || !newMember.relationship}>Add Member</button>
+                    <button className="btn-outline" onClick={closeFamilyModal}>Cancel</button>
+                    <button className="btn-primary" onClick={handleSaveFamilyMember} disabled={!newMember.name || !newMember.relationship}>{editingFamilyId ? "Save Changes" : "Add Member"}</button>
                   </div>
                 </div>
               </div>

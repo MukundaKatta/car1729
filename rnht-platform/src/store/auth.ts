@@ -88,6 +88,7 @@ type AuthStore = {
   // Data actions
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: string }>;
   addFamilyMember: (member: FamilyMember) => void;
+  editFamilyMember: (id: string, updates: Partial<FamilyMember>) => void;
   removeFamilyMember: (id: string) => void;
   addBooking: (booking: Booking) => void;
   addDonation: (donation: Donation) => void;
@@ -448,6 +449,31 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           // optimistic update and log so the UI stays consistent with the DB.
           if (error) {
             console.error("addFamilyMember persist failed:", error);
+            const cur = get().user;
+            if (cur) set({ user: { ...cur, familyMembers: previous } });
+          }
+        });
+    }
+  },
+
+  editFamilyMember: (id, updates) => {
+    const user = get().user;
+    const authUser = get().authUser;
+    if (!user || !authUser) return;
+
+    const previous = user.familyMembers;
+    const updated = previous.map((m) => (m.id === id ? { ...m, ...updates } : m));
+    set({ user: { ...user, familyMembers: updated } });
+
+    if (supabase) {
+      supabase
+        .from("profiles")
+        .update({ family_members: updated })
+        .eq("id", authUser.id)
+        .then(({ error }) => {
+          // Same optimistic-write + rollback pattern as add/removeFamilyMember.
+          if (error) {
+            console.error("editFamilyMember persist failed:", error);
             const cur = get().user;
             if (cur) set({ user: { ...cur, familyMembers: previous } });
           }

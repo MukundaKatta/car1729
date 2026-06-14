@@ -76,7 +76,10 @@ native build (not re-distributed for admin-only changes):
   (the services page already does this) and retire the bookings UI.
 - **Preferences tab** (language/notifications/deities/dietary) has no state/save —
   all controls cosmetic (`src/app/profile/page.tsx`).
-- **Family members** can be added/removed but **not edited** despite rich fields.
+- ~~**Family members** can be added/removed but **not edited**.~~ **✅ FIXED**
+  (web-deployed) — per-member Edit button reuses the add modal (prefilled) →
+  `editFamilyMember` store action (same proven optimistic-write+rollback path as
+  add/remove); +3 lock-in tests (755 total).
 - **Two divergent profile editors** (`/profile` and the dashboard Profile tab) with
   different validation/fields — consolidate.
 - **Custom donation fields** persisted raw, validation is client-only — add server

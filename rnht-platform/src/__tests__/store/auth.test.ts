@@ -451,6 +451,57 @@ describe("useAuthStore", () => {
     });
   });
 
+  // ── 6b. editFamilyMember ───────────────────────────────────────────────────
+
+  describe("editFamilyMember", () => {
+    const member1: FamilyMember = {
+      id: "fm-1",
+      name: "Sita",
+      relationship: "Spouse",
+      gotra: "Bharadvaja",
+    };
+    const member2: FamilyMember = {
+      id: "fm-2",
+      name: "Lakshman",
+      relationship: "Brother",
+    };
+
+    it("updates only the matching member, preserving others", () => {
+      setAuthenticatedState({
+        user: { ...mockProfile, familyMembers: [member1, member2] },
+      });
+
+      useAuthStore.getState().editFamilyMember("fm-1", { name: "Sita Devi", nakshatra: "Rohini" });
+
+      const members = useAuthStore.getState().user!.familyMembers;
+      expect(members).toHaveLength(2);
+      expect(members[0]).toEqual({ ...member1, name: "Sita Devi", nakshatra: "Rohini" });
+      expect(members[1]).toEqual(member2); // untouched
+    });
+
+    it("persists the edited array to Supabase", () => {
+      setAuthenticatedState({
+        user: { ...mockProfile, familyMembers: [member1] },
+      });
+      const builder = createQueryBuilder();
+      queryBuilders["profiles"] = builder;
+
+      useAuthStore.getState().editFamilyMember("fm-1", { relationship: "Wife" });
+
+      expect(mockFrom).toHaveBeenCalledWith("profiles");
+      expect(builder.update).toHaveBeenCalledWith({
+        family_members: [{ ...member1, relationship: "Wife" }],
+      });
+      expect(builder.eq).toHaveBeenCalledWith("id", "user-123");
+    });
+
+    it("does nothing if user is not set", () => {
+      useAuthStore.setState({ authUser: mockAuthUser, user: null });
+      useAuthStore.getState().editFamilyMember("fm-1", { name: "X" });
+      expect(mockFrom).not.toHaveBeenCalled();
+    });
+  });
+
   // ── 7. removeFamilyMember ──────────────────────────────────────────────────
 
   describe("removeFamilyMember", () => {
