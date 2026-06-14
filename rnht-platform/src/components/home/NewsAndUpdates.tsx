@@ -49,7 +49,19 @@ export function NewsAndUpdates({ limit = 3, compact = false }: Props) {
         )}
         <div className={`mt-6 grid gap-4 ${compact ? "" : "sm:grid-cols-3"}`}>
           {Array.from({ length: limit }).map((_, i) => (
-            <div key={i} className="h-80 animate-pulse rounded-2xl bg-temple-ivory" />
+            // Mirror the real card layout (h-40 image + p-5 text body) so the
+            // skeleton reserves the same height the loaded card occupies — a flat
+            // h-80 block was ~2x the image and still mis-sized vs the full card,
+            // causing layout shift on load either way.
+            <div key={i} className="card flex flex-col overflow-hidden p-0">
+              <div className="h-40 w-full animate-pulse bg-temple-ivory" />
+              <div className="flex flex-1 flex-col gap-2 p-5">
+                <div className="h-3 w-1/3 animate-pulse rounded bg-temple-ivory" />
+                <div className="h-5 w-3/4 animate-pulse rounded bg-temple-ivory" />
+                <div className="h-3 w-full animate-pulse rounded bg-temple-ivory" />
+                <div className="h-3 w-2/3 animate-pulse rounded bg-temple-ivory" />
+              </div>
+            </div>
           ))}
         </div>
       </div>

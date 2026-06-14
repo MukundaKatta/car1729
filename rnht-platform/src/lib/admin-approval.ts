@@ -9,6 +9,9 @@ export type SensitiveAdminAction =
   | "delete_news_post"
   | "delete_donation_type"
   | "delete_priest"
+  | "delete_event"
+  | "delete_volunteer"
+  | "delete_service_pdf"
   | "publish_news_post"
   | "activate_service"
   | "deactivate_service"
@@ -38,6 +41,9 @@ const REQUIRED_ROLE: Record<SensitiveAdminAction, AdminRole> = {
   delete_news_post: "approver",
   delete_donation_type: "approver",
   delete_priest: "approver",
+  delete_event: "approver",
+  delete_volunteer: "approver",
+  delete_service_pdf: "approver",
   publish_news_post: "editor",
   activate_service: "editor",
   deactivate_service: "editor",

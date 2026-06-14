@@ -46,7 +46,7 @@ export default function AdminEventsPage() {
   async function deleteEvent(event: Event) {
     if (!supabase) return;
     await confirmOrQueue({
-      action: "delete_news_post",
+      action: "delete_event",
       resourceLabel: event.title,
       confirmMessage: "Are you sure you want to delete this event?",
       approvalReason: `Delete event "${event.title}"`,

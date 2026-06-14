@@ -325,6 +325,9 @@ export default function DonatePage() {
     submittingRef.current = true;
     setProcessing(true);
     setError("");
+    // Also clear any stale payment-verification error so it doesn't linger
+    // above a fresh donation attempt.
+    setVerifyError("");
     try {
       // Signed-in devotees: pass the session token so the backend can verify
       // it and link the donation to their account (dashboard history).
@@ -645,6 +648,7 @@ export default function DonatePage() {
                       setFundTypeSlug(fund.slug);
                       setCustomFieldValues({});
                       setError("");
+                      setVerifyError("");
                     }}
                     className="mt-1 text-temple-red"
                   />

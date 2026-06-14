@@ -114,7 +114,7 @@ export default function AdminVolunteersPage() {
   async function remove(item: VolunteerOpportunity) {
     if (!supabase) return;
     await confirmOrQueue({
-      action: "delete_service",
+      action: "delete_volunteer",
       resourceLabel: item.title,
       confirmMessage: `Delete "${item.title}"?`,
       approvalReason: `Delete volunteer opportunity "${item.title}"`,

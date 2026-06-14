@@ -119,7 +119,7 @@ export default function AdminServicesUploadPage() {
   async function remove(pdf: ServicePdf) {
     if (!supabase) return;
     await confirmOrQueue({
-      action: "delete_service",
+      action: "delete_service_pdf",
       resourceLabel: pdf.file_name,
       confirmMessage: `Delete "${pdf.file_name}"? This also removes the file from storage.`,
       approvalReason: `Delete services PDF "${pdf.file_name}"`,
