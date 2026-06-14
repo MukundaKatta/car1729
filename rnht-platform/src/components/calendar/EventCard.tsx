@@ -1,7 +1,14 @@
 import { Calendar, Clock, MapPin, Users, CalendarPlus, Repeat } from "lucide-react";
 import type { Event } from "@/types/database";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/utils";
 import { describeRecurrence } from "@/lib/recurrence";
+
+// Event times are stored as "HH:MM" (24h). Wrap into a parseable datetime so
+// formatTime renders a friendly 12-hour clock (e.g. "10:00 AM") for the US audience.
+function formatClock(t?: string | null): string {
+  if (!t) return "";
+  return formatTime(`2000-01-01T${t}`);
+}
 
 const eventTypeColors: Record<
   string,
@@ -110,8 +117,8 @@ export function EventCard({ event }: { event: Event }) {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" aria-hidden="true" />
               <span>
-                {event.start_time}
-                {event.end_time && ` - ${event.end_time}`}
+                {formatClock(event.start_time)}
+                {event.end_time && ` - ${formatClock(event.end_time)}`}
               </span>
             </div>
           )}

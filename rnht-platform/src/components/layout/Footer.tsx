@@ -131,6 +131,10 @@ export function Footer() {
       </div>
 
       <div className="h-px bg-gradient-to-r from-transparent via-temple-gold/20 to-transparent" />
+
+      <p className="py-4 text-center text-xs text-gray-400">
+        &copy; Rudra Narayana Hindu Temple. All rights reserved.
+      </p>
     </footer>
   );
 }

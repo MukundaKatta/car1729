@@ -554,7 +554,7 @@ const pa: TranslationKeys = {
   "services.duration": "ਸਮਾਂ",
   "services.price": "ਕੀਮਤ",
   "donate.title": "ਸਾਡੇ ਮੰਦਰ ਦਾ ਸਮਰਥਨ",
-  "donate.subtitle": "ਤੁਹਾਡਾ ਦਾਨ ਮੰਦਰ ਦੀ ਦੇਖਭਾਲ ਅਤੇ ਸਮੁਦਾਇਕ ਪ੍ਰੋਗਰਾಮਾਂ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ",
+  "donate.subtitle": "ਤੁਹਾਡਾ ਦਾਨ ਮੰਦਰ ਦੀ ਦੇਖਭਾਲ ਅਤੇ ਸਮੁਦਾਇਕ ਪ੍ਰੋਗਰਾਮਾਂ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ",
   "donate.amount": "ਦਾਨ ਰਕਮ",
   "donate.fund": "ਫੰਡ ਚੁਣੋ",
   "donate.recurring": "ਦੁਹਰਾਇਆ ਦਾਨ",

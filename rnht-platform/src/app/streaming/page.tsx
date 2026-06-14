@@ -14,13 +14,13 @@ export const metadata: Metadata = {
 const dailySchedule = [
   {
     name: "Morning Aarti & Suprabhatam",
-    time: "Daily 7:00 AM - 7:30 AM CST",
+    time: "Daily 7:00 AM - 7:30 AM CT",
     detail:
       "Start your day with the morning aarti and Suprabhatam from the main sanctum.",
   },
   {
     name: "Evening Aarti & Deeparadhana",
-    time: "Daily 7:00 PM - 7:30 PM CST",
+    time: "Daily 7:00 PM - 7:30 PM CT",
     detail:
       "Evening Deeparadhana ceremony — the divine light offering to the deities.",
   },

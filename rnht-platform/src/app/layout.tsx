@@ -112,6 +112,8 @@ const jsonLd = {
   openingHours: ["Mo-Su 09:00-12:00", "Mo-Su 17:00-20:00"],
   sameAs: [
     "https://wa.me/message/P3YRA2XY3GI7F1",
+    "https://www.facebook.com/people/Rudra-Narayana-Hindu-Temple/61572697872055/",
+    "https://www.instagram.com/rudranarayanahindutemple",
   ],
 };
 

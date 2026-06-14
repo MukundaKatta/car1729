@@ -39,9 +39,10 @@ describe("EventCard", () => {
     expect(screen.getByText("Festival")).toBeInTheDocument();
   });
 
-  it("renders time range", () => {
+  it("renders time range in 12-hour format", () => {
     render(<EventCard event={mockEvent} />);
-    expect(screen.getByText("10:00 - 13:00")).toBeInTheDocument();
+    // Regex (not exact string) because Intl may use a narrow no-break space before AM/PM.
+    expect(screen.getByText(/10:00.*AM.*-.*1:00.*PM/i)).toBeInTheDocument();
   });
 
   it("renders location", () => {

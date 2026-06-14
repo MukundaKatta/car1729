@@ -396,11 +396,17 @@ function getYoga(sunLongitude: number, moonLongitude: number) {
 
 function getKarana(sunLongitude: number, moonLongitude: number) {
   const difference = normalizeAngle(moonLongitude - sunLongitude);
-  const rawKarana = Math.floor(difference / 6) + 1;
-  let index = (rawKarana - 1) % 7;
-
-  if (rawKarana >= 58 && rawKarana <= 60) {
-    index = 7 + (rawKarana - 58);
+  const rawKarana = Math.floor(difference / 6) + 1; // 1..60
+  // Of the 60 half-tithis: #1 is the fixed Kimstughna, #2..57 cycle the 7
+  // movable karanas (Bava..Vishti, Bava-aligned), and #58..60 are the fixed
+  // Shakuni / Chatushpada / Naga.
+  let index: number;
+  if (rawKarana === 1) {
+    index = 10; // Kimstughna
+  } else if (rawKarana >= 58) {
+    index = 7 + (rawKarana - 58); // Shakuni / Chatushpada / Naga
+  } else {
+    index = (rawKarana - 2) % 7; // movable cycle
   }
 
   return {

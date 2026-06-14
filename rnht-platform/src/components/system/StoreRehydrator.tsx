@@ -20,6 +20,8 @@ import { useAuthStore } from "@/store/auth";
  * idempotent and guards against duplicate auth listeners.
  */
 export function StoreRehydrator() {
+  const locale = useLanguageStore((s) => s.locale);
+
   useEffect(() => {
     // `.persist` is undefined when tests mock these stores without the
     // persist middleware — guard so a mocked store doesn't crash the layout.
@@ -28,5 +30,15 @@ export function StoreRehydrator() {
     usePanchangamStore.persist?.rehydrate?.();
     void useAuthStore.getState().initialize();
   }, []);
+
+  // Keep <html lang> in sync with the selected language so screen readers /
+  // TTS / "translate this page" use the correct language (layout renders the
+  // static lang="en" default; this updates it after rehydrate + on switch).
+  useEffect(() => {
+    if (typeof document !== "undefined" && locale) {
+      document.documentElement.lang = locale;
+    }
+  }, [locale]);
+
   return null;
 }
