@@ -52,20 +52,18 @@ beta. None were churned mid-beta (regression risk); fixes are listed for a focus
 
 ## B. Admin internal tooling (staff-only; safe error-handling fixes)
 
-These are mostly **silent write-error swallowing** — the fix is additive
-(`const { error } = await …; if (error) { setError(…); return; }`), low-risk, but
-several self-correct via a subsequent `refresh()`. Do as one focused pass:
+**✅ FIXED + web-deployed (commit 1c300c8, 2026-06-14)** — folds into the next
+native build (not re-distributed for admin-only changes):
+- **Slideshow add/update/remove + hide/show** now propagate Supabase errors
+  (store returns boolean; page surfaces save/toggle/delete failures).
+- **Slideshow new-slide sort_order** now `max(sort_order)+1` (was `slides.length`).
+- **Event delete** now checks + surfaces the Supabase error.
+- **Priest head-demote** now aborts if the demote write fails (prevents proceeding
+  on a false premise). _Residual:_ full demote+write atomicity still needs a **DB
+  transaction/RPC** — the partial unique index forces demote-first, so a main-write
+  failure after a successful demote can still leave zero heads. Convert to an RPC.
 
-- **Slideshow add/update/remove + hide/show** swallow Supabase errors → UI reports
-  success on a failed write (`src/app/admin/slideshow/page.tsx`). (high/medium)
-- **Event delete** discards the delete error inside `confirmOrQueue.run`
-  (`src/app/admin/events/page.tsx:54`). (medium — refresh() self-corrects UI)
-- **Priest head-demote partial write** (`src/app/admin/priests/page.tsx:146-152`) —
-  demotes the existing head before the main write; a failed write leaves **zero
-  head priests**. Demote-first is required by a partial unique index, so the proper
-  fix is a **DB transaction/RPC** (or at minimum error-check the demote + restore).
-- **Slideshow new-slide sort_order** defaults to `slides.length`, can collide after
-  deletes/reorders → nondeterministic ordering. Use `max(sort_order)+1`.
+**Remaining:**
 - **Approval queue is cosmetic** (medium) — pending approvals live only in the
   requesting editor's localStorage; no backend. Slideshow ops also bypass it.
   `resolveAdminRole` defaults to 'approver' when env unset → queue is a no-op.
