@@ -13,7 +13,8 @@ The genuine launch-gating items are **operational/correctness**, not classic
 exploits. **None of the security findings are client/web-fixable** — they all need
 DB migration or edge-function deploy (no Supabase CLI/token in the build env).
 
-## ✅ Fixed + web-deployed this session (safe, gated, 755 tests)
+## ✅ Fixed + shipped to web + BUILD 18 (both platforms; gated, 752 tests)
+Batch 1 (commit f478c7b):
 - **Panchangam karana off-by-one** (correctness) — #1 now Kimstughna, movable cycle
   Bava-aligned, #58-60 fixed. (Devotees were shown the wrong karana.)
 - **`<html lang>` syncs with selected language** (a11y/SEO) — was hardcoded "en".
@@ -21,6 +22,20 @@ DB migration or edge-function deploy (no Supabase CLI/token in the build env).
 - **Punjabi `donate.subtitle`** — removed stray Kannada glyph.
 - **JSON-LD `sameAs`** — added real Facebook + Instagram. **Footer copyright** added.
   **"Strotras"→"Stotras"** (priest bio). **Streaming "CST"→"CT"**.
+
+Batch 2 (commit d19e7c5):
+- **CC-02 (HIGH) /donate prerender** — wrapped in `<Suspense>` with a real
+  header/skeleton fallback; verified `out/donate/index.html` now emits "Support
+  Our Temple" + 501(c)(3) line instead of "Loading…". Donate logic untouched.
+- **CC-01 (HIGH) deploy guard** — added `build:web` (STATIC_EXPORT) + `release`
+  now asserts `out/index.html` + a `downloads/*.pdf` before `firebase deploy`.
+- **Deleted dead `panchangam.server.ts`** (crash-if-called path); `@bidyashish`
+  now orphaned (removable).
+- **Removed gallery 404 CTA** ("View Full Gallery on Google Drive" → placeholder
+  404); on-page grid is the full gallery. Dropped 3 obsolete tests.
+
+**Build 18** (Android versionCode 18 / iOS CURRENT_PROJECT_VERSION 18) distributed:
+Android via Firebase, iOS uploaded to TestFlight.
 
 ## 🔴 SECURITY — needs DB/edge-fn deploy (Supabase CLI/token required)
 None are live breaches; all are integrity/abuse-hardening. One-line fixes:
@@ -43,20 +58,12 @@ None are live breaches; all are integrity/abuse-hardening. One-line fixes:
   (PayPal does); `_shared/receipt.ts` doesn't `esc()` fundLabel (latent, not
   exploitable today). Defense-in-depth on next edge-fn deploy.
 
-## 🟠 Operational / SEO — SAFE-NOW but need care + runtime verify (flagged, not done)
-Deferred because they restructure high-value pages and the test computer was
-shared/blocked this window (couldn't runtime-verify):
-- **CC-02 (HIGH)** — `/donate` (and profile/dashboard) use `useSearchParams()`
-  without `<Suspense>` → under static export the route CSR-bails → `out/donate`
-  body = "Loading…" (blank flash + empty for crawlers; head metadata is fine).
-  Fix: extract the searchParams read into a `<Suspense>`-wrapped child.
-- **CC-01 (HIGH)** — `out/` is shared by web+mobile; `build-mobile.sh` strips the
-  12MB calendar PDF, and plain `next build` doesn't emit a static export
-  (`output:'export'` only under `STATIC_EXPORT=1`). A manual deploy after a mobile
-  build would ship a PDF-less/stale bundle. (CI builds web correctly, so **live web
-  is fine** — this is a manual-path footgun.) Fix: make `release` run
-  `STATIC_EXPORT=1 next build` + assert `test -f out/downloads/2026-rnht.pdf`;
-  ideally split web/mobile output dirs.
+## 🟠 Operational / SEO — remaining (flagged)
+_CC-02 and CC-01 are now FIXED (see above, build 18). `profile`/`dashboard` still
+have the same `useSearchParams`-without-Suspense CSR-bailout as the old donate —
+apply the same `<Suspense>` wrap there next. Remaining:_
+- **profile/dashboard CSR bailout** — same fix as CC-02 (wrap in `<Suspense>`).
+  Lower priority (auth-gated, not crawled).
 - **CC-04 (MED)** — homepage Panchangam date is seeded from `new Date()` in a
   useState initializer → build-time date baked into static HTML → hydration
   reconcile + stale-date flash for later-day visitors. Fix: init to null/placeholder,
