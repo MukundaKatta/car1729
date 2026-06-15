@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { Camera, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Camera, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { pushOverlay } from "@/lib/overlay-stack";
 
 const galleryImages = [
@@ -34,8 +34,6 @@ const galleryImages = [
 ];
 
 const categories = ["All", ...Array.from(new Set(galleryImages.map((img) => img.category)))];
-
-const DRIVE_LINK = "https://photos.app.goo.gl/rnht";
 
 export default function GalleryPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -170,28 +168,6 @@ export default function GalleryPage() {
             />
           </button>
         ))}
-      </div>
-
-      {/* View Full Gallery CTA */}
-      <div className="mt-12 text-center">
-        <div className="rounded-2xl bg-gradient-to-br from-temple-cream to-temple-gold/10 p-5 sm:p-8">
-          <Camera className="mx-auto h-8 w-8 text-temple-gold" />
-          <h2 className="mt-4 font-heading text-xl font-bold text-gray-900">
-            Want to see more?
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Browse our complete collection of photos and videos from all temple events.
-          </p>
-          <a
-            href={DRIVE_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary mt-6 inline-flex items-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            View Full Gallery on Google Drive
-          </a>
-        </div>
       </div>
 
       {/* Lightbox */}

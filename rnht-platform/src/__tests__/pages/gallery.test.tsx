@@ -231,25 +231,6 @@ describe("GalleryPage", () => {
     expect(screen.getAllByRole("img")).toHaveLength(25);
   });
 
-  it("shows the Want to see more CTA section", () => {
-    render(<GalleryPage />);
-    expect(
-      screen.getByRole("heading", { name: /want to see more/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/browse our complete collection/i)
-    ).toBeInTheDocument();
-  });
-
-  it("has a Google Drive link", () => {
-    render(<GalleryPage />);
-    const link = screen.getByRole("link", {
-      name: /view full gallery on google drive/i,
-    });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("target", "_blank");
-  });
-
   it("lightbox works with filtered images", () => {
     render(<GalleryPage />);
     fireEvent.click(screen.getByRole("button", { name: "Priests" }));
@@ -426,14 +407,6 @@ describe("GalleryPage", () => {
     );
     fireEvent.click(prevButton!);
     expect(screen.getByText("Ram Parivar event - priest addressing devotees")).toBeInTheDocument();
-  });
-
-  it("Google Drive link has noopener noreferrer", () => {
-    render(<GalleryPage />);
-    const link = screen.getByRole("link", {
-      name: /view full gallery on google drive/i,
-    });
-    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("switching filter while lightbox is closed resets images", () => {

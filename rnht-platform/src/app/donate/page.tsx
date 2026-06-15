@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Heart,
@@ -55,7 +55,37 @@ function donationFundLabel(slug: string) {
   return donationFundLabels[slug] || "Temple Fund";
 }
 
+// useSearchParams() forces a CSR bailout under static export unless it sits
+// inside a <Suspense> boundary — without this the whole /donate route prerendered
+// to an empty "Loading…" shell (blank flash for users, no body for crawlers).
+// Wrapping here lets the route prerender this real header/skeleton fallback.
+function DonateFallback() {
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="text-center">
+        <Heart className="mx-auto h-10 w-10 text-temple-red" />
+        <h1 className="mt-4 section-heading">Support Our Temple</h1>
+        <p className="mt-3 text-gray-600">
+          Your contributions help maintain the temple and support community programs.
+        </p>
+        <p className="mt-2 text-sm font-semibold text-gray-900">
+          All donations are tax-deductible under 501(c)(3).
+        </p>
+      </div>
+      <div className="mt-8 h-64 animate-pulse rounded-3xl bg-temple-ivory" />
+    </div>
+  );
+}
+
 export default function DonatePage() {
+  return (
+    <Suspense fallback={<DonateFallback />}>
+      <DonateContent />
+    </Suspense>
+  );
+}
+
+function DonateContent() {
   const [fundTypes, setFundTypes] = useState<DonationType[]>([]);
   const [customAmount, setCustomAmount] = useState("");
   const [fundTypeSlug, setFundTypeSlug] = useState("general");
