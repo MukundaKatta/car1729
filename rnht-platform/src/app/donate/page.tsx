@@ -164,14 +164,28 @@ function DonateContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
-  // Handle return from Stripe or PayPal
+  // Handle return from Stripe or PayPal. Runs EXACTLY ONCE per return: read the
+  // params, strip them immediately, then verify. The ref guard prevents a
+  // re-render — e.g. from the replaceState below, or from our own setState, both
+  // of which can make useSearchParams re-emit under the static export — from
+  // re-entering this effect and cancelling the in-flight verification before it
+  // can mark the donation confirmed. (Previously a `cancelled` cleanup aborted
+  // verifyDonation on that re-run, so the confirmation screen never appeared.)
+  const returnHandledRef = useRef(false);
   useEffect(() => {
     if (searchParams.get("success") !== "true") return;
+    if (returnHandledRef.current) return;
+    returnHandledRef.current = true;
 
     const token = searchParams.get("token");
     const provider = searchParams.get("provider");
     const sessionId = searchParams.get("session_id");
-    let cancelled = false;
+
+    // Strip ?success/&session_id up front (after capturing them) so a refresh or
+    // native re-focus can't re-run verification against an already-consumed session.
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
 
     async function verifyDonation() {
       setVerifyingPayment(true);
@@ -190,8 +204,6 @@ function DonateContent() {
           if (!response.ok || data.status !== "COMPLETED") {
             throw new Error("Payment capture failed");
           }
-
-          if (cancelled) return;
 
           setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
           setConfirmedFundName(
@@ -214,33 +226,18 @@ function DonateContent() {
           throw new Error("Payment verification failed");
         }
 
-        if (cancelled) return;
-
         setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
         setConfirmedFundName(data.fundLabel || null);
         setSubmitted(true);
       } catch {
-        if (!cancelled) {
-          setVerifyError("We couldn't verify your donation yet. Please contact the temple before trying again.");
-        }
+        setVerifyError("We couldn't verify your donation yet. Please contact the temple before trying again.");
       } finally {
-        if (!cancelled) {
-          setVerifyingPayment(false);
-          setProcessing(false);
-        }
+        setVerifyingPayment(false);
+        setProcessing(false);
       }
     }
 
     void verifyDonation();
-    // Strip the ?success/&session_id params so a refresh (or native re-focus)
-    // doesn't re-run verification against an already-consumed session.
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-
-    return () => {
-      cancelled = true;
-    };
   }, [searchParams]);
 
   const activeFund = fundTypes.find((f) => f.slug === fundTypeSlug) ?? fundTypes[0] ?? null;
