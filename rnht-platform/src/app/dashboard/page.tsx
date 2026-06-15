@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -1121,7 +1121,23 @@ function ProfileTab() {
 }
 
 /* ─── Main Dashboard Page ─── */
+// useSearchParams() forces a CSR bailout under static export unless wrapped in
+// <Suspense> — otherwise /dashboard prerendered to a bare "Loading…" shell.
 export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="h-80 animate-pulse rounded-3xl bg-temple-ivory" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const { isAuthenticated, initialized, initialize } = useAuthStore();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("overview");

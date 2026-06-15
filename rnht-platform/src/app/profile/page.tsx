@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -60,7 +60,24 @@ type FamilyMember = {
   dob: string;
 };
 
+// useSearchParams() (the ?tab= deep-link) forces a CSR bailout under static
+// export unless wrapped in <Suspense> — otherwise /profile prerendered to a bare
+// "Loading…" shell (blank flash). This wrapper lets the route prerender a skeleton.
 export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="h-72 animate-pulse rounded-3xl bg-temple-ivory" />
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
   const {
     isAuthenticated,
