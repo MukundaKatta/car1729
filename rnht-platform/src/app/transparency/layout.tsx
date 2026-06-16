@@ -4,6 +4,16 @@ import { canonicalPath } from "@/lib/site-metadata";
 export const metadata: Metadata = {
   title: "Financial Transparency",
   description: "View annual financial statements, building fund progress, and donor recognition for Rudra Narayana Hindu Temple. 501(c)(3) nonprofit.",
+  openGraph: {
+    title: "Financial Transparency | Rudra Narayana Hindu Temple",
+    description: "View annual financial statements, building fund progress, and donor recognition for Rudra Narayana Hindu Temple. 501(c)(3) nonprofit.",
+    url: canonicalPath("/transparency"),
+    type: "website",
+  },
+  twitter: {
+    title: "Financial Transparency | Rudra Narayana Hindu Temple",
+    description: "View annual financial statements, building fund progress, and donor recognition for Rudra Narayana Hindu Temple. 501(c)(3) nonprofit.",
+  },
   alternates: {
     canonical: canonicalPath("/transparency"),
   },

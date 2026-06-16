@@ -44,7 +44,14 @@ export default function GalleryPage() {
       ? galleryImages
       : galleryImages.filter((img) => img.category === selectedCategory);
 
+  // Focus management for the modal lightbox (WCAG 2.4.3 / 2.1.2): focus moves
+  // into the dialog on open, Tab is trapped among its controls, and focus
+  // returns to the triggering thumbnail on close.
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
   const openLightbox = (filteredIndex: number) => {
+    triggerRef.current = (document.activeElement as HTMLElement) ?? null;
     setLightboxIndex(filteredIndex);
   };
 
@@ -97,6 +104,37 @@ export default function GalleryPage() {
       unregister();
     };
   }, [lightboxIndex, closeLightbox, goPrev, goNext]);
+
+  // Keyed on open/close (not the index) so navigating Prev/Next doesn't steal
+  // focus back to the trigger mid-viewing.
+  const lightboxOpen = lightboxIndex !== null;
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusables = () =>
+      Array.from(dialog.querySelectorAll<HTMLElement>("button:not([disabled])"));
+    focusables()[0]?.focus(); // move focus into the dialog
+    const trapTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    dialog.addEventListener("keydown", trapTab);
+    return () => {
+      dialog.removeEventListener("keydown", trapTab);
+      triggerRef.current?.focus(); // restore focus to the thumbnail on close
+    };
+  }, [lightboxOpen]);
 
   return (
     <div>
@@ -173,6 +211,7 @@ export default function GalleryPage() {
       {/* Lightbox */}
       {lightboxIndex !== null && lightboxIndex < filtered.length && (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
           role="dialog"
           aria-modal="true"

@@ -4,6 +4,16 @@ import { canonicalPath } from "@/lib/site-metadata";
 export const metadata: Metadata = {
   title: "Donate",
   description: "Support Rudra Narayana Hindu Temple with tax-deductible donations. Choose from General, Building, Priest, Annadanam, Festival, or Education funds.",
+  openGraph: {
+    title: "Donate | Rudra Narayana Hindu Temple",
+    description: "Support Rudra Narayana Hindu Temple with tax-deductible donations. Choose from General, Building, Priest, Annadanam, Festival, or Education funds.",
+    url: canonicalPath("/donate"),
+    type: "website",
+  },
+  twitter: {
+    title: "Donate | Rudra Narayana Hindu Temple",
+    description: "Support Rudra Narayana Hindu Temple with tax-deductible donations. Choose from General, Building, Priest, Annadanam, Festival, or Education funds.",
+  },
   alternates: {
     canonical: canonicalPath("/donate"),
   },

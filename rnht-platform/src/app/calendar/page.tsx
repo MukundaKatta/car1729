@@ -234,6 +234,11 @@ export default function CalendarPage() {
                     key={idx}
                     role={day && events.length ? "button" : undefined}
                     tabIndex={day && events.length ? 0 : undefined}
+                    aria-label={
+                      day && events.length
+                        ? `${day}, ${events.length} event${events.length === 1 ? "" : "s"} — open day details`
+                        : undefined
+                    }
                     onClick={() =>
                       day && events.length && setSelectedDay(isSelected ? null : day)
                     }

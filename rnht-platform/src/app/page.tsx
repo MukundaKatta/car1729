@@ -101,7 +101,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-7 sm:grid-cols-4 sm:gap-5 sm:px-6 lg:px-8">
           {[
             { value: "Est. 2022", label: "Serving the Community", icon: "🙏" },
-            { value: "50+", label: "Vedic Services Offered", icon: "🪔" },
+            { value: "36+", label: "Vedic Services Offered", icon: "🪔" },
             { value: "2", label: "Experienced Priests", icon: "📿" },
             { value: "12+", label: "Texas Cities Served", icon: "📍" },
           ].map((stat) => (

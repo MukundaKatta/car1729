@@ -40,7 +40,8 @@ describe("HomePage", () => {
   it("shows the trust stats section with current values", () => {
     render(<HomePage />);
     expect(screen.getByText("Est. 2022")).toBeInTheDocument();
-    expect(screen.getByText("50+")).toBeInTheDocument();
+    // 36+ matches the actual service catalog count (was an inflated "50+").
+    expect(screen.getByText("36+")).toBeInTheDocument();
     expect(screen.getAllByText("Experienced Priests").length).toBeGreaterThan(0);
     expect(screen.getByText("12+")).toBeInTheDocument();
   });

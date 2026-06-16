@@ -490,6 +490,7 @@ export default function LoginPage() {
                 <input
                   id="email-name"
                   type="text"
+                  autoComplete="name"
                   className="input-field mt-1"
                   placeholder="Enter your name"
                   value={name}
@@ -509,6 +510,7 @@ export default function LoginPage() {
                 <input
                   id="email-address"
                   type="email"
+                  autoComplete="email"
                   className="input-field mt-1"
                   placeholder="you@example.com"
                   value={email}
@@ -569,6 +571,7 @@ export default function LoginPage() {
                 <input
                   id="phone-name"
                   type="text"
+                  autoComplete="name"
                   className="input-field mt-1"
                   placeholder="Enter your name"
                   value={name}
@@ -588,6 +591,7 @@ export default function LoginPage() {
                 <input
                   id="phone-number"
                   type="tel"
+                  autoComplete="tel"
                   className="input-field mt-1"
                   placeholder="(512) 555-0123"
                   value={phone}

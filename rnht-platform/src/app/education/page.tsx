@@ -261,6 +261,7 @@ export default function EducationPage() {
       </div>
 
       {/* Program Grid */}
+      <h2 className="sr-only">Programs &amp; Classes</h2>
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((program) => (
           <div key={program.id} className="card overflow-hidden">
