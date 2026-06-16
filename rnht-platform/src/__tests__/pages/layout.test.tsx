@@ -270,9 +270,15 @@ describe("RootLayout", () => {
       'script[type="application/ld+json"]'
     );
     const jsonLd = JSON.parse(script?.textContent || "{}");
-    expect(jsonLd.address.addressLocality).toBe("Austin");
+    expect(jsonLd.address.streetAddress).toBe("2025 Rushing Ranch Path");
+    expect(jsonLd.address.addressLocality).toBe("Georgetown");
     expect(jsonLd.address.addressRegion).toBe("TX");
+    expect(jsonLd.address.postalCode).toBe("78628");
     expect(jsonLd.address.addressCountry).toBe("US");
+    // Geo coordinates for the temple's map/Business presence.
+    expect(jsonLd.geo["@type"]).toBe("GeoCoordinates");
+    expect(jsonLd.geo.latitude).toBeCloseTo(30.6265, 3);
+    expect(jsonLd.geo.longitude).toBeCloseTo(-97.7957, 3);
   });
 
   it("renders structured data with area served", () => {

@@ -99,9 +99,16 @@ const jsonLd = {
   telephone: "+15125450473",
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Austin",
+    streetAddress: "2025 Rushing Ranch Path",
+    addressLocality: "Georgetown",
     addressRegion: "TX",
+    postalCode: "78628",
     addressCountry: "US",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 30.626544,
+    longitude: -97.795671,
   },
   areaServed: [
     "Austin", "Kyle", "Manor", "Round Rock", "Georgetown",
