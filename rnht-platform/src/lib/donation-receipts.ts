@@ -24,6 +24,60 @@ import { getServiceSupabase } from "@/lib/supabase";
 
 export const TAX_RECEIPT_THRESHOLD_USD = 750;
 
+// The temple operates in Central Time (Georgetown, TX). Year bucketing and
+// row-date display must both use this zone so a donation summed under one
+// year's total never prints a date in the adjacent year, and so gifts in the
+// first/last hours of the calendar year are bucketed by the temple's local
+// year rather than UTC. Mirrors the timeZone used across the app (panchangam,
+// calendar, news).
+const TEMPLE_TIMEZONE = "America/Chicago";
+
+// Current calendar year as observed in the temple timezone.
+function currentTempleYear(): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: TEMPLE_TIMEZONE,
+      year: "numeric",
+    }).format(new Date()),
+  );
+}
+
+// UTC instant for midnight (00:00) on `${year}-01-01` in the temple timezone.
+// Computed by measuring the zone's UTC offset at that wall-clock moment, so the
+// query window aligns with how created_at rows are bucketed and displayed.
+function templeYearStartUtc(year: number): string {
+  // Treat the wall-clock parts as if they were UTC, then correct by the zone's
+  // offset at that instant (DST-aware for Jan 1, which is always standard time
+  // in US Central, but computed rather than hard-coded for safety).
+  const asUtc = Date.UTC(year, 0, 1, 0, 0, 0);
+  const zoned = new Date(asUtc);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: TEMPLE_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(zoned);
+  const get = (t: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === t)?.value);
+  // What that UTC instant looks like as a wall clock in the temple zone.
+  const wallAsUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") === 24 ? 0 : get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  // offset = (interpreted-UTC) - (actual-UTC wall clock); add it back to land
+  // the real instant of temple-local midnight.
+  const offsetMs = wallAsUtc - asUtc;
+  return new Date(asUtc - offsetMs).toISOString();
+}
+
 const TEMPLE_NAME = process.env.RNHT_TEMPLE_NAME || "Rudra Narayana Hindu Temple";
 const TEMPLE_EIN = process.env.RNHT_TEMPLE_EIN || "(available upon request)";
 const TEMPLE_ADDRESS =
@@ -69,6 +123,7 @@ function renderHtml(payload: SummaryPayload): string {
   const rows = payload.donations
     .map((d) => {
       const date = new Date(d.created_at).toLocaleDateString("en-US", {
+        timeZone: TEMPLE_TIMEZONE,
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -151,7 +206,9 @@ function renderHtml(payload: SummaryPayload): string {
 function renderText(payload: SummaryPayload): string {
   const rows = payload.donations
     .map((d) => {
-      const date = new Date(d.created_at).toLocaleDateString("en-US");
+      const date = new Date(d.created_at).toLocaleDateString("en-US", {
+        timeZone: TEMPLE_TIMEZONE,
+      });
       return `  ${date.padEnd(12)} ${d.fund_type.padEnd(28)} ${usd(Number(d.amount))}`;
     })
     .join("\n");
@@ -203,9 +260,9 @@ export async function checkAndSendReceipt(userId: string): Promise<void> {
   const serviceClient = getServiceSupabase();
   if (!serviceClient) return;
 
-  const year = new Date().getFullYear();
-  const yearStart = `${year}-01-01T00:00:00Z`;
-  const yearEnd = `${year + 1}-01-01T00:00:00Z`;
+  const year = currentTempleYear();
+  const yearStart = templeYearStartUtc(year);
+  const yearEnd = templeYearStartUtc(year + 1);
 
   const { data: donations, error } = await serviceClient
     .from("donations")
@@ -215,7 +272,10 @@ export async function checkAndSendReceipt(userId: string): Promise<void> {
     .eq("user_id", userId)
     .eq("payment_status", "completed")
     .gte("created_at", yearStart)
-    .lt("created_at", yearEnd);
+    .lt("created_at", yearEnd)
+    // Deterministic order so the recipient/salutation (rows[0]) is the most
+    // recent gift's email/name, not an arbitrary row.
+    .order("created_at", { ascending: false });
 
   if (error || !donations || donations.length === 0) return;
 
@@ -224,19 +284,29 @@ export async function checkAndSendReceipt(userId: string): Promise<void> {
   const total = rows.reduce((sum, d) => sum + Number(d.amount ?? 0), 0);
   if (total < TAX_RECEIPT_THRESHOLD_USD) return;
 
-  const anyUnsent = rows.some((d) => !d.tax_receipt_sent);
-  if (!anyUnsent) return;
-
+  // Recipient = the most recent gift's email/name (rows are ordered
+  // created_at desc), preferring the donor's freshest contact details.
   const primary = rows[0];
+  const primaryEmail = primary.donor_email;
+
+  // Only the donations recorded under the address we actually email may be
+  // marked receipted. If this user's gifts span multiple donor_email values
+  // (email change, mix of authed + guest-linked gifts), the rows under the
+  // other address(es) stay unmarked so a future call can still deliver their
+  // summary instead of permanently suppressing it.
+  const sameEmail = rows.filter((d) => d.donor_email === primaryEmail);
+  const unsentForPrimary = sameEmail.some((d) => !d.tax_receipt_sent);
+  if (!unsentForPrimary) return;
+
   await sendTaxSummaryEmail({
-    to: primary.donor_email,
+    to: primaryEmail,
     name: primary.donor_name,
     year,
     total,
     donations: rows,
   });
 
-  const ids = rows.map((d) => d.id);
+  const ids = sameEmail.map((d) => d.id);
   await serviceClient
     .from("donations")
     .update({ tax_receipt_sent: true })

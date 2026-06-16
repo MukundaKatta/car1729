@@ -109,6 +109,20 @@ export default function AdminServicesPage() {
   async function uploadServiceImage(file: File) {
     if (!supabase) return;
     setError(null);
+
+    // The <input accept> attribute is advisory and trivially bypassed
+    // (drag-drop / "all files" picker), so validate type and size
+    // programmatically before uploading to the public-read bucket.
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("File type not allowed. Use PNG, JPEG, or WebP.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setError("File too large. Maximum 50MB.");
+      return;
+    }
+
     setUploadingImage(true);
 
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -164,7 +178,17 @@ export default function AdminServicesPage() {
     };
     const { error: writeError } = form.id
       ? await supabase.from("services").update(payload).eq("id", form.id)
-      : await supabase.from("services").insert(payload);
+      : await supabase.from("services").insert({
+          // The canonical numbered schema declares price_type, location_type
+          // and duration_minutes as NOT NULL with no column DEFAULT, so an
+          // insert that omits them violates the not-null constraint. Supply the
+          // intended defaults explicitly. (Update intentionally leaves any
+          // existing row values untouched.)
+          ...payload,
+          price_type: "donation",
+          location_type: "both",
+          duration_minutes: 60,
+        } as never);
     setSaving(false);
     if (writeError) {
       setError(writeError.message);
@@ -588,11 +612,21 @@ export default function AdminServicesPage() {
               <label className="block text-sm font-medium text-gray-700">Sort Order</label>
               <input
                 type="number"
+                min={0}
+                step={1}
                 className="input-field mt-1"
                 value={form.sort_order}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))
-                }
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  // Ignore empty / non-numeric / negative input instead of
+                  // silently coercing it to 0 (which would move the service to
+                  // the top of the public list). Only accept a whole number ≥ 0.
+                  const parsed = Number(raw);
+                  if (raw.trim() === "" || !Number.isInteger(parsed) || parsed < 0) {
+                    return;
+                  }
+                  setForm((f) => ({ ...f, sort_order: parsed }));
+                }}
               />
             </div>
             <div className="flex items-end">

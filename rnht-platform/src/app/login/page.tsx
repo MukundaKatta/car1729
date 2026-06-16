@@ -135,6 +135,7 @@ function LoginContent() {
   }, [router, step]);
 
   const handleSendOtp = async () => {
+    if (emailCooldownSeconds > 0) return;
     setError("");
     setLoading(true);
     const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
@@ -149,6 +150,7 @@ function LoginContent() {
   };
 
   const handleResendOtp = async () => {
+    if (emailCooldownSeconds > 0) return;
     setError("");
     setLoading(true);
     const result = await sendOtp(email, authMode === "signup" ? name : "", authMode === "signup");
@@ -182,6 +184,7 @@ function LoginContent() {
   };
 
   const handleSendPhoneOtp = async () => {
+    if (phoneCooldownSeconds > 0) return;
     setError("");
     const e164 = normalizePhone(phone);
     if (!e164) {
@@ -194,6 +197,7 @@ function LoginContent() {
     setLoading(false);
     if (result.error) {
       setError(result.error);
+      if (result.retryAfterSeconds) startPhoneCooldown(result.retryAfterSeconds);
     } else {
       startPhoneCooldown(60);
       setStep("phone_otp");
@@ -523,7 +527,7 @@ function LoginContent() {
                   className="input-field mt-1"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value.trim())}
                 />
               </div>
               {emailCooldownSeconds > 0 && (
@@ -730,14 +734,14 @@ function LoginContent() {
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="e.g. 60216421"
+                    placeholder="e.g. 602164"
                     className="input-field flex-1 text-center tracking-[0.2em]"
                     value={emailCode}
-                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
                   <button
                     className="btn-primary px-5"
-                    disabled={loading || emailCode.length < 6}
+                    disabled={loading || emailCode.length !== 6}
                     onClick={async () => {
                       setLoading(true);
                       setError("");

@@ -14,6 +14,18 @@ import type { ServicePdf } from "@/types/database";
  * later as a client-side generation button using @react-pdf/renderer —
  * see `src/app/admin/services/upload/page.tsx` for where that lands.
  */
+
+/** True only for an absolute http(s) URL, so a blank/malformed stored value never becomes a dead Download link. */
+function isValidPdfUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function ServicePdfDownloads() {
   const [current, setCurrent] = useState<ServicePdf | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,8 +48,9 @@ export function ServicePdfDownloads() {
     load();
   }, []);
 
-  if (!loading && !current) {
-    // Don't show a dead card when there's nothing to download.
+  if (!loading && !isValidPdfUrl(current?.public_url)) {
+    // Don't show a dead card when there's nothing valid to download
+    // (no row, or a row whose public_url is blank/malformed).
     return null;
   }
 
@@ -59,9 +72,9 @@ export function ServicePdfDownloads() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {current && (
+          {isValidPdfUrl(current?.public_url) && (
             <a
-              href={current.public_url}
+              href={current!.public_url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg bg-temple-maroon px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-temple-maroon/90"

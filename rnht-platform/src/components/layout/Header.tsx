@@ -374,6 +374,15 @@ export function Header() {
     };
   }, [showLangPicker]);
 
+  // Android back button: close the open language dropdown instead of leaving the
+  // page. The toggle is `hidden sm:flex`, so the dropdown is reachable at >=640px
+  // including tablet-width native builds; register it with the overlay stack so the
+  // hardware back button dismisses it first (mirrors the mobile-menu registration).
+  useEffect(() => {
+    if (!showLangPicker) return;
+    return pushOverlay(() => setShowLangPicker(false));
+  }, [showLangPicker]);
+
   // Prevent body scroll when mobile menu is open.
   // overflow:hidden alone does not reliably stop background scroll/rubber-banding
   // on iOS Safari and the iOS Capacitor WKWebView, so pin the body with

@@ -36,6 +36,45 @@ export function hasBlockingEnvIssues(env: NodeJS.ProcessEnv = process.env) {
   return getEnvValidationResult(env).missingCore.length > 0;
 }
 
+export function hasPaymentEnvIssues(env: NodeJS.ProcessEnv = process.env) {
+  return getEnvValidationResult(env).missingPayments.length > 0;
+}
+
+export function hasEmailEnvIssues(env: NodeJS.ProcessEnv = process.env) {
+  return getEnvValidationResult(env).missingEmail.length > 0;
+}
+
+let didLogEnvConfigWarnings = false;
+
+/**
+ * Surfaces missing payment/email configuration as an operator-visible warning.
+ * Unlike StartupValidationNotice (dev-only UI, missingCore-only), this runs in
+ * every environment including production so a deploy missing PAYPAL_SECRET /
+ * STRIPE_SECRET_KEY / RESEND_API_KEY is not silently treated as healthy.
+ * Safe to call repeatedly; it only logs once per process.
+ */
+export function logEnvConfigWarnings(env: NodeJS.ProcessEnv = process.env) {
+  if (didLogEnvConfigWarnings) return;
+  didLogEnvConfigWarnings = true;
+
+  const { missingPayments, missingEmail } = getEnvValidationResult(env);
+
+  if (missingPayments.length > 0) {
+    console.warn(
+      `[env] Missing payment configuration: ${missingPayments.join(
+        ", ",
+      )}. Donations relying on these keys will fail.`,
+    );
+  }
+  if (missingEmail.length > 0) {
+    console.warn(
+      `[env] Missing email configuration: ${missingEmail.join(
+        ", ",
+      )}. Tax receipts and notification emails will not be sent.`,
+    );
+  }
+}
+
 export function parseEmailList(value: string | undefined): string[] {
   const raw = value?.trim();
   if (!raw) return [];

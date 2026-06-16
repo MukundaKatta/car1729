@@ -22,7 +22,23 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
     .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .slice(0, 80);
+}
+
+// Guarantee a non-empty slug. slugify() strips every non [a-z0-9 -] char, so a
+// title written only in Telugu/Hindi/punctuation (expected for a temple) yields
+// "" — which both violates the NOT NULL/UNIQUE intent and collides on the empty
+// string for a second such post. Fall back to a short random token.
+function randomSlugToken(): string {
+  const uuid = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return uuid.replace(/[^a-z0-9]/gi, "").toLowerCase().slice(0, 8);
+}
+
+function ensureSlug(rawSlug: string, title: string): string {
+  const base = (slugify(rawSlug) || slugify(title)).slice(0, 80);
+  return base || `post-${randomSlugToken()}`;
 }
 
 type FormState = {
@@ -104,9 +120,38 @@ export default function AdminNewsPage() {
       return;
     }
     setSaving(true);
+
+    // news_posts.slug is TEXT NOT NULL UNIQUE. Guarantee a non-empty slug
+    // (non-Latin titles slugify to "") and pre-resolve collisions by appending
+    // -2, -3, … so a second post with a similar/identical title still saves.
+    // The 23505 catch below remains the safety net against the read/write race.
+    const baseSlug = ensureSlug(form.slug, form.title);
+    let slug = baseSlug;
+    {
+      const { data: existing, error: slugErr } = await supabase
+        .from("news_posts")
+        .select("id,slug")
+        .like("slug", `${baseSlug}%`);
+      if (slugErr) {
+        setSaving(false);
+        setError(slugErr.message);
+        return;
+      }
+      const taken = new Set(
+        ((existing ?? []) as Array<{ id: string; slug: string }>)
+          .filter((row) => row.id !== form.id)
+          .map((row) => row.slug)
+      );
+      let n = 2;
+      while (taken.has(slug)) {
+        slug = `${baseSlug.slice(0, 76)}-${n}`;
+        n += 1;
+      }
+    }
+
     const payload = {
       title: form.title.trim(),
-      slug: form.slug.trim() || slugify(form.title),
+      slug,
       excerpt: form.excerpt.trim(),
       body_markdown: form.body_markdown,
       category: form.category,
@@ -121,7 +166,12 @@ export default function AdminNewsPage() {
       : await supabase.from("news_posts").insert(payload);
     setSaving(false);
     if (error) {
-      setError(error.message);
+      // Translate the raw Postgres unique-constraint violation into guidance.
+      setError(
+        error.code === "23505" || /duplicate key|unique constraint/i.test(error.message)
+          ? "A post with this slug already exists. Edit the Slug field to make it unique and try again."
+          : error.message
+      );
       return;
     }
     setShowForm(false);

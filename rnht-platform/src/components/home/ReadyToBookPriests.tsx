@@ -61,13 +61,26 @@ export function ReadyToBookPriests() {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("priests")
         .select("id, name, title, image_url, whatsapp_url, phone, is_active, sort_order")
         .eq("is_active", true)
         .order("sort_order");
+      if (error) {
+        // Keep the static fallback (which always has contacts) rather than
+        // trusting a failed/partial read; distinguishes "query failed" from "no data".
+        setLoading(false);
+        return;
+      }
       if (data && data.length) {
-        setPriests(data as unknown as FallbackPriest[]);
+        // Drop rows with no contact method so a misconfigured priest never
+        // renders a dead card with zero actionable buttons.
+        const actionable = (data as unknown as FallbackPriest[]).filter(
+          (p) => p.whatsapp_url || p.phone,
+        );
+        if (actionable.length) {
+          setPriests(actionable);
+        }
       }
       setLoading(false);
     }

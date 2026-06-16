@@ -18,6 +18,7 @@ export function formatDate(date: Date | string | null | undefined): string {
   const d = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
     ? new Date(date + "T00:00:00")
     : new Date(date);
+  if (Number.isNaN(d.getTime())) return "--";
   return d.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -28,7 +29,9 @@ export function formatDate(date: Date | string | null | undefined): string {
 
 export function formatTime(date: Date | string | null | undefined): string {
   if (!date) return "--";
-  return new Date(date).toLocaleTimeString("en-US", {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "--";
+  return d.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,

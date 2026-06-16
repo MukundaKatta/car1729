@@ -14,7 +14,7 @@ import {
   Users as UsersIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 type Stats = {
   totalBookings: number;
@@ -76,6 +76,24 @@ export default function AdminDashboard() {
             .order("created_at", { ascending: false })
             .limit(5),
         ]);
+
+      // A Supabase query can fail-but-resolve (e.g. an RLS denial) returning
+      // { data: null, error } rather than rejecting. Without inspecting each
+      // response's error, those failures would silently coalesce to $0.00 / 0,
+      // indistinguishable from a genuine zero. Surface them as a load error
+      // instead of showing wrong figures.
+      const statErrors = [
+        bookingsTotal.error,
+        donationsYtd.error,
+        serviceRevenueYtd.error,
+        activeServices.error,
+        recentBookings.error,
+      ].filter(Boolean);
+      if (statErrors.length > 0) {
+        setLoadError(
+          "Some dashboard data could not be loaded and may be inaccurate. Please reload."
+        );
+      }
 
       const donationSum = (donationsYtd.data ?? []).reduce((a, r) => a + Number(r.amount ?? 0), 0);
       const serviceSum = (serviceRevenueYtd.data ?? []).reduce((a, r) => a + Number(r.total_amount ?? 0), 0);
@@ -272,7 +290,7 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 font-mono text-xs text-gray-900">{b.id.slice(0, 8)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{b.service_name ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">{b.devotee_name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{b.booking_date}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{formatDate(b.booking_date)}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                       {formatCurrency(b.total_amount)}
                     </td>

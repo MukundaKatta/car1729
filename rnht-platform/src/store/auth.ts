@@ -357,7 +357,9 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           date: b.booking_date,
           time: b.booking_time,
           status: b.status as Booking["status"],
-          amount: b.total_amount,
+          // PostgREST returns NUMERIC columns as strings — coerce so totals
+          // sum instead of string-concatenating (mirrors the donations mapper).
+          amount: Number(b.total_amount) || 0,
           priest: b.priest_name || undefined,
           location: "Temple",
           createdAt: b.created_at,
@@ -478,8 +480,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     const authUser = get().authUser;
     if (!user || !authUser) return;
 
-    const previous = user.familyMembers;
-    const updated = [...previous, member];
+    const updated = [...user.familyMembers, member];
     set({ user: { ...user, familyMembers: updated } });
 
     if (supabase) {
@@ -491,10 +492,21 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           // The write was previously fire-and-forget, so a failed save (RLS /
           // offline) silently reverted only on the next reload. Roll back the
           // optimistic update and log so the UI stays consistent with the DB.
+          // Reverse only THIS op against the current list (remove the member we
+          // added) rather than restoring a captured snapshot, so a concurrent
+          // family-member edit that landed in between is not discarded.
           if (error) {
             console.error("addFamilyMember persist failed:", error);
             const cur = get().user;
-            if (cur) set({ user: { ...cur, familyMembers: previous } });
+            if (cur)
+              set({
+                user: {
+                  ...cur,
+                  familyMembers: cur.familyMembers.filter(
+                    (m) => m.id !== member.id
+                  ),
+                },
+              });
           }
         });
     }
@@ -505,8 +517,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     const authUser = get().authUser;
     if (!user || !authUser) return;
 
-    const previous = user.familyMembers;
-    const updated = previous.map((m) => (m.id === id ? { ...m, ...updates } : m));
+    const original = user.familyMembers.find((m) => m.id === id);
+    const updated = user.familyMembers.map((m) =>
+      m.id === id ? { ...m, ...updates } : m
+    );
     set({ user: { ...user, familyMembers: updated } });
 
     if (supabase) {
@@ -516,10 +530,22 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         .eq("id", authUser.id)
         .then(({ error }) => {
           // Same optimistic-write + rollback pattern as add/removeFamilyMember.
+          // Reverse only THIS edit (restore the original fields of the one
+          // member we changed) against the current list rather than restoring a
+          // captured snapshot, so a concurrent family-member change that landed
+          // in between is not discarded.
           if (error) {
             console.error("editFamilyMember persist failed:", error);
             const cur = get().user;
-            if (cur) set({ user: { ...cur, familyMembers: previous } });
+            if (cur && original)
+              set({
+                user: {
+                  ...cur,
+                  familyMembers: cur.familyMembers.map((m) =>
+                    m.id === id ? original : m
+                  ),
+                },
+              });
           }
         });
     }
@@ -530,8 +556,9 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     const authUser = get().authUser;
     if (!user || !authUser) return;
 
-    const previous = user.familyMembers;
-    const updated = previous.filter((m) => m.id !== id);
+    const removedIndex = user.familyMembers.findIndex((m) => m.id === id);
+    const removed = removedIndex >= 0 ? user.familyMembers[removedIndex] : undefined;
+    const updated = user.familyMembers.filter((m) => m.id !== id);
     set({ user: { ...user, familyMembers: updated } });
 
     if (supabase) {
@@ -540,10 +567,22 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         .update({ family_members: updated })
         .eq("id", authUser.id)
         .then(({ error }) => {
+          // Reverse only THIS op (re-insert the member we removed, at its
+          // original index) against the current list rather than restoring a
+          // captured snapshot, so a concurrent family-member change that landed
+          // in between is not discarded.
           if (error) {
             console.error("removeFamilyMember persist failed:", error);
             const cur = get().user;
-            if (cur) set({ user: { ...cur, familyMembers: previous } });
+            if (cur && removed && !cur.familyMembers.some((m) => m.id === id)) {
+              const restored = [...cur.familyMembers];
+              restored.splice(
+                Math.min(removedIndex, restored.length),
+                0,
+                removed
+              );
+              set({ user: { ...cur, familyMembers: restored } });
+            }
           }
         });
     }

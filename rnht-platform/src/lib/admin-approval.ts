@@ -109,15 +109,21 @@ export function useSensitiveAdminApproval(email: string | null | undefined) {
   }, []);
 
   function addPendingApproval(action: SensitiveAdminAction, resourceLabel: string, reason: string) {
-    const next = queuePendingApproval(pendingApprovals, {
+    const created: PendingAdminApproval = {
+      id: `${action}-${Date.now()}`,
       action,
       resourceLabel,
       requestedBy: email || "unknown-admin",
       reason,
+      requestedAt: new Date().toISOString(),
+      status: "pending",
+    };
+    setPendingApprovals((prev) => {
+      const next = [created, ...prev];
+      persistPendingApprovals(next);
+      return next;
     });
-    setPendingApprovals(next);
-    persistPendingApprovals(next);
-    return next[0];
+    return created;
   }
 
   function dismissPendingApproval(id: string) {

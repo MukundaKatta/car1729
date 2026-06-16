@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MapPin, Navigation } from "lucide-react";
 import { PanchangamWidget } from "@/components/panchangam/PanchangamWidget";
 import {
@@ -29,36 +29,73 @@ export default function PanchangamPage() {
   // both a privacy concern and, on iOS, required a usage-description string;
   // the page falls back to DEFAULT_LOCATION (Georgetown, TX) until the user opts in.
 
-  useEffect(() => {
-    let cancelled = false;
+  // Tracks the latest in-flight load so stale async results (e.g. a location
+  // change that lands after a background refresh) can be discarded.
+  const loadIdRef = useRef(0);
 
-    async function loadPanchangam() {
-      setLoading(true);
-      setHasError(false);
-      setComputed(createPanchangamLoadingState(location));
+  // `silent` recomputes in the background without flashing the loading state —
+  // used by the auto-refresh paths (timer / focus / visibility) so an already-
+  // rendered almanac is not blanked out while the new values are computed.
+  const loadPanchangam = useCallback(
+    async (silent = false) => {
+      const loadId = ++loadIdRef.current;
+
+      if (!silent) {
+        setLoading(true);
+        setHasError(false);
+        setComputed(createPanchangamLoadingState(location));
+      }
 
       try {
         const data = await computePanchangam(location);
-        if (!cancelled) {
+        if (loadId === loadIdRef.current) {
           setComputed(data);
+          setHasError(false);
           setLoading(false);
         }
       } catch (error) {
         console.error("Failed to load live Panchangam", error);
-        if (!cancelled) {
-          setComputed(createPanchangamLoadingState(location));
-          setHasError(true);
+        if (loadId === loadIdRef.current) {
+          if (!silent) {
+            setComputed(createPanchangamLoadingState(location));
+            setHasError(true);
+          }
           setLoading(false);
         }
       }
-    }
+    },
+    [location]
+  );
 
-    loadPanchangam();
+  // Recompute when the location changes (with the visible loading state).
+  useEffect(() => {
+    loadPanchangam(false);
+  }, [loadPanchangam]);
+
+  // Keep the almanac fresh while the page stays open: refresh periodically and
+  // whenever the tab regains focus/visibility. Without this the tithi /
+  // nakshatra / vaara computed at page-load instant go stale across a tithi
+  // boundary or across local midnight. Refreshes are silent so the rendered
+  // values are not blanked out mid-view.
+  useEffect(() => {
+    const REFRESH_MS = 5 * 60 * 1000; // every 5 minutes
+    const interval = setInterval(() => loadPanchangam(true), REFRESH_MS);
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        loadPanchangam(true);
+      }
+    };
+
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
 
     return () => {
-      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
     };
-  }, [location]);
+  }, [loadPanchangam]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">

@@ -83,8 +83,17 @@ export function CapacitorInit() {
     let browserListenerHandle: { remove: () => void } | null = null;
     void (async () => {
       const listener = await Browser.addListener("browserFinished", () => {
+        // Re-assert the iOS status-bar style: the in-app payment browser
+        // (Stripe/PayPal) can leave the status bar in its own style, so restore
+        // the temple's dark-icon style (Style.Light) when the donor returns.
+        if (Capacitor.getPlatform() === "ios") {
+          StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+        }
         const { isAuthenticated, fetchUserData } = useAuthStore.getState();
-        if (isAuthenticated) void fetchUserData();
+        // fetchUserData awaits Supabase queries; a hard network failure on
+        // return from the payment browser can reject the promise. Swallow it so
+        // it doesn't surface as an unhandled rejection in the WebView.
+        if (isAuthenticated) void fetchUserData().catch(() => {});
       });
       if (browserListenerCancelled) listener.remove();
       else browserListenerHandle = listener;

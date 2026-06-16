@@ -63,7 +63,14 @@ export function HomePanchangamScroll() {
     createPanchangamLoadingState(location, null)
   );
   const [hasError, setHasError] = useState(false);
-  const calendarYear = new Date().getFullYear();
+  // Currently-published calendar year. Hardcoded (not derived from
+  // new Date().getFullYear()) so the PDF href / preview image / label always
+  // reference assets that actually exist on disk. With output:'export' the
+  // HTML is frozen at build time; deriving the year at render would, on the
+  // year rollover before a redeploy, produce next-year asset URLs that 404
+  // and a hydration text mismatch against the baked year. Bump this when a
+  // new year's PDF + preview are uploaded to public/downloads/.
+  const calendarYear = 2026;
   // Absolute URL so the PDF also works inside the native apps, where the
   // 12 MB file is stripped from the bundled assets (build-mobile.sh) and
   // opens via the in-app browser instead.

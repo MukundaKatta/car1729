@@ -15,6 +15,25 @@ const categoryIcons: Record<string, string> = {
   "cat-5": "🔥", // Rudrabhishekam & Abhishekam
 };
 
+/**
+ * Build a WhatsApp chat link with a prefilled `text` message.
+ *
+ * The wa.me/message/<code> invite short-links (used elsewhere in the app)
+ * do NOT honor a `?text=` query, so appending it silently drops the message.
+ * For those we return the base URL unchanged rather than producing a broken
+ * link. For supported URLs we use `&` when a query string already exists so
+ * we never emit a malformed second `?`.
+ */
+function buildWhatsAppHref(baseUrl: string, encodedMessage: string): string {
+  const url = baseUrl.trim();
+  // Invite short-links don't support prefilled text — leave them untouched.
+  if (/wa\.me\/message\//i.test(url)) {
+    return url;
+  }
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}text=${encodedMessage}`;
+}
+
 export function ServiceCard({ service }: { service: Service }) {
   const [showModal, setShowModal] = useState(false);
   const panditjiWhatsApp = usePanditjiWhatsApp();
@@ -23,7 +42,7 @@ export function ServiceCard({ service }: { service: Service }) {
   const whatsappMessage = encodeURIComponent(
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
   );
-  const whatsappHref = `${panditjiWhatsApp}?text=${whatsappMessage}`;
+  const whatsappHref = buildWhatsAppHref(panditjiWhatsApp, whatsappMessage);
   const registerUrl = getRegistrationUrl(service.slug);
 
   return (

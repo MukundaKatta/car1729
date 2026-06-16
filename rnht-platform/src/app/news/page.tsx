@@ -85,6 +85,7 @@ export default function NewsPage() {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
+                timeZone: "America/Chicago",
               })}
             </p>
           )}
@@ -143,7 +144,11 @@ export default function NewsPage() {
                   onClick={(e) => {
                     e.preventDefault();
                     setActiveSlug(post.slug);
-                    window.history.pushState(null, "", `/news?slug=${post.slug}`);
+                    window.history.pushState(
+                      null,
+                      "",
+                      `/news?slug=${encodeURIComponent(post.slug)}`
+                    );
                     window.scrollTo(0, 0);
                   }}
                   className="card group flex flex-col overflow-hidden p-0 transition-all hover:border-temple-gold/40"
@@ -176,6 +181,7 @@ export default function NewsPage() {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
+                          timeZone: "America/Chicago",
                         })}
                       </p>
                     )}

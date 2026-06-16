@@ -24,6 +24,7 @@ import type { RefObject } from "react";
 import { useAuthStore } from "@/store/auth";
 import { useLanguageStore } from "@/store/language";
 import { localeNames, type Locale } from "@/lib/i18n/translations";
+import { normalizePhone } from "@/lib/phone";
 import { supabase } from "@/lib/supabase";
 import { deleteAccountUrl, edgeFunctionHeaders } from "@/lib/edge-functions";
 import { pushOverlay } from "@/lib/overlay-stack";
@@ -196,6 +197,15 @@ function ProfileContent() {
   const [deleteError, setDeleteError] = useState("");
   const familyDialogRef = useRef<HTMLDivElement>(null);
   const deleteDialogRef = useRef<HTMLDivElement>(null);
+  // Tracks the saveSuccess auto-dismiss timer so it can be cleared on unmount
+  // (avoids a setState on an unmounted component if the user navigates within 3s).
+  const saveSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+    },
+    [],
+  );
   const closeDeleteConfirm = useCallback(() => setShowDeleteConfirm(false), []);
 
   // Device-local member preferences (notifications / deities / dietary). Loaded
@@ -304,6 +314,7 @@ function ProfileContent() {
   // null = adding a new member; an id = editing that existing member.
   const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
+  const [familyError, setFamilyError] = useState("");
 
   // Android back button: close the Add/Edit Family dialog instead of navigating.
   useEffect(() => {
@@ -317,6 +328,7 @@ function ProfileContent() {
     setShowAddFamily(false);
     setEditingFamilyId(null);
     setNewMember({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
+    setFamilyError("");
   }, []);
 
   // Dialog a11y: focus trap, Escape-to-close, focus restore (+ body-scroll lock
@@ -422,9 +434,16 @@ function ProfileContent() {
       setSaveError("Please enter a valid email address.");
       return;
     }
-    if (formPhone.trim() && formPhone.replace(/\D/g, "").length < 10) {
-      setSaveError("Please enter a valid phone number.");
-      return;
+    // Normalize to E.164 so the stored profile phone matches the identity used
+    // by phone-OTP login (lib/phone.ts). A blank phone is allowed.
+    let normalizedPhone = "";
+    if (formPhone.trim()) {
+      const e164 = normalizePhone(formPhone);
+      if (!e164) {
+        setSaveError("Please enter a valid phone number.");
+        return;
+      }
+      normalizedPhone = e164;
     }
     setSaving(true);
     setSaveError("");
@@ -432,7 +451,7 @@ function ProfileContent() {
     const result = await updateProfile({
       name: formName.trim(),
       email: formEmail.trim(),
-      phone: formPhone.trim(),
+      phone: normalizedPhone,
       address: formAddress,
       gotra: formGotra,
       nakshatra: formNakshatra,
@@ -446,7 +465,10 @@ function ProfileContent() {
       setSaveSuccess(true);
       // An email change needs the user to read a confirmation message; don't
       // auto-dismiss that one.
-      if (!result?.emailChangePending) setTimeout(() => setSaveSuccess(false), 3000);
+      if (!result?.emailChangePending) {
+        if (saveSuccessTimer.current) clearTimeout(saveSuccessTimer.current);
+        saveSuccessTimer.current = setTimeout(() => setSaveSuccess(false), 3000);
+      }
     }
   };
 
@@ -455,6 +477,7 @@ function ProfileContent() {
   const openAddFamilyMember = () => {
     setEditingFamilyId(null);
     setNewMember(blankMember);
+    setFamilyError("");
     setShowAddFamily(true);
   };
 
@@ -468,23 +491,40 @@ function ProfileContent() {
       rashi: member.rashi ?? "",
       dob: member.dob ?? "",
     });
+    setFamilyError("");
     setShowAddFamily(true);
   };
 
   const handleSaveFamilyMember = () => {
     // Trim so a whitespace-only name can't create a blank-titled card.
     if (!newMember.name.trim() || !newMember.relationship.trim()) return;
+    // DOB is optional, but a future date is invalid data that corrupts
+    // downstream age/milestone logic — reject it.
+    const dob = newMember.dob.trim();
+    if (dob) {
+      const today = new Date().toISOString().split("T")[0];
+      if (dob > today) {
+        setFamilyError("Date of birth cannot be in the future.");
+        return;
+      }
+    }
+    setFamilyError("");
     const fields = {
       ...newMember,
       name: newMember.name.trim(),
       relationship: newMember.relationship.trim(),
+      dob,
     };
     if (editingFamilyId) {
       editFamilyMember(editingFamilyId, fields);
     } else {
       // UUID, not a millisecond timestamp — two quick adds in the same ms would
-      // otherwise collide and a single remove would delete both.
-      addFamilyMember({ id: `fm-${crypto.randomUUID()}`, ...fields });
+      // otherwise collide and a single remove would delete both. randomUUID is
+      // absent on pre-Chromium-92 Android WebViews, so fall back to a
+      // timestamp+random id rather than throwing an uncaught TypeError.
+      const uuid =
+        crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      addFamilyMember({ id: `fm-${uuid}`, ...fields });
     }
     closeFamilyModal();
   };
@@ -747,6 +787,14 @@ function ProfileContent() {
                       <option value="">Relationship</option>
                       <option>Spouse</option><option>Son</option><option>Daughter</option>
                       <option>Father</option><option>Mother</option><option>Other</option>
+                      {/* A member created via the dashboard's free-text field may hold a
+                          relationship outside this list (e.g. "Brother"). Inject it so
+                          editing displays and preserves the real value instead of
+                          silently snapping to the first option. */}
+                      {newMember.relationship &&
+                        !["Spouse", "Son", "Daughter", "Father", "Mother", "Other"].includes(newMember.relationship) && (
+                          <option value={newMember.relationship}>{newMember.relationship}</option>
+                        )}
                     </select>
                     <input type="text" className="input-field" placeholder="Gotra" aria-label="Gotra" value={newMember.gotra} onChange={(e) => setNewMember((p) => ({ ...p, gotra: e.target.value }))} />
                     <select className="input-field" aria-label="Nakshatra" value={newMember.nakshatra} onChange={(e) => setNewMember((p) => ({ ...p, nakshatra: e.target.value }))}>
@@ -757,8 +805,11 @@ function ProfileContent() {
                       <option value="">Rashi</option>
                       {rashis.map((r) => (<option key={r} value={r}>{r}</option>))}
                     </select>
-                    <input type="date" className="input-field" aria-label="Date of Birth" value={newMember.dob} onChange={(e) => setNewMember((p) => ({ ...p, dob: e.target.value }))} />
+                    <input type="date" className="input-field" aria-label="Date of Birth" max={new Date().toISOString().split("T")[0]} value={newMember.dob} onChange={(e) => setNewMember((p) => ({ ...p, dob: e.target.value }))} />
                   </div>
+                  {familyError && (
+                    <p role="alert" className="mt-3 text-sm text-red-600">{familyError}</p>
+                  )}
                   <div className="mt-6 flex justify-end gap-3">
                     <button className="btn-outline" onClick={closeFamilyModal}>Cancel</button>
                     <button className="btn-primary" onClick={handleSaveFamilyMember} disabled={!newMember.name || !newMember.relationship}>{editingFamilyId ? "Save Changes" : "Add Member"}</button>

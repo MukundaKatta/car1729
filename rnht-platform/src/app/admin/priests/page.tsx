@@ -55,7 +55,17 @@ export default function AdminPriestsPage() {
   async function refresh() {
     if (!supabase) return;
     setLoading(true);
-    const { data } = await supabase.from("priests").select("*").order("sort_order");
+    setError(null);
+    const { data, error: readErr } = await supabase
+      .from("priests")
+      .select("*")
+      .order("sort_order");
+    if (readErr) {
+      setError(`Failed to load priests: ${readErr.message}`);
+      setPriests([]);
+      setLoading(false);
+      return;
+    }
     setPriests((data ?? []) as unknown as Priest[]);
     setLoading(false);
   }
@@ -80,8 +90,8 @@ export default function AdminPriestsPage() {
       whatsapp_url: priest.whatsapp_url ?? "",
       email: priest.email ?? "",
       years_experience: priest.years_experience ?? "",
-      specializations: priest.specializations.join(", "),
-      languages: priest.languages.join(", "),
+      specializations: (priest.specializations ?? []).join(", "),
+      languages: (priest.languages ?? []).join(", "),
       is_head: priest.is_head,
       is_active: priest.is_active,
       sort_order: priest.sort_order,
@@ -144,8 +154,16 @@ export default function AdminPriestsPage() {
     // If setting a new head, demote others first (partial unique index
     // enforces single head, so we can't have two `true` rows at once).
     // Abort if the demote fails so we don't proceed on a false premise.
-    // (Full atomicity of demote+write needs a DB transaction/RPC — see backlog.)
+    // (Full atomicity of demote+write ideally needs a DB transaction/RPC — see
+    // backlog. As a client-side safeguard we remember the previously-demoted
+    // head and re-promote it if the subsequent write fails, so a failed save
+    // never strands the table with zero heads.)
+    let demotedHeadId: string | null = null;
     if (form.is_head) {
+      const previousHead = priests.find(
+        (p) => p.is_head && p.id !== form.id,
+      );
+      demotedHeadId = previousHead?.id ?? null;
       const { error: demoteErr } = await supabase
         .from("priests")
         .update({ is_head: false })
@@ -160,11 +178,20 @@ export default function AdminPriestsPage() {
     const { error: writeErr } = form.id
       ? await supabase.from("priests").update(payload).eq("id", form.id)
       : await supabase.from("priests").insert(payload);
-    setSaving(false);
     if (writeErr) {
+      // The new head was never committed but the prior head was demoted —
+      // re-promote it so we don't leave the table with zero heads.
+      if (demotedHeadId) {
+        await supabase
+          .from("priests")
+          .update({ is_head: true })
+          .eq("id", demotedHeadId);
+      }
+      setSaving(false);
       setError(writeErr.message);
       return;
     }
+    setSaving(false);
     setShowForm(false);
     setForm(emptyForm);
     refresh();

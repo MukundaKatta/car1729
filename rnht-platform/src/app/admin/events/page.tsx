@@ -263,10 +263,15 @@ function EventFormModal({
 
   const handleSave = async () => {
     if (!supabase) return;
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle || !startDate) {
+      setFormError("Title and date are required.");
+      return;
+    }
     setFormError(null);
     setSaving(true);
     const payload = {
-      title,
+      title: trimmedTitle,
       description: description || null,
       event_type: eventType as Event["event_type"],
       start_date: startDate,

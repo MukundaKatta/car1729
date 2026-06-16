@@ -556,7 +556,10 @@ function OverviewTab() {
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
   const totalBookings = bookings.length;
   const upcomingBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "pending");
-  const recurringDonations = donations.filter((d) => d.recurring);
+  // Match the Donations tab's "Recurring total", which counts completed
+  // donations only — a pending/failed recurring pledge must not inflate the
+  // Overview "Recurring" stat while the Donations tab shows $0.
+  const recurringDonations = completedDonations.filter((d) => d.recurring);
 
   return (
     <div className="space-y-8">
@@ -640,7 +643,7 @@ function OverviewTab() {
                 <p className="text-xs text-gray-500">{a.description}</p>
               </div>
               <div className="text-right shrink-0">
-                {a.amount && <p className="text-sm font-semibold text-gray-900">${a.amount}</p>}
+                {a.amount && <p className="text-sm font-semibold text-gray-900">{formatCurrency(a.amount)}</p>}
                 <p className="text-xs text-gray-400">{formatDate(a.date)}</p>
               </div>
             </div>
@@ -722,7 +725,7 @@ function BookingsTab() {
                   )}
                 </div>
               </div>
-              <p className="text-lg font-heading font-bold text-temple-maroon shrink-0">${b.amount}</p>
+              <p className="text-lg font-heading font-bold text-temple-maroon shrink-0">{formatCurrency(b.amount)}</p>
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
               <p className="text-xs text-gray-400">Booking ID: {b.id}</p>
@@ -767,10 +770,23 @@ function DonationsTab() {
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
   const recurringTotal = completedDonations.filter((d) => d.recurring).reduce((s, d) => s + d.amount, 0);
 
+  // Stable slugs mirroring the donate page's fund mapping. Passing the slug
+  // (not the display name) lets the donate page match the requested fund even
+  // when donation_types is unseeded — a name-only deep-link would silently fall
+  // back to "General" and mis-attribute the gift.
+  const fundSlugByLabel: Record<string, string> = {
+    "General Temple Fund": "general",
+    "Annadanam Fund": "annadanam",
+    "Priest Fund": "priest",
+    "Building Fund": "building",
+    "Education Fund": "education",
+  };
+
   const handleQuickDonate = () => {
     // Redirect to donate page with pre-selected fund and amount
     // instead of creating a donation record without payment
-    window.location.href = `/donate?fund=${encodeURIComponent(selectedFund)}&amount=${selectedAmount}`;
+    const fundParam = fundSlugByLabel[selectedFund] ?? selectedFund;
+    window.location.href = `/donate?fund=${encodeURIComponent(fundParam)}&amount=${selectedAmount}`;
   };
 
   return (
@@ -1022,28 +1038,37 @@ function ProfileTab() {
         <h3 className="font-heading font-bold text-gray-900 mb-5">Personal Information</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           {[
-            { label: "Full Name", key: "name" as const, icon: User },
-            { label: "Email", key: "email" as const, icon: Mail },
-            { label: "Phone", key: "phone" as const, icon: Phone },
-            { label: "Address", key: "address" as const, icon: MapPin },
-            { label: "City", key: "city" as const, icon: MapPin },
-            { label: "State", key: "state" as const, icon: MapPin },
+            { label: "Full Name", key: "name" as const, icon: User, inputType: "text" as const },
+            { label: "Email", key: "email" as const, icon: Mail, inputType: "email" as const },
+            // Phone is the sign-in identity for phone-OTP devotees. Editing it
+            // here would only change profiles.phone, leaving the auth identity
+            // (and thus the OTP login number) on the OLD value — so it's shown
+            // read-only with guidance to contact the temple to change it.
+            { label: "Phone", key: "phone" as const, icon: Phone, inputType: "tel" as const, readOnly: true },
+            { label: "Address", key: "address" as const, icon: MapPin, inputType: "text" as const },
+            { label: "City", key: "city" as const, icon: MapPin, inputType: "text" as const },
+            { label: "State", key: "state" as const, icon: MapPin, inputType: "text" as const },
           ].map((field) => (
             <div key={field.key}>
               <label htmlFor={`dash-profile-${field.key}`} className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
                 <field.icon className="h-3 w-3" />
                 {field.label}
               </label>
-              {editing ? (
+              {editing && !field.readOnly ? (
                 <input
                   id={`dash-profile-${field.key}`}
-                  type="text"
+                  type={field.inputType}
                   value={form[field.key]}
                   onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
                   className="input-field"
                 />
               ) : (
                 <p className="text-sm font-medium text-gray-900">{user[field.key] || "—"}</p>
+              )}
+              {editing && field.readOnly && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Contact the temple to update your phone number — it is used to sign in.
+                </p>
               )}
             </div>
           ))}

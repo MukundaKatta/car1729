@@ -98,6 +98,11 @@ function DonateContent() {
   const [submitted, setSubmitted] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [nativePaymentOpened, setNativePaymentOpened] = useState(false);
+  // True while a native payment is awaiting reconciliation — whether the overlay
+  // is still open or a verify came back inconclusive. Drives the manual "Check
+  // payment status" affordance so the donor is never stranded if browserFinished
+  // never fires or the payment is still settling.
+  const [nativePaymentPending, setNativePaymentPending] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [error, setError] = useState("");
   // Errors from verifying a returned Stripe/PayPal payment are tracked
@@ -155,8 +160,15 @@ function DonateContent() {
       );
       if (match) setFundTypeSlug(match.slug);
     }
-    if (amountParam && Number(amountParam) > 0) {
-      setCustomAmount(String(Number(amountParam)));
+    if (amountParam) {
+      // Normalize the deep-link amount the same way effectiveAmount does (round
+      // to whole cents, cap at MAX_DONATION) so the prefilled input can't show a
+      // value that silently differs from what is actually charged. Reject
+      // non-finite inputs (e.g. scientific-notation overflow, NaN).
+      const n = Number(amountParam);
+      if (Number.isFinite(n) && n > 0) {
+        setCustomAmount(String(Math.min(Math.round(n * 100) / 100, MAX_DONATION)));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fundTypes]);
@@ -253,6 +265,17 @@ function DonateContent() {
   const requiredFieldsMissing = customFields.some(
     (f) => f.required && !(customFieldValues[f.key] ?? "").trim(),
   );
+  // A number-type custom field renders <input type=number> but the backend
+  // stores whatever string it receives — so a non-numeric / negative value
+  // would be silently persisted. Block submit when a number field (required, or
+  // optional-but-filled) doesn't hold a finite, non-negative number.
+  const customFieldsInvalid = customFields.some((f) => {
+    if (f.type !== "number") return false;
+    const raw = (customFieldValues[f.key] ?? "").trim();
+    if (!raw) return false; // emptiness is handled by requiredFieldsMissing
+    const n = Number(raw);
+    return !Number.isFinite(n) || n < 0;
+  });
   const amount = customAmount ? parseFloat(customAmount) : NaN;
   // Round to whole cents and cap at a sane maximum, so we never send sub-cent
   // values or overflow the DECIMAL(10,2) column / Stripe's integer limit.
@@ -285,13 +308,36 @@ function DonateContent() {
     amount: number;
     fundName: string;
   } | null>(null);
+  // Guards against overlapping reconcile runs — browserFinished, the App
+  // "resume" fallback, and the manual "check status" button can all fire close
+  // together; without this they'd race duplicate verify calls.
+  const reconcilingRef = useRef(false);
 
   const reconcileNativePayment = useCallback(async () => {
     const pending = nativePaymentRef.current;
-    if (!pending || !pending.id) return;
+    if (!pending) return;
+    if (reconcilingRef.current) return;
+    // A pending payment with no session/order id can never be verified — bailing
+    // silently would trap the donor on a permanently-disabled form. Reset the UI
+    // and surface an error so they can retry. (Latent: the backend always
+    // returns an id today, but a malformed response must not deadlock the form.)
+    if (!pending.id) {
+      nativePaymentRef.current = null;
+      setNativePaymentOpened(false);
+      setNativePaymentPending(false);
+      setProcessing(false);
+      setVerifyError(
+        "We couldn't confirm your payment. Please try again or contact the temple.",
+      );
+      return;
+    }
+    reconcilingRef.current = true;
+    setVerifyError("");
     setVerifyingPayment(true);
-    try {
-      let ok = false;
+
+    // One verification attempt against the provider. Returns the confirmed
+    // amount/fund on success, or null when not yet completed.
+    const attempt = async (): Promise<{ amount: number; fundName: string } | null> => {
       let amount = pending.amount;
       let fundName = pending.fundName;
       if (pending.provider === "paypal") {
@@ -301,56 +347,97 @@ function DonateContent() {
           body: JSON.stringify({ orderId: pending.id }),
         });
         const d = await res.json();
-        ok = res.ok && d.status === "COMPLETED";
-        if (ok) {
-          if (Number(d.amount) > 0) amount = Number(d.amount);
-          if (d.fundLabel) fundName = d.fundLabel;
-        }
-      } else {
-        const res = await fetch(donateVerifyUrl(pending.id), {
-          headers: edgeFunctionHeaders(),
-        });
-        const d = await res.json();
-        ok = res.ok && d.verified;
-        if (ok) {
-          if (Number(d.amount) > 0) amount = Number(d.amount);
-          if (d.fundLabel) fundName = d.fundLabel;
-        }
+        if (!(res.ok && d.status === "COMPLETED")) return null;
+        if (Number(d.amount) > 0) amount = Number(d.amount);
+        if (d.fundLabel) fundName = d.fundLabel;
+        return { amount, fundName };
       }
-      if (ok) {
+      const res = await fetch(donateVerifyUrl(pending.id), {
+        headers: edgeFunctionHeaders(),
+      });
+      const d = await res.json();
+      if (!(res.ok && d.verified)) return null;
+      if (Number(d.amount) > 0) amount = Number(d.amount);
+      if (d.fundLabel) fundName = d.fundLabel;
+      return { amount, fundName };
+    };
+
+    try {
+      // A payment can still be settling (3DS / bank-redirect / PayPal capture
+      // not yet COMPLETED) at the instant the donor returns. Retry a few times
+      // with backoff before treating it as not completed, so a momentarily
+      // "processing" payment isn't silently declared cancelled.
+      const backoffMs = [0, 1500, 3000];
+      let result: { amount: number; fundName: string } | null = null;
+      for (let i = 0; i < backoffMs.length; i++) {
+        if (backoffMs[i] > 0) {
+          await new Promise((r) => setTimeout(r, backoffMs[i]));
+        }
+        try {
+          result = await attempt();
+        } catch {
+          result = null;
+        }
+        if (result) break;
+      }
+
+      if (result) {
         nativePaymentRef.current = null;
-        setConfirmedAmount(amount);
-        setConfirmedFundName(fundName);
+        setNativePaymentPending(false);
+        setConfirmedAmount(result.amount);
+        setConfirmedFundName(result.fundName);
         setSubmitted(true);
         if (isAuthenticated) void fetchUserData();
       } else {
-        // Cancelled / not completed — re-enable the form so the user can retry.
+        // Still not confirmed after retries. Re-enable the form so the donor
+        // isn't trapped, but KEEP nativePaymentRef so they can re-check (manual
+        // button / app resume) without re-submitting — and tell them their
+        // payment may still be settling rather than silently failing.
         setNativePaymentOpened(false);
+        setVerifyError(
+          "We're still confirming your payment. If you completed it, please check your dashboard shortly or use \"Check payment status\" — don't pay again.",
+        );
       }
-    } catch {
-      setNativePaymentOpened(false);
     } finally {
+      reconcilingRef.current = false;
       setVerifyingPayment(false);
       setProcessing(false);
     }
   }, [isAuthenticated, fetchUserData]);
 
   // Re-verify a native payment when the donor returns from the in-app browser.
+  // browserFinished alone is not reliable — some OS versions don't emit it on a
+  // force-swipe dismiss, and a backgrounded/killed app never fires it — so we
+  // ALSO reconcile on App "resume" as a fallback. reconcileNativePayment no-ops
+  // when there is no pending payment and is re-entrancy-guarded, so the two
+  // triggers can safely overlap.
   useEffect(() => {
     if (!isNative()) return;
     let cancelled = false;
-    let handle: { remove: () => void } | null = null;
-    void (async () => {
-      const { Browser } = await import("@capacitor/browser");
-      const listener = await Browser.addListener("browserFinished", () => {
-        void reconcileNativePayment();
-      });
+    const handles: { remove: () => void }[] = [];
+    const track = (listener: { remove: () => void }) => {
       if (cancelled) listener.remove();
-      else handle = listener;
+      else handles.push(listener);
+    };
+    void (async () => {
+      const [{ Browser }, { App }] = await Promise.all([
+        import("@capacitor/browser"),
+        import("@capacitor/app"),
+      ]);
+      track(
+        await Browser.addListener("browserFinished", () => {
+          void reconcileNativePayment();
+        }),
+      );
+      track(
+        await App.addListener("resume", () => {
+          if (nativePaymentRef.current) void reconcileNativePayment();
+        }),
+      );
     })();
     return () => {
       cancelled = true;
-      handle?.remove();
+      handles.forEach((h) => h.remove());
     };
   }, [reconcileNativePayment]);
 
@@ -396,6 +483,21 @@ function DonateContent() {
         }
       }
 
+      // Coerce number-type custom fields to actual numbers so the stored record
+      // holds a clean numeric value (the input is validated finite/non-negative
+      // before submit is enabled); text fields pass through trimmed.
+      const normalizedCustomFields: Record<string, string | number> = {};
+      for (const f of customFields) {
+        const raw = (customFieldValues[f.key] ?? "").trim();
+        if (!raw) continue;
+        if (f.type === "number") {
+          const n = Number(raw);
+          normalizedCustomFields[f.key] = Number.isFinite(n) ? n : raw;
+        } else {
+          normalizedCustomFields[f.key] = raw;
+        }
+      }
+
       // All methods create a donation record — Zelle is recorded as a pending
       // pledge (the transfer itself happens in the donor's banking app).
       const response = await fetch(donateCreateUrl(), {
@@ -408,7 +510,7 @@ function DonateContent() {
           // non-empty donorName — default so blank names don't 400 silently.
           donorName: donorName.trim() || "Anonymous",
           donorEmail: donorEmail.trim(),
-          customFields: customFieldValues,
+          customFields: normalizedCustomFields,
           paymentMethod,
         }),
       });
@@ -425,12 +527,20 @@ function DonateContent() {
           // no way back. Open it in the system browser overlay instead; the
           // app stays mounted underneath. When the user returns we refresh so
           // the completed donation shows in their dashboard.
+          const paymentId = data.sessionId || data.orderId || "";
+          // Without a session/order id we can never reconcile the payment after
+          // the overlay closes — opening it would leave the form deadlocked.
+          // Surface an error and keep the form usable instead.
+          if (!paymentId) {
+            setError("Payment could not be started. Please try again.");
+            return;
+          }
           const { Browser } = await import("@capacitor/browser");
           // Stash the created payment id so we can verify it when the donor
           // returns (browserFinished) — the redirect happens in the overlay.
           nativePaymentRef.current = {
             provider: paymentMethod === "paypal" ? "paypal" : "stripe",
-            id: data.sessionId || data.orderId || "",
+            id: paymentId,
             amount: effectiveAmount,
             fundName:
               activeFund?.name ??
@@ -438,6 +548,7 @@ function DonateContent() {
           };
           await Browser.open({ url: data.url });
           setNativePaymentOpened(true);
+          setNativePaymentPending(true);
           return;
         }
         window.location.href = data.url;
@@ -521,6 +632,8 @@ function DonateContent() {
               setConfirmedAmount(null);
               setConfirmedFundName(null);
               setNativePaymentOpened(false);
+              setNativePaymentPending(false);
+              nativePaymentRef.current = null;
               setCustomAmount("");
               setCustomFieldValues({});
             }}
@@ -912,6 +1025,23 @@ function DonateContent() {
               </div>
             )}
 
+            {/* Manual reconcile fallback: if browserFinished never fires (force
+                swipe, backgrounded app) or the payment was still settling on
+                return, the donor can re-trigger verification instead of being
+                stuck on a disabled form. */}
+            {nativePaymentPending && (
+              <button
+                type="button"
+                className="btn-outline mt-3 w-full"
+                onClick={() => void reconcileNativePayment()}
+                disabled={verifyingPayment}
+              >
+                {verifyingPayment
+                  ? "Checking payment status..."
+                  : "I finished paying — check status"}
+              </button>
+            )}
+
             <button
               className="btn-primary mt-6 w-full"
               onClick={handleDonate}
@@ -919,6 +1049,7 @@ function DonateContent() {
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail.trim()) ||
                 effectiveAmount < MIN_DONATION ||
                 requiredFieldsMissing ||
+                customFieldsInvalid ||
                 processing ||
                 verifyingPayment ||
                 // Stay disabled after the native payment overlay opens until the

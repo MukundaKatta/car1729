@@ -76,6 +76,10 @@ export default function AdminServicesUploadPage() {
       data: { publicUrl },
     } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
 
+    // Remember the previously-current row so we can restore it if the insert
+    // fails (otherwise the public download would silently vanish).
+    const previousCurrentId = pdfs.find((p) => p.is_current)?.id ?? null;
+
     // Mark any previous "current" row as not current so only one exists.
     await supabase
       .from("service_pdfs")
@@ -91,6 +95,15 @@ export default function AdminServicesUploadPage() {
     });
 
     if (insertErr) {
+      // Roll back: delete the orphaned storage object and restore the
+      // previously-current PDF so /services still has a download.
+      await supabase.storage.from(BUCKET).remove([storagePath]);
+      if (previousCurrentId) {
+        await supabase
+          .from("service_pdfs")
+          .update({ is_current: true })
+          .eq("id", previousCurrentId);
+      }
       setError(insertErr.message);
     }
 
@@ -106,6 +119,9 @@ export default function AdminServicesUploadPage() {
   async function makeCurrent(pdf: ServicePdf) {
     if (!supabase) return;
     setError(null);
+    // Remember the row that is current now so we can restore it if the
+    // second (set-current) update fails and leaves zero current rows.
+    const previousCurrentId = pdfs.find((p) => p.is_current)?.id ?? null;
     const { error: clearErr } = await supabase
       .from("service_pdfs")
       .update({ is_current: false })
@@ -119,7 +135,16 @@ export default function AdminServicesUploadPage() {
       .update({ is_current: true })
       .eq("id", pdf.id);
     if (setErr) {
+      // The clear succeeded but the set failed — restore the prior current
+      // row so the public download does not silently disappear.
+      if (previousCurrentId && previousCurrentId !== pdf.id) {
+        await supabase
+          .from("service_pdfs")
+          .update({ is_current: true })
+          .eq("id", previousCurrentId);
+      }
       setError(setErr.message);
+      refresh();
       return;
     }
     refresh();

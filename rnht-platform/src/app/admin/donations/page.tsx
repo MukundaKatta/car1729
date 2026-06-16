@@ -93,6 +93,30 @@ function DonationTypesTab() {
       return;
     }
     const slug = form.slug.trim() || slugify(form.name);
+    // Validate + normalize custom fields: donor answers on the public form are
+    // keyed by field.key, so empty/duplicate/malformed keys collide or lose
+    // donor input. Require a non-empty label, derive a normalized slug key, and
+    // reject duplicates before persisting.
+    const normalizedFields: DonationTypeCustomField[] = [];
+    for (let i = 0; i < form.custom_fields.length; i++) {
+      const field = form.custom_fields[i];
+      const label = field.label.trim();
+      if (!label) {
+        setError(`Custom field ${i + 1}: label is required.`);
+        return;
+      }
+      const key = slugify(field.key.trim() || label).replace(/-/g, "_");
+      if (!key) {
+        setError(`Custom field ${i + 1}: key must contain letters or numbers.`);
+        return;
+      }
+      normalizedFields.push({ ...field, key, label });
+    }
+    const keys = normalizedFields.map((f) => f.key);
+    if (new Set(keys).size !== keys.length) {
+      setError("Custom field keys must be unique.");
+      return;
+    }
     const { data: existing } = await supabase
       .from("donation_types")
       .select("id")
@@ -107,7 +131,7 @@ function DonationTypesTab() {
       name: form.name.trim(),
       slug,
       description: form.description || null,
-      custom_fields: form.custom_fields,
+      custom_fields: normalizedFields,
       is_active: form.is_active,
       sort_order: form.sort_order,
     };
@@ -509,8 +533,11 @@ function DonationInflowTab() {
         setLoading(false);
         return;
       }
-      const year = new Date().getFullYear();
-      const yearStart = `${year}-01-01`;
+      // created_at is TIMESTAMPTZ (UTC). Compute the "this year" window on a
+      // consistent UTC basis so the label and the .gte filter agree and a gift
+      // near Jan 1 isn't bucketed into the wrong year by a local-vs-UTC skew.
+      const year = new Date().getUTCFullYear();
+      const yearStart = new Date(Date.UTC(year, 0, 1)).toISOString();
 
       const [donationsResp, bookingsResp, donationSumResp, bookingSumResp] = await Promise.all([
         supabase

@@ -25,10 +25,17 @@ export function StoreRehydrator() {
   useEffect(() => {
     // `.persist` is undefined when tests mock these stores without the
     // persist middleware — guard so a mocked store doesn't crash the layout.
-    useLanguageStore.persist?.rehydrate?.();
-    useCartStore.persist?.rehydrate?.();
-    usePanchangamStore.persist?.rehydrate?.();
-    void useAuthStore.getState().initialize();
+    //
+    // `rehydrate()` returns a Promise that rejects if the stored JSON is
+    // corrupted; swallow the rejection so it doesn't surface as an unhandled
+    // rejection (console noise / dev overlay). The store keeps its SSR
+    // defaults when rehydration fails, which is the correct fallback.
+    void Promise.resolve(useLanguageStore.persist?.rehydrate?.()).catch(() => {});
+    void Promise.resolve(useCartStore.persist?.rehydrate?.()).catch(() => {});
+    void Promise.resolve(usePanchangamStore.persist?.rehydrate?.()).catch(() => {});
+    // Promise.resolve() so a mocked initialize() that returns undefined (tests)
+    // doesn't throw on .catch.
+    void Promise.resolve(useAuthStore.getState().initialize()).catch(() => {});
   }, []);
 
   // Keep <html lang> in sync with the selected language so screen readers /

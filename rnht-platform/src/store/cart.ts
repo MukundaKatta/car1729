@@ -28,7 +28,20 @@ type CartStore = {
   clearCart: () => void;
   getTotal: () => number;
   getItemCount: () => number;
+  hasUnpricedItem: () => boolean;
 };
+
+// Resolve the unit price for a cart item, distinguishing "no price known"
+// (null — e.g. a custom service with null price AND null suggested_donation)
+// from a genuine $0. Returning null lets callers guard against an accidental
+// no-charge checkout instead of silently coercing the item to free.
+function resolveUnitPrice(item: CartItem): number | null {
+  if (item.selectedTier) {
+    return item.selectedTier.price;
+  }
+  const price = item.service.price ?? item.service.suggested_donation;
+  return price ?? null;
+}
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -50,13 +63,17 @@ export const useCartStore = create<CartStore>()(
       getTotal: () => {
         const { items } = get();
         return items.reduce((total, item) => {
-          const price = item.selectedTier
-            ? item.selectedTier.price
-            : item.service.price ?? item.service.suggested_donation ?? 0;
+          // Only sum items with a known price. Unpriced items (resolveUnitPrice
+          // === null) are excluded rather than counted as $0; callers should
+          // check hasUnpricedItem() before allowing checkout.
+          const price = resolveUnitPrice(item);
+          if (price === null) return total;
           return total + price * item.quantity;
         }, 0);
       },
       getItemCount: () => get().items.length,
+      hasUnpricedItem: () =>
+        get().items.some((item) => resolveUnitPrice(item) === null),
     }),
     {
       name: "rnht-cart",

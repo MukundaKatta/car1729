@@ -38,6 +38,98 @@ function todayYmd(): string {
   return `${y}-${m}-${day}`;
 }
 
+// Map weekday names (as used in recurrence_rule strings, e.g. "weekly-saturday")
+// to JS getDay() indices (0=Sunday … 6=Saturday).
+const WEEKDAY_INDEX: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+// Ordinal tokens for "Nth weekday of month" rules. "last" is handled separately.
+const ORDINAL_INDEX: Record<string, number> = {
+  "1st": 1, first: 1,
+  "2nd": 2, second: 2,
+  "3rd": 3, third: 3,
+  "4th": 4, fourth: 4,
+  "5th": 5, fifth: 5,
+};
+
+// Does a single recurring event occur on the given calendar date?
+//
+// We only expand recurrence rules that reduce to a deterministic Gregorian date:
+// daily, weekly/biweekly weekday, and monthly ordinal-weekday (e.g.
+// "monthly-4th-sunday"). Tithi/lunar rules (monthly-purnima, ekadashi, …) need a
+// panchangam source we don't have, so we fall back to matching only the stored
+// start_date for those — never guessing a wrong Gregorian day. `year`/`month0`
+// (0-based) and `day` describe the candidate cell; `cellDate` is its YYYY-MM-DD.
+function recurringEventOccursOn(
+  rule: string | null | undefined,
+  startDate: string,
+  cellDate: string,
+  year: number,
+  month0: number,
+  day: number,
+): boolean {
+  // Recurrences never fire before the series' first occurrence.
+  if (cellDate < startDate) return false;
+  if (!rule) return cellDate === startDate;
+
+  const parts = rule.trim().toLowerCase().split(/[-_\s]+/).filter(Boolean);
+  if (parts.length === 0) return cellDate === startDate;
+  const [freq, ...rest] = parts;
+  const cellWeekday = new Date(year, month0, day).getDay();
+
+  switch (freq) {
+    case "daily":
+      return true;
+
+    case "weekly":
+    case "biweekly":
+    case "fortnightly": {
+      const dayName = rest.find((p) => p in WEEKDAY_INDEX);
+      if (!dayName || WEEKDAY_INDEX[dayName] !== cellWeekday) return false;
+      if (freq === "weekly") return true;
+      // Bi-weekly: only every other occurrence of that weekday counting from
+      // the start_date. 7-day-aligned diff keeps the parity stable.
+      const diffDays = Math.round(
+        (new Date(year, month0, day).getTime() -
+          new Date(`${startDate}T00:00:00`).getTime()) /
+          86_400_000,
+      );
+      return diffDays >= 0 && diffDays % 14 === 0;
+    }
+
+    case "monthly": {
+      const ordToken = rest.find((p) => p in ORDINAL_INDEX);
+      const isLast = rest.includes("last");
+      const dayName = rest.find((p) => p in WEEKDAY_INDEX);
+      // Ordinal-weekday monthly (e.g. monthly-4th-sunday / monthly-last-friday).
+      if (dayName && (ordToken || isLast)) {
+        if (WEEKDAY_INDEX[dayName] !== cellWeekday) return false;
+        if (isLast) {
+          // Last matching weekday of the month: no later same-weekday in month.
+          const daysInThisMonth = new Date(year, month0 + 1, 0).getDate();
+          return day + 7 > daysInThisMonth;
+        }
+        const nth = Math.floor((day - 1) / 7) + 1;
+        return nth === ORDINAL_INDEX[ordToken as string];
+      }
+      // Tithi/lunar or under-specified monthly rule: can't compute a Gregorian
+      // date safely, so only honor the stored first occurrence.
+      return cellDate === startDate;
+    }
+
+    default:
+      // Unknown cadence — honor only the stored start_date rather than guess.
+      return cellDate === startDate;
+  }
+}
+
 export default function CalendarPage() {
   const [filterType, setFilterType] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -101,9 +193,23 @@ export default function CalendarPage() {
   const getEventsForDay = (day: number) => {
     const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return events.filter((e) => {
-      if (e.start_date !== dateStr) return false;
       if (filterType !== "all" && e.event_type !== filterType) return false;
-      return true;
+      if (e.is_recurring) {
+        // Recurring series repeat across the grid per their recurrence_rule,
+        // not just on the stored first-occurrence start_date. (RN-020)
+        return recurringEventOccursOn(
+          e.recurrence_rule,
+          e.start_date,
+          dateStr,
+          selectedYear,
+          selectedMonth,
+          day,
+        );
+      }
+      // Non-recurring events span start_date..end_date (inclusive). Lexical
+      // YYYY-MM-DD comparison is chronologically correct. (RN-180)
+      const end = e.end_date ?? e.start_date;
+      return dateStr >= e.start_date && dateStr <= end;
     });
   };
 

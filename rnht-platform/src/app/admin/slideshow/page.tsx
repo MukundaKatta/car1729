@@ -234,12 +234,37 @@ function SlideEditor({
     };
   }, [onClose]);
 
+  // Accept only a same-origin relative path ("/services") or an absolute https URL.
+  // Rejects javascript:, data:, http:, protocol-relative ("//evil"), and other
+  // schemes that would turn a saved value into an off-site / unsafe jump.
+  const isSafeLink = (value: string) => {
+    if (value.startsWith("//")) return false;
+    if (value.startsWith("/")) return true;
+    try {
+      return new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     setSaveError("");
+    const ctaLink = form.ctaLink.trim();
+    const url = form.url.trim();
+    if (ctaLink && !isSafeLink(ctaLink)) {
+      setSaveError("Button Link must be an internal path starting with “/” (e.g. /services) or an https:// URL.");
+      return;
+    }
+    // Skip validating the placeholder shown for inline-uploaded data URLs.
+    if (url && !url.startsWith("data:") && !isSafeLink(url)) {
+      setSaveError("Media URL must be an internal path starting with “/” (e.g. /slideshow/photo.jpg) or an https:// URL.");
+      return;
+    }
+    const normalized = { ...form, ctaLink, url };
     setSaving(true);
     const ok = isNew
-      ? await addSlide({ ...form, id: `slide-${Date.now()}` })
-      : await updateSlide(slide.id, form);
+      ? await addSlide({ ...normalized, id: `slide-${Date.now()}` })
+      : await updateSlide(slide.id, normalized);
     setSaving(false);
     if (!ok) {
       setSaveError("Couldn't save the slide. Check your connection and try again.");
