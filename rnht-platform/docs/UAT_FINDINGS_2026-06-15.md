@@ -81,6 +81,45 @@ static export rebuilt. **Needs deploy** (web redeploy + native rebuild) to reach
 - **DB hardening** — applied `005_bookings_admin_update.sql` to live (admins can now
   UPDATE/DELETE bookings → Confirm/Cancel works). INSERT policies already owner-scoped.
 
+## Rounds 2–3 — deep interaction + edge-case sweep (multi-agent, 107 checks)
+Playwright deep probes across donate/content/cross-cutting (deterministic) + 10
+parallel agents (a11y, responsive/dark, auth-member, admin, negative-XSS-security,
+cross-flows, regression, perf, i18n-depth, free-form) → adversarial verify → critic.
+
+**Verified working (no defect):** donate funds/amount-guards/validation/method-toggle/
+deep-link; gallery 26 imgs/0 broken; "Purana Stotras" fix; 0 console errors across all
+17 routes; SEO title+desc everywhere; internal links 200; ext links rel=noopener; 404;
+all admin pages; negative/XSS inputs safely escaped (no script exec); cross-flows (locale
+persists, reloads, back/forward); **all 4 prior fixes regression-pass** (confirmation
+screen, karana, Punjabi Gurmukhi, html lang). 3 reported bugs were **false alarms**
+(adversarially refuted): profile-email editable (by design), Total-Donated excludes
+pending (by design), donations XSS already escaped.
+
+**FIXED + shipped (web, gated tsc+753 tests):**
+- Mobile nav **scroll-lock** could strand a user (body overflow:hidden never released
+  when the viewport crossed to desktop while the menu was open) → now released on
+  resize/orientation; + regression test.
+- **Logo was an `<h1>` on every page** → made a `<div>`; added an sr-only `<h1>` to the
+  image-hero homepage and promoted the dashboard "Namaste" to `<h1>` → every page now
+  has exactly one descriptive h1 (a11y + SEO).
+- **/priests labels** `text-gray-400` (~2.5:1, fails WCAG AA) → `text-gray-600`.
+
+**Flagged (judgment / known / low — not auto-changed):**
+- Gold "eyebrow" labels (`text-temple-gold`) on light sections ~2.67:1 (WCAG AA) — a
+  **brand-color** decision; recommend a darker gold or temple-maroon for small eyebrow
+  text on white. (Your call — I didn't repaint brand colors unattended.)
+- Heading skip h1→h3 on /services, /panchangam (minor; the h1 fix is the main win).
+- /gallery loads ~4MB on open (lazy not deferring); images are already web-sized
+  (800px/166KB) so impact is modest — acceptable, or generate grid thumbnails later.
+- **Partial i18n** (home section headings, donate form labels, services filters stay
+  English in non-EN locales) — the known, deliberately-staged i18n-01 limitation.
+- **Booking** has **no in-app form** — it's via the WhatsApp/Call buttons by design
+  (6 wa.me + 6 tel links verified); nothing to "submit"/round-trip.
+
+**Remaining gaps (need creds / out of scope here):** real LIVE PayPal capture (mocked
+only — needs creds); transactional email deliverability + sender SPF/DKIM/DMARC; native
+build-20 roll-in of the above a11y fixes (low phone impact — deferred).
+
 ## Test data created (identifiable; safe to delete)
 A few **pending** donation rows from Stripe/Zelle checkout tests, donor
 "UAT TEST - Mukunda" / mukunda.vjcs6@gmail.com, small amounts ($11/$13/$51). No
