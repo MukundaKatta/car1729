@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
+import { useLanguageStore } from "@/store/language";
+import { localeNames, type Locale } from "@/lib/i18n/translations";
 import { supabase } from "@/lib/supabase";
 import { deleteAccountUrl, edgeFunctionHeaders } from "@/lib/edge-functions";
 import { pushOverlay } from "@/lib/overlay-stack";
@@ -60,6 +62,33 @@ type FamilyMember = {
   dob: string;
 };
 
+// Device-local member preferences. There is no server column for these yet, so
+// they persist to localStorage and are scoped to this device (made explicit in
+// the UI). Previously these controls were inert (defaultChecked, no handlers),
+// so a member's choices reset to "all on" on every visit.
+const NOTIFICATION_CHANNELS = [
+  { key: "push", label: "Push Notifications", desc: "Daily panchangam, event reminders, booking updates" },
+  { key: "email", label: "Email Notifications", desc: "Booking confirmations, donation receipts, newsletters" },
+  { key: "sms", label: "SMS Alerts", desc: "Booking reminders, festival alerts" },
+  { key: "whatsapp", label: "WhatsApp Updates", desc: "Temple announcements, community news" },
+] as const;
+
+type NotificationKey = (typeof NOTIFICATION_CHANNELS)[number]["key"];
+
+type MemberPreferences = {
+  notifications: Record<NotificationKey, boolean>;
+  deities: string[];
+  dietary: string;
+};
+
+const DEFAULT_PREFERENCES: MemberPreferences = {
+  notifications: { push: true, email: true, sms: true, whatsapp: true },
+  deities: [],
+  dietary: "None",
+};
+
+const PREFERENCES_STORAGE_KEY = "rnht-member-preferences";
+
 // useSearchParams() (the ?tab= deep-link) forces a CSR bailout under static
 // export unless wrapped in <Suspense> — otherwise /profile prerendered to a bare
 // "Loading…" shell (blank flash). This wrapper lets the route prerender a skeleton.
@@ -92,11 +121,51 @@ function ProfileContent() {
     editFamilyMember,
     removeFamilyMember,
   } = useAuthStore();
+  const { locale, setLocale } = useLanguageStore();
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  // Device-local member preferences (notifications / deities / dietary). Loaded
+  // from localStorage after mount to avoid a hydration mismatch under static
+  // export, then written back on every change.
+  const [prefs, setPrefs] = useState<MemberPreferences>(DEFAULT_PREFERENCES);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<MemberPreferences>;
+        setPrefs({
+          notifications: { ...DEFAULT_PREFERENCES.notifications, ...(saved.notifications ?? {}) },
+          deities: Array.isArray(saved.deities) ? saved.deities : DEFAULT_PREFERENCES.deities,
+          dietary: typeof saved.dietary === "string" ? saved.dietary : DEFAULT_PREFERENCES.dietary,
+        });
+      }
+    } catch {
+      /* ignore corrupt/unavailable storage */
+    }
+    setPrefsLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    try {
+      localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
+    } catch {
+      /* ignore storage write failures (private mode, quota) */
+    }
+  }, [prefs, prefsLoaded]);
+  const toggleNotification = (key: NotificationKey) =>
+    setPrefs((p) => ({ ...p, notifications: { ...p.notifications, [key]: !p.notifications[key] } }));
+  const toggleDeity = (deity: string) =>
+    setPrefs((p) => ({
+      ...p,
+      deities: p.deities.includes(deity)
+        ? p.deities.filter((d) => d !== deity)
+        : [...p.deities, deity],
+    }));
 
   // Android back button: close the delete-confirm dialog instead of navigating.
   useEffect(() => {
@@ -708,17 +777,19 @@ function ProfileContent() {
             <h2 className="font-heading text-lg font-bold text-gray-900">Preferences</h2>
             <div className="card p-5">
               <h3 id="pref-language-label" className="font-heading text-lg font-bold text-gray-900">Preferred Language</h3>
-              <select id="pref-language" aria-labelledby="pref-language-label" className="input-field mt-3 max-w-xs">
-                <option>English</option>
-                <option>Telugu</option>
-                <option>Hindi</option>
-                <option>Tamil</option>
-                <option>Kannada</option>
-                <option>Marathi</option>
-                <option>Malayalam</option>
-                <option>Gujarati</option>
-                <option>Bengali</option>
-                <option>Punjabi</option>
+              <p className="mt-1 text-sm text-gray-600">Changes the language across the app.</p>
+              <select
+                id="pref-language"
+                aria-labelledby="pref-language-label"
+                className="input-field mt-3 max-w-xs"
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as Locale)}
+              >
+                {(Object.entries(localeNames) as [Locale, string][]).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="card p-5">
@@ -726,21 +797,22 @@ function ProfileContent() {
                 <Bell className="h-5 w-5" /> Communication Preferences
               </h3>
               <div className="mt-4 space-y-3">
-                {[
-                  { label: "Push Notifications", desc: "Daily panchangam, event reminders, booking updates" },
-                  { label: "Email Notifications", desc: "Booking confirmations, donation receipts, newsletters" },
-                  { label: "SMS Alerts", desc: "Booking reminders, festival alerts" },
-                  { label: "WhatsApp Updates", desc: "Temple announcements, community news" },
-                ].map((item) => (
-                  <label key={item.label} className="flex items-start gap-3">
-                    <input type="checkbox" defaultChecked className="mt-1 rounded text-temple-red" />
+                {NOTIFICATION_CHANNELS.map((item) => (
+                  <label key={item.key} className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={prefs.notifications[item.key]}
+                      onChange={() => toggleNotification(item.key)}
+                      className="mt-1 rounded text-temple-red"
+                    />
                     <div>
                       <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                      <p className="text-xs text-gray-500">{item.desc}</p>
+                      <p className="text-xs text-gray-600">{item.desc}</p>
                     </div>
                   </label>
                 ))}
               </div>
+              <p className="mt-4 text-xs text-gray-600">Saved on this device.</p>
             </div>
             <div className="card p-5">
               <h3 className="font-heading text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -752,7 +824,12 @@ function ProfileContent() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {["Lord Ganesha", "Lord Vishnu", "Lord Shiva", "Goddess Lakshmi", "Lord Hanuman", "Lord Rama"].map((deity) => (
                       <label key={deity} className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm">
-                        <input type="checkbox" className="rounded text-temple-red" />
+                        <input
+                          type="checkbox"
+                          checked={prefs.deities.includes(deity)}
+                          onChange={() => toggleDeity(deity)}
+                          className="rounded text-temple-red"
+                        />
                         {deity}
                       </label>
                     ))}
@@ -760,7 +837,12 @@ function ProfileContent() {
                 </div>
                 <div>
                   <label htmlFor="pref-dietary" className="block text-sm font-medium text-gray-700">Dietary Restrictions (for Prasadam)</label>
-                  <select id="pref-dietary" className="input-field mt-1 max-w-xs">
+                  <select
+                    id="pref-dietary"
+                    className="input-field mt-1 max-w-xs"
+                    value={prefs.dietary}
+                    onChange={(e) => setPrefs((p) => ({ ...p, dietary: e.target.value }))}
+                  >
                     <option>None</option>
                     <option>Vegan</option>
                     <option>No Nuts</option>

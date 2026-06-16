@@ -18,11 +18,24 @@ vi.mock("@/store/auth", () => ({
   useAuthStore: (selector: any) => (typeof selector === "function" ? selector(authState) : authState),
 }));
 
+// Controllable language-store mock: `langState.locale` is what the Preferences
+// "Preferred Language" select must reflect, and `setLocaleSpy` proves the select
+// dispatches changes back to the store.
+const { langState, setLocaleSpy } = vi.hoisted(() => ({
+  langState: { locale: "en" },
+  setLocaleSpy: vi.fn(),
+}));
+vi.mock("@/store/language", () => ({
+  useLanguageStore: () => ({ locale: langState.locale, setLocale: setLocaleSpy }),
+}));
+
 import ProfilePage from "@/app/profile/page";
 
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    langState.locale = "en";
     authState = {
       isAuthenticated: true,
       initialized: true,
@@ -96,5 +109,49 @@ describe("ProfilePage", () => {
       expect(authState.logout).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith("/login");
     });
+  });
+
+  it("Preferences: language select reflects the store locale and dispatches changes", () => {
+    langState.locale = "hi"; // store says Hindi
+    render(<ProfilePage />);
+    fireEvent.click(screen.getByText("Preferences"));
+    const select = screen.getByLabelText("Preferred Language") as HTMLSelectElement;
+    // Bound to the store value (not a hardcoded "English"), and uses locale codes.
+    expect(select.value).toBe("hi");
+    fireEvent.change(select, { target: { value: "te" } });
+    expect(setLocaleSpy).toHaveBeenCalledWith("te");
+  });
+
+  it("Preferences: notification + dietary choices persist to localStorage", async () => {
+    render(<ProfilePage />);
+    fireEvent.click(screen.getByText("Preferences"));
+
+    const push = screen.getByRole("checkbox", { name: /Push Notifications/ }) as HTMLInputElement;
+    expect(push.checked).toBe(true); // default-on
+    fireEvent.click(push); // turn off
+
+    const dietary = screen.getByLabelText("Dietary Restrictions (for Prasadam)") as HTMLSelectElement;
+    fireEvent.change(dietary, { target: { value: "Vegan" } });
+
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem("rnht-member-preferences") || "{}");
+      expect(saved.notifications.push).toBe(false);
+      expect(saved.notifications.email).toBe(true);
+      expect(saved.dietary).toBe("Vegan");
+    });
+  });
+
+  it("Preferences: saved preferences rehydrate on next mount", async () => {
+    localStorage.setItem(
+      "rnht-member-preferences",
+      JSON.stringify({ notifications: { push: false, email: true, sms: true, whatsapp: true }, deities: ["Lord Shiva"], dietary: "No Nuts" })
+    );
+    render(<ProfilePage />);
+    fireEvent.click(screen.getByText("Preferences"));
+    await waitFor(() => {
+      expect((screen.getByRole("checkbox", { name: /Push Notifications/ }) as HTMLInputElement).checked).toBe(false);
+    });
+    expect((screen.getByRole("checkbox", { name: /Lord Shiva/ }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Dietary Restrictions (for Prasadam)") as HTMLSelectElement).value).toBe("No Nuts");
   });
 });
