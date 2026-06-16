@@ -87,6 +87,12 @@ const testimonials = [
 export default function HomePage() {
   return (
     <div className="bg-temple-ivory">
+      {/* Visually-hidden page title: the hero is an image slideshow with no text
+          heading, so this gives the homepage a single descriptive <h1> for SEO +
+          screen-reader heading navigation without altering the visual design. */}
+      <h1 className="sr-only">
+        Rudra Narayana Hindu Temple — Pooja, Homam &amp; Vedic Services in Austin, Texas
+      </h1>
       {/* Hero — Three-panel animated slideshow with Ken Burns effect */}
       <HeroSlideshow />
 

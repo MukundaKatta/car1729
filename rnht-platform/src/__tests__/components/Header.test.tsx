@@ -317,6 +317,19 @@ describe("Header", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
+  it("closes the menu and releases the body scroll-lock when the viewport grows to desktop width", () => {
+    // Regression: previously the scroll-lock effect only depended on mobileMenuOpen,
+    // so crossing the lg breakpoint hid the drawer/close-button via CSS while the
+    // lock stayed on — leaving the page permanently scroll-locked with no control.
+    render(<Header />);
+    fireEvent.click(screen.getByLabelText("Open menu"));
+    expect(document.body.style.overflow).toBe("hidden");
+    (window as unknown as { innerWidth: number }).innerWidth = 1280;
+    fireEvent(window, new Event("resize"));
+    expect(screen.getByLabelText("Open menu")).toBeInTheDocument(); // menu closed
+    expect(document.body.style.overflow).toBe(""); // scroll restored
+  });
+
   it("closes mobile menu when the overlay backdrop is clicked", () => {
     render(<Header />);
     fireEvent.click(screen.getByLabelText("Open menu"));

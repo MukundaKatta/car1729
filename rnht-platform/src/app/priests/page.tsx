@@ -146,25 +146,25 @@ export default function PriestsPage() {
               {/* Right — Details */}
               <div className="flex-1 p-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Education
                   </p>
                   <p className="mt-1 text-sm text-gray-700">{priest.education}</p>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Specialization
                   </p>
                   <p className="mt-1 text-sm text-gray-700">{priest.specialization}</p>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     About
                   </p>
                   <p className="mt-1 text-sm text-gray-600 leading-relaxed">{priest.bio}</p>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Services Offered
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">

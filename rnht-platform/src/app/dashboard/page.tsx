@@ -557,9 +557,9 @@ function OverviewTab() {
     <div className="space-y-8">
       {/* Welcome */}
       <div className="card p-8 bg-gradient-to-r from-temple-maroon-deep to-temple-maroon text-white">
-        <h2 className="font-heading text-2xl font-bold">
+        <h1 className="font-heading text-2xl font-bold">
           Namaste{user?.name?.trim() ? `, ${user.name.trim().split(" ")[0]}` : ""}!
-        </h2>
+        </h1>
         <p className="mt-2 text-gray-300 font-accent text-lg">
           Welcome to your devotee portal. Manage your services, donations, and spiritual journey.
         </p>

@@ -325,6 +325,27 @@ export function Header() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  // Close the mobile menu (which releases the body scroll-lock below) when the
+  // viewport grows past the lg breakpoint. Otherwise `lg:hidden` hides the drawer
+  // AND its close button/backdrop while `mobileMenuOpen` stays true, leaving the
+  // page permanently scroll-locked with no visible control to recover.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    // Only react to an actual resize/orientation change crossing into desktop.
+    // (No eager call: the hamburger is lg:hidden, so the menu can't be opened at
+    // >=1024 in a real browser; an eager check would also mis-fire in jsdom where
+    // innerWidth defaults to 1024.)
+    const closeIfDesktop = () => {
+      if (window.innerWidth >= 1024) setMobileMenuOpen(false);
+    };
+    window.addEventListener("resize", closeIfDesktop);
+    window.visualViewport?.addEventListener("resize", closeIfDesktop);
+    return () => {
+      window.removeEventListener("resize", closeIfDesktop);
+      window.visualViewport?.removeEventListener("resize", closeIfDesktop);
+    };
+  }, [mobileMenuOpen]);
+
   // Close language picker on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -380,14 +401,17 @@ export function Header() {
             />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] whitespace-nowrap" style={{
+            {/* Brand wordmark — a <div>, not an <h1>: the logo must NOT be the page's
+                top-level heading (it would make every page's h1 the non-descriptive
+                "Rudra Narayana" and demote/duplicate the real content heading). */}
+            <div className="text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] whitespace-nowrap" style={{
               background: "linear-gradient(90deg, #8B6914 0%, #C5973E 20%, #D4A843 50%, #C5973E 80%, #8B6914 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
               Rudra Narayana
-            </h1>
+            </div>
             <p className="text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5" style={{
               background: "linear-gradient(90deg, #9B7730 0%, #C5973E 30%, #D4A843 50%, #C5973E 70%, #9B7730 100%)",
               WebkitBackgroundClip: "text",
