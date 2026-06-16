@@ -13,6 +13,7 @@ export default function TermsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="section-heading">Terms of Use</h1>
+      <p className="mt-2 text-sm text-gray-500">Last updated: June 16, 2026</p>
 
       <div className="mt-8 prose prose-sm max-w-none text-gray-700 space-y-6">
         <p>

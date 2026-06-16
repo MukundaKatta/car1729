@@ -55,7 +55,7 @@ export default function AboutPage() {
         </p>
 
         <p>
-          After serving the community for many years, Pandit Aditya Sharma and
+          Over their years of serving the community, Pandit Aditya Sharma and
           Pandit Raghurama Sharma wanted to take their vision to the next level by
           establishing a <strong>Vedic experience</strong> for devotees. They
           aimed to create a sacred space where individuals could immerse

@@ -251,6 +251,7 @@ function DonateContent() {
   // Round to whole cents and cap at a sane maximum, so we never send sub-cent
   // values or overflow the DECIMAL(10,2) column / Stripe's integer limit.
   const MAX_DONATION = 100000;
+  const MIN_DONATION = 1; // Stripe rejects < $0.50; enforce a $1 floor
   const effectiveAmount =
     !isNaN(amount) && amount > 0
       ? Math.min(Math.round(amount * 100) / 100, MAX_DONATION)
@@ -717,6 +718,11 @@ function DonateContent() {
                   onChange={(e) => setCustomAmount(e.target.value)}
                 />
               </div>
+              {!isNaN(amount) && amount > 0 && amount < MIN_DONATION && (
+                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                  The minimum online donation is {formatCurrency(MIN_DONATION)}.
+                </p>
+              )}
               {!isNaN(amount) && amount > MAX_DONATION && (
                 <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                   The maximum online donation is{" "}
@@ -868,7 +874,7 @@ function DonateContent() {
               onClick={handleDonate}
               disabled={
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail.trim()) ||
-                effectiveAmount <= 0 ||
+                effectiveAmount < MIN_DONATION ||
                 requiredFieldsMissing ||
                 processing ||
                 verifyingPayment ||

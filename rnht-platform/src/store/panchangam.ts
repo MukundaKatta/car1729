@@ -15,7 +15,7 @@ import { browserStorage } from "@/store/persistStorage";
 type PanchangamStore = {
   location: PanchangamLocation;
   setLocation: (location: PanchangamLocation) => void;
-  detectCurrentLocation: () => Promise<void>;
+  detectCurrentLocation: () => Promise<boolean>;
 };
 
 export const usePanchangamStore = create<PanchangamStore>()(
@@ -25,10 +25,9 @@ export const usePanchangamStore = create<PanchangamStore>()(
       setLocation: (location) => set({ location }),
       detectCurrentLocation: async () => {
         if (typeof navigator === "undefined" || !navigator.geolocation) {
-          set({ location: DEFAULT_LOCATION });
-          return;
+          return false; // geolocation unavailable — keep the current selection
         }
-        return new Promise<void>((resolve) => {
+        return new Promise<boolean>((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
               const { latitude: lat, longitude: lon } = position.coords;
@@ -43,11 +42,12 @@ export const usePanchangamStore = create<PanchangamStore>()(
                       : DEFAULT_LOCATION.timeZone,
                 },
               });
-              resolve();
+              resolve(true);
             },
             () => {
-              set({ location: DEFAULT_LOCATION });
-              resolve();
+              // On denial/timeout, KEEP the user's selected location instead of
+              // silently resetting it to the default city.
+              resolve(false);
             },
             { enableHighAccuracy: false, timeout: 5_000 }
           );

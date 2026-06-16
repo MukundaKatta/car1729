@@ -396,7 +396,7 @@ export default function CommunityPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="btn-outline" onClick={() => { setSelectedOpp(null); setVolunteerName(""); setVolunteerEmail(""); }}>Cancel</button>
-              <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!volunteerName.trim() || !volunteerEmail.trim()} onClick={() => {
+              <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!volunteerName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(volunteerEmail.trim())} onClick={() => {
                 // Online volunteer sign-up isn't wired to a backend yet — be
                 // honest instead of claiming a confirmation that never sends.
                 alert("Online volunteer sign-up is coming soon. To volunteer now, please contact the temple at (512) 545-0473 or on WhatsApp and we'll add you.");

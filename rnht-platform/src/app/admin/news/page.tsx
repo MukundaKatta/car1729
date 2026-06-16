@@ -387,12 +387,14 @@ export default function AdminNewsPage() {
                       </button>
                       <button
                         onClick={() => startEdit(post)}
+                        aria-label={`Edit post: ${post.title}`}
                         className="rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-50"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => remove(post)}
+                        aria-label={`Delete post: ${post.title}`}
                         className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />

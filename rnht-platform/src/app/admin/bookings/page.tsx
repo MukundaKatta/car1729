@@ -149,6 +149,7 @@ export default function AdminBookingsPage() {
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
+            aria-label="Search bookings by name, ID, or service"
             placeholder="Search by name, ID, or service..."
             className="input-field pl-10"
             value={searchQuery}
@@ -156,6 +157,7 @@ export default function AdminBookingsPage() {
           />
         </div>
         <select
+          aria-label="Filter bookings by status"
           className="input-field w-40"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}

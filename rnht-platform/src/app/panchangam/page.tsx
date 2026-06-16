@@ -21,6 +21,8 @@ export default function PanchangamPage() {
   );
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [detectingLoc, setDetectingLoc] = useState(false);
+  const [geoMsg, setGeoMsg] = useState("");
 
   // Geolocation is requested ONLY when the devotee taps "Use current location"
   // (see the button below) — never automatically on mount. Auto-prompting was
@@ -151,13 +153,25 @@ export default function PanchangamPage() {
             </span>
           </div>
           <button
-            onClick={() => detectCurrentLocation()}
-            className="inline-flex items-center gap-2 rounded-lg bg-temple-maroon px-3 py-1.5 text-xs font-semibold text-white hover:bg-temple-maroon/90"
+            onClick={async () => {
+              setDetectingLoc(true);
+              setGeoMsg("");
+              const found = await detectCurrentLocation();
+              setDetectingLoc(false);
+              if (!found) {
+                setGeoMsg("Couldn't detect your location — keeping your current selection.");
+              }
+            }}
+            disabled={detectingLoc}
+            className="inline-flex items-center gap-2 rounded-lg bg-temple-maroon px-3 py-1.5 text-xs font-semibold text-white hover:bg-temple-maroon/90 disabled:opacity-60"
           >
             <Navigation className="h-3.5 w-3.5" />
-            Use current location
+            {detectingLoc ? "Detecting\u2026" : "Use current location"}
           </button>
         </div>
+        {geoMsg && (
+          <p role="status" className="mt-2 text-xs text-amber-700">{geoMsg}</p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           {PRESET_LOCATIONS.map((preset) => {
             const active = preset.label === location.label;

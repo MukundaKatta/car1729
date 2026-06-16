@@ -113,7 +113,7 @@ export default function SponsorshipPage() {
       {/* Service Bundles */}
       <section className="mt-12">
         <h2 className="font-heading text-xl font-bold text-gray-900">
-          Service Packages (Save 15-20%)
+          Service Packages (Save up to 25%)
         </h2>
         <p className="mt-1 text-sm text-gray-500">
           Popular service combinations at discounted bundle prices.
