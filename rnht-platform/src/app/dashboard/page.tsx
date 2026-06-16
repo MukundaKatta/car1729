@@ -749,7 +749,6 @@ function BookingsTab() {
 /* ─── Donations Tab ─── */
 function DonationsTab() {
   const { donations } = useAuthStore();
-  const addDonation = useAuthStore((s) => s.addDonation);
   const [showQuickDonate, setShowQuickDonate] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(51);
   const [selectedFund, setSelectedFund] = useState("General Temple Fund");
@@ -855,8 +854,11 @@ function DonationsTab() {
           {donations.map((d) => {
             // A receipt only exists once the gift is verified/received. Pending
             // gifts (e.g. a Zelle pledge awaiting bank confirmation) show a
-            // status instead of a receipt ID that isn't valid yet.
+            // status instead of a receipt ID that isn't valid yet. Failed /
+            // cancelled gifts must be labelled as such, not silently shown as
+            // "Pending" (which read as "still processing").
             const isCompleted = d.status === "completed" || d.status === undefined;
+            const isFailed = d.status === "failed" || d.status === "cancelled";
             return (
             <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-temple-ivory/50 transition-colors">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
@@ -875,6 +877,10 @@ function DonationsTab() {
                 <p className="font-heading font-bold text-temple-maroon">{formatCurrency(d.amount)}</p>
                 {isCompleted ? (
                   <p className="text-xs text-gray-400">{d.receiptId}</p>
+                ) : isFailed ? (
+                  <p className="text-xs font-accent text-red-600">
+                    {d.status === "cancelled" ? "Cancelled" : "Failed"}
+                  </p>
                 ) : (
                   <p className="text-xs font-accent text-amber-600">Pending</p>
                 )}
@@ -915,6 +921,8 @@ function ProfileTab() {
   });
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "" });
+  const [saveError, setSaveError] = useState("");
+  const [saveNotice, setSaveNotice] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -934,8 +942,21 @@ function ProfileTab() {
   }, [user]);
 
   const handleSave = async () => {
-    await updateProfile(form);
+    setSaveError("");
+    setSaveNotice("");
+    const result = await updateProfile(form);
+    if (result.error) {
+      // Keep the form open so the user can correct the input and retry —
+      // previously the error was discarded and the edit appeared to succeed.
+      setSaveError(result.error);
+      return;
+    }
     setEditing(false);
+    setSaveNotice(
+      result.emailChangePending
+        ? "Saved. Check your inbox to confirm the new email — your current email stays active for sign-in until you confirm."
+        : "Profile saved."
+    );
   };
 
   const handleAddMember = () => {
@@ -974,6 +995,17 @@ function ProfileTab() {
           )}
         </div>
       </div>
+
+      {saveError && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {saveError}
+        </div>
+      )}
+      {saveNotice && (
+        <div role="status" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          {saveNotice}
+        </div>
+      )}
 
       {/* Personal Info */}
       <div className="card p-6">

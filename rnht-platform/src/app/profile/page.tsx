@@ -124,6 +124,7 @@ function ProfileContent() {
   const { locale, setLocale } = useLanguageStore();
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [emailPending, setEmailPending] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -343,8 +344,11 @@ function ProfileContent() {
     if (result?.error) {
       setSaveError(result.error);
     } else {
+      setEmailPending(Boolean(result?.emailChangePending));
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      // An email change needs the user to read a confirmation message; don't
+      // auto-dismiss that one.
+      if (!result?.emailChangePending) setTimeout(() => setSaveSuccess(false), 3000);
     }
   };
 
@@ -562,7 +566,11 @@ function ProfileContent() {
                 <p className="mt-3 text-sm text-red-600">{saveError}</p>
               )}
               {saveSuccess && (
-                <p className="mt-3 text-sm text-green-600">Profile saved successfully!</p>
+                <p className="mt-3 text-sm text-green-600">
+                  {emailPending
+                    ? "Profile saved. Check your inbox to confirm the new email — your current email stays active for sign-in until you confirm."
+                    : "Profile saved successfully!"}
+                </p>
               )}
             </div>
           </div>

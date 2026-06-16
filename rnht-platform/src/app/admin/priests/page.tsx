@@ -178,7 +178,11 @@ export default function AdminPriestsPage() {
       confirmMessage: `Delete "${priest.name}"? This can't be undone.`,
       approvalReason: `Delete priest "${priest.name}"`,
       run: async () => {
-        await supabase.from("priests").delete().eq("id", priest.id);
+        const { error: delErr } = await supabase.from("priests").delete().eq("id", priest.id);
+        if (delErr) {
+          setError(delErr.message);
+          return;
+        }
         await refresh();
       },
     });

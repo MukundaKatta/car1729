@@ -328,10 +328,14 @@ function getSunriseSunset(date: Date, location: PanchangamLocation) {
   );
   const phi = (location.lat * Math.PI) / 180;
   const altitude = (-0.833 * Math.PI) / 180;
-  const hourAngle = Math.acos(
+  // Clamp the cosine to [-1, 1] before acos. At high latitudes (polar day /
+  // night) the ratio can fall slightly outside that range, which makes acos
+  // return NaN → `new Date(NaN)` (Invalid Date) → the panchangam view crashes
+  // and the offending location gets persisted, re-crashing on every reload.
+  const cosHourAngle =
     (Math.sin(altitude) - Math.sin(phi) * Math.sin(delta)) /
-      (Math.cos(phi) * Math.cos(delta))
-  );
+    (Math.cos(phi) * Math.cos(delta));
+  const hourAngle = Math.acos(Math.max(-1, Math.min(1, cosHourAngle)));
   const jSet = jTransit + hourAngle / (2 * Math.PI);
   const jRise = jTransit - hourAngle / (2 * Math.PI);
 

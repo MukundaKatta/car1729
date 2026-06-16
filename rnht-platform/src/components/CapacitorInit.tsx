@@ -48,8 +48,13 @@ export function CapacitorInit() {
           return;
         }
 
+        // preventDefault stops the in-webview navigation so we can open the link
+        // in the system browser instead. We deliberately do NOT stopPropagation:
+        // this is a capture-phase listener, and stopping propagation would also
+        // swallow React's own onClick on the same anchor (e.g. the handler that
+        // closes the mobile menu), leaving the menu stuck open after a tap on an
+        // external link (WhatsApp, socials).
         e.preventDefault();
-        e.stopPropagation();
         openExternal(href);
       }
     };

@@ -152,9 +152,19 @@ export function EventCard({ event }: { event: Event }) {
               </a>
             )}
             {event.rsvp_enabled && (
-              <button className="rounded-lg bg-temple-red px-4 py-1.5 text-xs font-semibold text-white hover:bg-temple-red-dark transition-colors">
+              <a
+                href={`https://wa.me/15125450473?text=${encodeURIComponent(
+                  `Namaste! I'd like to RSVP for "${event.title}"${
+                    event.start_date ? ` on ${formatDate(event.start_date)}` : ""
+                  }.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg bg-temple-red px-4 py-1.5 text-xs font-semibold text-white hover:bg-temple-red-dark transition-colors"
+                aria-label={`RSVP for ${event.title} on WhatsApp`}
+              >
                 RSVP
-              </button>
+              </a>
             )}
           </div>
         </div>

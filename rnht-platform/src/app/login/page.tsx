@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Phone as PhoneIcon, ArrowRight, ShieldCheck, CheckCircle, Loader2 } from "lucide-react";
@@ -25,7 +25,7 @@ const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
  * - If no "+", assumes US and prepends "+1"
  * - Returns null if the result isn't a plausible E.164 number
  */
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, sendOtp, verifyOtp, sendPhoneOtp, verifyPhoneOtp, initialize } = useAuthStore();
@@ -797,5 +797,23 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams() (the ?mode=/?next= deep-link) forces a client-side bailout
+// under static export unless it sits inside a <Suspense> boundary — without this
+// the entire /login route deopts to client rendering (blank shell on first
+// paint). The wrapper lets the route prerender a lightweight skeleton.
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-temple-red" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

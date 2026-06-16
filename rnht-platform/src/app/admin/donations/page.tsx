@@ -135,10 +135,14 @@ function DonationTypesTab() {
         : `Deactivate "${type.name}" from the donation form?`,
       approvalReason: `${nextActive ? "Restore" : "Deactivate"} donation type "${type.name}"`,
       run: async () => {
-        await supabase
+        const { error: toggleErr } = await supabase
           .from("donation_types")
           .update({ is_active: nextActive })
           .eq("id", type.id);
+        if (toggleErr) {
+          setError(toggleErr.message);
+          return;
+        }
         await refresh();
       },
     });
@@ -152,7 +156,14 @@ function DonationTypesTab() {
       confirmMessage: `Delete "${type.name}"? Donations already tagged with this fund won't be deleted.`,
       approvalReason: `Delete donation type "${type.name}"`,
       run: async () => {
-        await supabase.from("donation_types").delete().eq("id", type.id);
+        const { error: delErr } = await supabase
+          .from("donation_types")
+          .delete()
+          .eq("id", type.id);
+        if (delErr) {
+          setError(delErr.message);
+          return;
+        }
         await refresh();
       },
     });
@@ -494,7 +505,7 @@ function DonationInflowTab() {
       const year = new Date().getFullYear();
       const yearStart = `${year}-01-01`;
 
-      const [donationsResp, bookingsResp] = await Promise.all([
+      const [donationsResp, bookingsResp, donationSumResp, bookingSumResp] = await Promise.all([
         supabase
           .from("donations")
           .select("id, donor_name, donor_email, amount, fund_type, payment_status, created_at")
@@ -509,6 +520,21 @@ function DonationInflowTab() {
           .gte("created_at", yearStart)
           .order("created_at", { ascending: false })
           .limit(100),
+        // Year-to-date totals must cover ALL completed gifts, not just the
+        // latest 100 displayed rows (which would understate revenue once the
+        // temple has > 100 gifts in a year). Amount-only, status-filtered.
+        supabase
+          .from("donations")
+          .select("amount")
+          .eq("payment_status", "completed")
+          .gte("created_at", yearStart)
+          .limit(10000),
+        supabase
+          .from("bookings")
+          .select("total_amount")
+          .eq("payment_status", "paid")
+          .gte("created_at", yearStart)
+          .limit(10000),
       ]);
 
       const donations = donationsResp.data ?? [];
@@ -539,14 +565,10 @@ function DonationInflowTab() {
       });
 
       setDonationTotal(
-        donations
-          .filter((d) => d.payment_status === "completed")
-          .reduce((s, d) => s + Number(d.amount ?? 0), 0)
+        (donationSumResp.data ?? []).reduce((s, d) => s + Number(d.amount ?? 0), 0)
       );
       setServiceTotal(
-        bookings
-          .filter((b) => b.payment_status === "paid")
-          .reduce((s, b) => s + Number(b.total_amount ?? 0), 0)
+        (bookingSumResp.data ?? []).reduce((s, b) => s + Number(b.total_amount ?? 0), 0)
       );
 
       const merged = [...donationRows, ...serviceRows].sort((a, b) =>

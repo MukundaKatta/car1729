@@ -119,7 +119,14 @@ export default function AdminVolunteersPage() {
       confirmMessage: `Delete "${item.title}"?`,
       approvalReason: `Delete volunteer opportunity "${item.title}"`,
       run: async () => {
-        await supabase.from("volunteer_opportunities").delete().eq("id", item.id);
+        const { error: delErr } = await supabase
+          .from("volunteer_opportunities")
+          .delete()
+          .eq("id", item.id);
+        if (delErr) {
+          setError(delErr.message);
+          return;
+        }
         await refresh();
       },
     });

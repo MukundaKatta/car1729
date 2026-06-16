@@ -649,37 +649,21 @@ describe("useAuthStore", () => {
       expect(activities[0].description).toContain("Recurring");
     });
 
-    it("persists donation to Supabase when authenticated", () => {
+    it("never writes the donation directly to Supabase, even when authenticated (server-only)", () => {
+      // Security: a real, paid donation row (payment_status: "completed") is
+      // created only server-side by the payment-verification edge functions.
+      // addDonation is an optimistic LOCAL-ONLY UI update and must not insert
+      // into the donations table — otherwise any signed-in user could fabricate
+      // completed, tax-deductible donation records from the client.
       setAuthenticatedState();
-      const donationsBuilder = createQueryBuilder();
-      const activitiesBuilder = createQueryBuilder();
-      queryBuilders["donations"] = donationsBuilder;
-      queryBuilders["activities"] = activitiesBuilder;
 
       useAuthStore.getState().addDonation(sampleDonation);
 
-      expect(mockFrom).toHaveBeenCalledWith("donations");
-      expect(donationsBuilder.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user_id: "user-123",
-          amount: 108,
-          fund_type: "General Fund",
-          payment_method: "stripe",
-          payment_status: "completed",
-          is_recurring: false,
-          is_anonymous: false,
-        })
-      );
-
-      expect(mockFrom).toHaveBeenCalledWith("activities");
-      expect(activitiesBuilder.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user_id: "user-123",
-          type: "donation",
-          title: "Donated to General Fund",
-          amount: 108,
-        })
-      );
+      // Local state updated...
+      expect(useAuthStore.getState().donations[0].id).toBe("don-1");
+      // ...but no database write to donations or activities.
+      expect(mockFrom).not.toHaveBeenCalledWith("donations");
+      expect(mockFrom).not.toHaveBeenCalledWith("activities");
     });
 
     it("does not persist to Supabase when not authenticated", () => {

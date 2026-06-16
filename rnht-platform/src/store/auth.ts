@@ -86,7 +86,9 @@ type AuthStore = {
   initialize: () => Promise<void>;
 
   // Data actions
-  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error?: string }>;
+  updateProfile: (
+    updates: Partial<UserProfile>
+  ) => Promise<{ error?: string; emailChangePending?: boolean }>;
   addFamilyMember: (member: FamilyMember) => void;
   editFamilyMember: (id: string, updates: Partial<FamilyMember>) => void;
   removeFamilyMember: (id: string) => void;
@@ -272,7 +274,15 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   },
 
   logout: async () => {
-    if (supabase) await supabase.auth.signOut();
+    // Always clear the local session, even if the server sign-out call fails
+    // (network error, already-expired token). Otherwise a thrown signOut() would
+    // skip the set() below and leave isAuthenticated=true — the user appears
+    // signed in on a device they tried to sign out of.
+    try {
+      if (supabase) await supabase.auth.signOut();
+    } catch (e) {
+      console.error("signOut failed; clearing local session anyway:", e);
+    }
     set({
       isAuthenticated: false,
       authUser: null,
@@ -392,11 +402,41 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     if (!authUser) return { error: "Not authenticated" };
     if (!supabase) return { error: "Supabase is not configured" };
 
+    // Validate any email being written. An empty string previously slipped
+    // through (caller used `value && regex`), which wiped profiles.email; and an
+    // invalid value must never reach the database. A user who signed up by phone
+    // and never had an email may keep it blank, but a user who HAS an email
+    // cannot clear it (that would break their contact/login address).
+    const newEmail = updates.email !== undefined ? updates.email.trim() : undefined;
+    if (newEmail !== undefined) {
+      if (!newEmail) {
+        if (authUser.email) return { error: "Email cannot be empty." };
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return { error: "Please enter a valid email address." };
+      }
+    }
+    const emailChanging =
+      newEmail !== undefined && newEmail !== "" && newEmail !== (authUser.email || "");
+
+    // Update the AUTH identity FIRST when the email changes. OTP / magic-link
+    // sign-in matches against auth.users.email, and Supabase emails a
+    // confirmation link before the change takes effect. By doing this before the
+    // profiles write, a rejected email (already-in-use, invalid) never leaves
+    // profiles.email diverged from the auth identity.
+    let emailChangePending = false;
+    if (emailChanging) {
+      const { error: authErr } = await supabase.auth.updateUser({
+        email: newEmail!,
+      });
+      if (authErr) return { error: authErr.message };
+      emailChangePending = true;
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.email !== undefined && { email: updates.email }),
+        ...(newEmail !== undefined && { email: newEmail }),
         ...(updates.phone !== undefined && { phone: updates.phone }),
         ...(updates.gotra !== undefined && { gotra: updates.gotra }),
         ...(updates.nakshatra !== undefined && {
@@ -412,21 +452,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     if (error) return { error: error.message };
 
-    // If the email changed, also update the AUTH identity. OTP / magic-link
-    // sign-in matches against auth.users.email, so writing only profiles.email
-    // would leave the user unable to sign in with their new address. (Supabase
-    // may require the user to confirm the new email before it takes effect.)
-    if (updates.email !== undefined && updates.email !== authUser.email) {
-      const { error: authErr } = await supabase.auth.updateUser({
-        email: updates.email,
-      });
-      if (authErr) return { error: authErr.message };
-    }
-
     set((state) => ({
       user: state.user ? { ...state.user, ...updates } : null,
     }));
-    return {};
+    return emailChangePending ? { emailChangePending: true } : {};
   },
 
   addFamilyMember: (member) => {
@@ -522,8 +551,14 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     })),
 
   addDonation: (donation) => {
-    const authUser = get().authUser;
-
+    // Optimistic, LOCAL-ONLY state update for the in-session UI. We deliberately
+    // do NOT write the donation to Supabase here: a real donation row (with a
+    // verified `payment_status: "completed"`) is created only server-side by the
+    // payment-verification edge functions (Stripe verify / PayPal capture).
+    // Inserting a "completed" donation straight from the client allowed any
+    // signed-in user to fabricate paid, tax-deductible records — so that path is
+    // removed. This local entry is ephemeral and is replaced by the real rows on
+    // the next fetchUserData().
     set((state) => ({
       donations: [donation, ...state.donations],
       activities: [
@@ -538,35 +573,6 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         ...state.activities,
       ],
     }));
-
-    // Persist to Supabase
-    if (authUser) {
-      supabase
-        .from("donations")
-        .insert({
-          user_id: authUser.id,
-          donor_name: get().user?.name || "",
-          donor_email: get().user?.email || "",
-          amount: donation.amount,
-          fund_type: donation.fund,
-          payment_method: "stripe" as const,
-          payment_status: "completed" as const,
-          is_recurring: donation.recurring,
-          is_anonymous: false,
-        })
-        .then();
-
-      supabase
-        .from("activities")
-        .insert({
-          user_id: authUser.id,
-          type: "donation",
-          title: `Donated to ${donation.fund}`,
-          description: `${donation.recurring ? "Recurring" : "One-time"} donation`,
-          amount: donation.amount,
-        })
-        .then();
-    }
   },
 
   addActivity: (activity) =>

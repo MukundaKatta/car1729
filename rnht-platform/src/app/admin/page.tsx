@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<RecentBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -50,6 +51,8 @@ export default function AdminDashboard() {
         setLoading(false);
         return;
       }
+      setLoadError(null);
+      try {
       const year = new Date().getFullYear();
       const yearStart = `${year}-01-01`;
 
@@ -98,7 +101,16 @@ export default function AdminDashboard() {
         };
       });
       setRecent(recentRows);
-      setLoading(false);
+      } catch (e) {
+        // Without this, a single rejected query would skip setLoading(false)
+        // and leave the dashboard stuck on the loading skeletons forever.
+        console.error("Admin dashboard load failed:", e);
+        setLoadError(
+          "Could not load dashboard data. Please check your connection and reload."
+        );
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
@@ -145,6 +157,12 @@ export default function AdminDashboard() {
           </p>
         </div>
       </div>
+
+      {loadError && (
+        <div role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

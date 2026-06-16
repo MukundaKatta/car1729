@@ -105,14 +105,23 @@ export default function AdminServicesUploadPage() {
 
   async function makeCurrent(pdf: ServicePdf) {
     if (!supabase) return;
-    await supabase
+    setError(null);
+    const { error: clearErr } = await supabase
       .from("service_pdfs")
       .update({ is_current: false })
       .eq("is_current", true);
-    await supabase
+    if (clearErr) {
+      setError(clearErr.message);
+      return;
+    }
+    const { error: setErr } = await supabase
       .from("service_pdfs")
       .update({ is_current: true })
       .eq("id", pdf.id);
+    if (setErr) {
+      setError(setErr.message);
+      return;
+    }
     refresh();
   }
 
@@ -125,7 +134,14 @@ export default function AdminServicesUploadPage() {
       approvalReason: `Delete services PDF "${pdf.file_name}"`,
       run: async () => {
         await supabase.storage.from(BUCKET).remove([pdf.storage_path]);
-        await supabase.from("service_pdfs").delete().eq("id", pdf.id);
+        const { error: delErr } = await supabase
+          .from("service_pdfs")
+          .delete()
+          .eq("id", pdf.id);
+        if (delErr) {
+          setError(delErr.message);
+          return;
+        }
         await refresh();
       },
     });

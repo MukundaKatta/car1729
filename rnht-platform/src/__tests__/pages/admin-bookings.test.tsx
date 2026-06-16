@@ -84,7 +84,11 @@ const sampleRows = [
   },
 ];
 
-const updateEq = vi.fn().mockResolvedValue({ error: null });
+// .update(...).eq(...).select("id") — eq returns a builder whose select()
+// resolves to the affected row(s), so updateBookingStatus can confirm a row was
+// actually written.
+const updateSelect = vi.fn().mockResolvedValue({ data: [{ id: "RNHT-J7K8L" }], error: null });
+const updateEq = vi.fn(() => ({ select: updateSelect }));
 const updateFn = vi.fn(() => ({ eq: updateEq }));
 const orderFn = vi.fn().mockResolvedValue({ data: sampleRows, error: null });
 
@@ -109,6 +113,8 @@ import AdminBookingsPage from "@/app/admin/bookings/page";
 beforeEach(() => {
   updateEq.mockClear();
   updateFn.mockClear();
+  updateSelect.mockClear();
+  updateSelect.mockResolvedValue({ data: [{ id: "RNHT-J7K8L" }], error: null });
   orderFn.mockClear();
   orderFn.mockResolvedValue({ data: sampleRows, error: null });
 });

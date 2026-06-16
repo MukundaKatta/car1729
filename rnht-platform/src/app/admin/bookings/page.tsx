@@ -96,12 +96,24 @@ export default function AdminBookingsPage() {
 
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     if (!supabase) return;
-    const { error } = await supabase
+    // Select the updated row back so we can confirm a row was actually written.
+    // Without this, an UPDATE that matches zero rows (e.g. a missing admin RLS
+    // policy silently filtering the row) returns no error, and the optimistic UI
+    // below would falsely show the booking as confirmed/cancelled while nothing
+    // persisted — the change vanishes on reload.
+    const { data, error } = await supabase
       .from("bookings")
       .update({ status: newStatus })
-      .eq("id", bookingId);
+      .eq("id", bookingId)
+      .select("id");
     if (error) {
       setError(error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      setError(
+        "The booking status could not be saved (no row was updated). You may not have permission to change this booking. Please reload and try again."
+      );
       return;
     }
     setBookingsData((prev) =>

@@ -313,10 +313,14 @@ export default function AdminServicesPage() {
         : `Deactivate "${service.name}" from the live services list?`,
       approvalReason: `${nextActive ? "Restore" : "Deactivate"} service "${service.name}"`,
       run: async () => {
-        await supabase
+        const { error: toggleErr } = await supabase
           .from("services")
           .update({ is_active: nextActive })
           .eq("id", service.id);
+        if (toggleErr) {
+          setError(toggleErr.message);
+          return;
+        }
         await refresh();
       },
     });
@@ -331,7 +335,11 @@ export default function AdminServicesPage() {
       confirmMessage: `Delete "${service.name}"? This can't be undone.`,
       approvalReason: `Delete service "${service.name}"`,
       run: async () => {
-        await supabase.from("services").delete().eq("id", service.id);
+        const { error: delErr } = await supabase.from("services").delete().eq("id", service.id);
+        if (delErr) {
+          setError(delErr.message);
+          return;
+        }
         await refresh();
       },
     });

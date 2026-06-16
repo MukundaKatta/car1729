@@ -140,13 +140,17 @@ export default function AdminNewsPage() {
         : `Unpublish "${post.title}" and remove it from the public feed?`,
       approvalReason: `${nextPublished ? "Publish" : "Unpublish"} news post "${post.title}"`,
       run: async () => {
-        await supabase
+        const { error } = await supabase
           .from("news_posts")
           .update({
             is_published: nextPublished,
             published_at: nextPublished ? (post.published_at ?? new Date().toISOString()) : null,
           })
           .eq("id", post.id);
+        if (error) {
+          setError(error.message);
+          return;
+        }
         await refresh();
       },
     });
@@ -160,7 +164,11 @@ export default function AdminNewsPage() {
       confirmMessage: `Delete "${post.title}"? This can't be undone.`,
       approvalReason: `Delete news post "${post.title}"`,
       run: async () => {
-        await supabase.from("news_posts").delete().eq("id", post.id);
+        const { error } = await supabase.from("news_posts").delete().eq("id", post.id);
+        if (error) {
+          setError(error.message);
+          return;
+        }
         await refresh();
       },
     });
