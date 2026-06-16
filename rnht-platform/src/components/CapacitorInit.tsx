@@ -37,14 +37,28 @@ export function CapacitorInit() {
       const href = anchor.getAttribute("href");
       if (!href) return;
 
-      // Only intercept external links (http/https) and special protocols (wa.me, tel won't match)
+      // Only intercept external links (http/https). tel:/mailto:/whatsapp: etc.
+      // don't match this prefix check and are left for the OS to resolve.
       if (href.startsWith("http://") || href.startsWith("https://")) {
+        let url: URL;
         // Don't intercept internal navigation (same origin)
         try {
-          const url = new URL(href, window.location.origin);
+          url = new URL(href, window.location.origin);
           if (url.origin === window.location.origin) return;
         } catch {
           // Invalid URL, let it pass
+          return;
+        }
+
+        // WhatsApp deep links (wa.me / api.whatsapp.com) are https URLs, but
+        // routing them through the in-app Browser (SFSafariViewController /
+        // Custom Tab) lands the user on WhatsApp's "Continue to Chat" web
+        // interstitial instead of the installed WhatsApp app. Hand these to the
+        // OS via "_system" so it resolves the app link straight into WhatsApp.
+        const host = url.hostname.replace(/^www\./, "");
+        if (host === "wa.me" || host === "api.whatsapp.com") {
+          e.preventDefault();
+          window.open(href, "_system");
           return;
         }
 

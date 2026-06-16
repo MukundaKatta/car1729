@@ -108,6 +108,12 @@ function DonateContent() {
   const [verifyError, setVerifyError] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
   const [confirmedFundName, setConfirmedFundName] = useState<string | null>(null);
+  // Focus targets for accessibility: the success heading (announce + move focus
+  // when the form is swapped for the thank-you view) and the verify-error banner
+  // (scroll into view + focus so a returning donor can't miss a failed
+  // verification at the top of a long form and silently resubmit).
+  const successHeadingRef = useRef<HTMLHeadingElement>(null);
+  const verifyErrorRef = useRef<HTMLDivElement>(null);
   const locale = useLanguageStore((s) => s.locale);
   const searchParams = useSearchParams();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -348,6 +354,27 @@ function DonateContent() {
     };
   }, [reconcileNativePayment]);
 
+  // On entering the success state, move focus to the thank-you heading so
+  // screen-reader users hear that the donation state changed (the role="status"
+  // wrapper announces it; the focus move re-anchors keyboard navigation since
+  // the route doesn't change).
+  useEffect(() => {
+    if (submitted) successHeadingRef.current?.focus();
+  }, [submitted]);
+
+  // When a returned-payment verification fails, the donor lands back on the full
+  // form. Pull the failure banner into view and focus it so the guidance to
+  // contact the temple is unmissable and they don't simply re-submit.
+  useEffect(() => {
+    if (!verifyError) return;
+    const el = verifyErrorRef.current;
+    if (!el) return;
+    // Optional-chain: scrollIntoView is absent in some webviews / test (jsdom)
+    // environments, where calling it would throw and unmount the form.
+    el.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    el.focus();
+  }, [verifyError]);
+
   const handleDonate = async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -430,9 +457,17 @@ function DonateContent() {
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <CheckCircle className="mx-auto h-20 w-20 text-green-500" />
-        <h1 className="mt-6 text-3xl font-heading font-bold text-gray-900">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8"
+      >
+        <CheckCircle className="mx-auto h-20 w-20 text-green-500" aria-hidden="true" />
+        <h1
+          ref={successHeadingRef}
+          tabIndex={-1}
+          className="mt-6 text-3xl font-heading font-bold text-gray-900 outline-none"
+        >
           {t("donate.thankYou", locale)}
         </h1>
         <p className="mt-4 text-lg text-gray-600">
@@ -646,9 +681,12 @@ function DonateContent() {
         <div className="lg:col-span-3 space-y-6">
           {verifyError && (
             <div
-              aria-live="polite"
+              ref={verifyErrorRef}
+              role="alert"
+              tabIndex={-1}
+              aria-live="assertive"
               aria-atomic="true"
-              className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+              className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 outline-none"
             >
               {verifyError}
             </div>
@@ -862,7 +900,12 @@ function DonateContent() {
             )}
 
             {nativePaymentOpened && (
-              <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+              <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800"
+              >
                 Your secure payment page has opened in the browser. After you
                 finish paying, return to the app — your donation will appear in
                 your dashboard once confirmed.

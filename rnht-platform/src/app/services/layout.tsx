@@ -9,10 +9,13 @@ export const metadata: Metadata = {
     description: "Book authentic Vedic poojas, homams, weddings, and spiritual services. Serving Austin, Kyle, Georgetown, Round Rock, and the greater Texas area.",
     url: canonicalPath("/services"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
+    card: "summary_large_image",
     title: "Pooja & Spiritual Services | Rudra Narayana Hindu Temple",
     description: "Book authentic Vedic poojas, homams, weddings, and spiritual services. Serving Austin, Kyle, Georgetown, Round Rock, and the greater Texas area.",
+    images: ["/deity-collage.jpg"],
   },
   alternates: {
     canonical: canonicalPath("/services"),

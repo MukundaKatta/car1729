@@ -263,7 +263,9 @@ describe("useAuthStore", () => {
 
       const result = await useAuthStore.getState().verifyOtp("test@temple.org", "000000");
 
-      expect(result).toEqual({ error: "Token has expired or is invalid" });
+      expect(result).toEqual({
+        error: "That code is incorrect or has expired. Please request a new code and try again.",
+      });
       expect(useAuthStore.getState().loading).toBe(false);
     });
   });

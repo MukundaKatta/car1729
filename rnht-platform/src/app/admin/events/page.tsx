@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Edit2, Trash2 } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
@@ -242,6 +242,24 @@ function EventFormModal({
   const [rsvpEnabled, setRsvpEnabled] = useState(event?.rsvp_enabled ?? true);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Lock body scroll, close on Escape, and manage focus while the modal is open.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    // Move initial focus into the dialog.
+    titleInputRef.current?.focus();
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [onClose]);
 
   const handleSave = async () => {
     if (!supabase) return;
@@ -273,9 +291,9 @@ function EventFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-        <h2 className="font-heading text-xl font-bold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="event-form-title" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <h2 id="event-form-title" className="font-heading text-xl font-bold text-gray-900">
           {isEditing ? "Edit Event" : "Add New Event"}
         </h2>
         {formError && (
@@ -289,6 +307,7 @@ function EventFormModal({
               Event Title *
             </label>
             <input
+              ref={titleInputRef}
               type="text"
               className="input-field mt-1"
               value={title}

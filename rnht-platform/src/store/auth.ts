@@ -124,6 +124,21 @@ function normalizeAuthError(message: string, channel: "email" | "phone"): AuthRe
     };
   }
 
+  // The most common verify-time failure: an expired or mistyped code. Supabase
+  // surfaces this as a terse "Token has expired or is invalid" string with no
+  // guidance — replace it with a clear, actionable message that tells the user
+  // to request a fresh code instead of showing the raw backend text.
+  if (
+    lower.includes("expired") ||
+    lower.includes("invalid") ||
+    lower.includes("token")
+  ) {
+    return {
+      error:
+        "That code is incorrect or has expired. Please request a new code and try again.",
+    };
+  }
+
   return { error: message };
 }
 

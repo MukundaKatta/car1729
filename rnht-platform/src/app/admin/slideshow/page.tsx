@@ -26,6 +26,7 @@ import {
   type SlideType,
 } from "@/store/slideshow";
 import { supabase } from "@/lib/supabase";
+import { pushOverlay } from "@/lib/overlay-stack";
 
 function FileUploader({
   onUpload,
@@ -85,15 +86,24 @@ function FileUploader({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor="slide-file-input" className="block text-sm font-medium text-gray-700 mb-1">
         Upload Photo / Video
       </label>
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload photo or video. Drop a file here, or activate to browse."
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileRef.current?.click()}
-        className={`relative cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all ${
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fileRef.current?.click();
+          }
+        }}
+        className={`relative cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-temple-gold ${
           dragOver
             ? "border-temple-gold bg-temple-gold/5"
             : "border-gray-300 hover:border-temple-gold/50 hover:bg-gray-50"
@@ -101,9 +111,10 @@ function FileUploader({
       >
         <input
           ref={fileRef}
+          id="slide-file-input"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-          className="hidden"
+          className="sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleFile(file);
@@ -179,6 +190,49 @@ function SlideEditor({
   });
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Focus management: remember what was focused, move focus into the dialog,
+    // trap Tab within it, close on Escape, and restore focus to the trigger on
+    // close. Mirrors the shared pattern in ServiceDetailModal.
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+    focusables()[0]?.focus();
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    // Android back button closes the modal (this component only mounts when open).
+    const unregister = pushOverlay(onClose);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      unregister();
+      previouslyFocused?.focus?.();
+    };
+  }, [onClose]);
 
   const handleSave = async () => {
     setSaveError("");
@@ -195,10 +249,19 @@ function SlideEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="slide-editor-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h3 className="font-heading text-lg font-bold text-gray-900">
+          <h3 id="slide-editor-title" className="font-heading text-lg font-bold text-gray-900">
             {isNew ? "Add New Slide" : "Edit Slide"}
           </h3>
           <button

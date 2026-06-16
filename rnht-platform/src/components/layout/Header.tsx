@@ -11,9 +11,11 @@ import {
   Globe,
   Heart,
   Calendar,
+  ShieldCheck,
 } from "lucide-react";
 import { useLanguageStore } from "@/store/language";
 import { useAuthStore } from "@/store/auth";
+import { useIsAdmin } from "@/lib/admin";
 import { localeNames, t, type Locale } from "@/lib/i18n/translations";
 import { pushOverlay } from "@/lib/overlay-stack";
 
@@ -279,9 +281,13 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const langButtonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const { locale, setLocale } = useLanguageStore();
   const { isAuthenticated, user } = useAuthStore();
+  const { isAdmin } = useIsAdmin();
   const pathname = usePathname();
 
   // Measure header height and set CSS variable on root for fixed elements.
@@ -346,33 +352,102 @@ export function Header() {
     };
   }, [mobileMenuOpen]);
 
-  // Close language picker on outside click
+  // Close language picker on outside click or Escape (return focus to toggle).
   useEffect(() => {
+    if (!showLangPicker) return;
     function handleClick(e: MouseEvent) {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setShowLangPicker(false);
       }
     }
-    if (showLangPicker) {
-      document.addEventListener("mousedown", handleClick);
-      return () => document.removeEventListener("mousedown", handleClick);
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowLangPicker(false);
+        langButtonRef.current?.focus();
+      }
     }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
   }, [showLangPicker]);
 
-  // Prevent body scroll when mobile menu is open
+  // Prevent body scroll when mobile menu is open.
+  // overflow:hidden alone does not reliably stop background scroll/rubber-banding
+  // on iOS Safari and the iOS Capacitor WKWebView, so pin the body with
+  // position:fixed (capturing scrollY) and restore the scroll position on close.
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "";
-      };
-    }
+    if (!mobileMenuOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    return () => {
+      body.style.overflow = prev.overflow;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.width = prev.width;
+      window.scrollTo(0, scrollY);
+    };
   }, [mobileMenuOpen]);
 
   // Android back button: close the menu instead of leaving the page.
   useEffect(() => {
     if (!mobileMenuOpen) return;
     return pushOverlay(() => setMobileMenuOpen(false));
+  }, [mobileMenuOpen]);
+
+  // Dialog semantics for the mobile drawer: move focus into the panel on open,
+  // trap Tab within it, close on Escape, and restore focus to the hamburger
+  // button on close. Mirrors the focus-trap in ServiceDetailModal.tsx.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    // The hamburger button is always mounted; capture it for focus restoration.
+    const triggerButton = mobileMenuButtonRef.current;
+    const focusables = () =>
+      Array.from(
+        mobileMenuRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+    focusables()[0]?.focus();
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+        return;
+      }
+      if (e.key === "Tab") {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      // Restore focus to the hamburger button (it returns to "Open menu" state).
+      (triggerButton ?? previouslyFocused)?.focus?.();
+    };
   }, [mobileMenuOpen]);
 
   const isActive = (href: string) => {
@@ -440,6 +515,7 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
                 className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2 ${
                   isActive(item.href)
                     ? "text-temple-maroon"
@@ -507,20 +583,31 @@ export function Header() {
           {/* Language Picker */}
           <div className="relative" ref={langRef}>
             <button
+              ref={langButtonRef}
               onClick={() => setShowLangPicker(!showLangPicker)}
               className="hidden sm:flex items-center gap-1 rounded-full p-2.5 text-temple-maroon/60 transition-colors hover:bg-temple-gold/15 hover:text-temple-maroon focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               title="Language"
               aria-label="Select language"
+              aria-haspopup="true"
+              aria-expanded={showLangPicker}
+              aria-controls="language-picker-menu"
             >
               <Globe className="h-4 w-4" />
               <span className="text-xs font-medium uppercase">{locale}</span>
             </button>
             {showLangPicker && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-temple-gold/20 bg-white py-1 shadow-premium animate-slide-down">
+              <div
+                id="language-picker-menu"
+                role="menu"
+                aria-label="Select language"
+                className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-temple-gold/20 bg-white py-1 shadow-premium animate-slide-down"
+              >
                 {(Object.entries(localeNames) as [Locale, string][]).map(
                   ([code, name]) => (
                     <button
                       key={code}
+                      role="menuitemradio"
+                      aria-checked={locale === code}
                       onClick={() => {
                         setLocale(code);
                         setShowLangPicker(false);
@@ -542,6 +629,18 @@ export function Header() {
             )}
           </div>
 
+          {/* Admin panel — only shown to temple administrators (is_admin). */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-temple-maroon ring-1 ring-temple-gold/40 transition-colors hover:bg-temple-gold/15 sm:flex"
+              aria-label="Admin panel"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
+
           {/* Profile / Dashboard */}
           <Link
             href="/dashboard"
@@ -549,8 +648,8 @@ export function Header() {
             aria-label={isAuthenticated ? "Dashboard" : "Sign in"}
           >
             {isAuthenticated ? (
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-temple-gold/20 text-[11px] font-bold text-temple-gold ring-1 ring-temple-gold/30">
-                {user?.name?.charAt(0) || "U"}
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-temple-gold/20 text-[11px] font-bold uppercase text-temple-gold ring-1 ring-temple-gold/30">
+                {(user?.name?.charAt(0) || "U").toUpperCase()}
               </div>
             ) : (
               <User className="h-[18px] w-[18px]" />
@@ -559,11 +658,14 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
+            ref={mobileMenuButtonRef}
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-temple-maroon/70 transition-colors hover:bg-temple-gold/15 lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-haspopup="dialog"
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu-dialog"
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -585,7 +687,14 @@ export function Header() {
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-x-0 top-[var(--header-h)] z-50 border-t border-temple-gold/10 bg-white lg:hidden max-h-[calc(100dvh-var(--header-h))] overflow-y-auto animate-slide-down">
+          <div
+            ref={mobileMenuRef}
+            id="mobile-menu-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            className="fixed inset-x-0 top-[var(--header-h)] z-50 border-t border-temple-gold/10 bg-white lg:hidden max-h-[calc(100dvh-var(--header-h))] overflow-y-auto animate-slide-down"
+          >
             <div className="px-4 py-2">
               {/* Prominent mobile donate button */}
               <Link
@@ -612,6 +721,16 @@ export function Header() {
                 <User className="h-5 w-5 text-temple-maroon/60" />
                 {isAuthenticated ? (user?.name || "My Account") : t("nav.login", locale)}
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-temple-gold/30 bg-temple-gold/10 px-4 py-3 mb-2 text-base font-semibold text-temple-maroon"
+                >
+                  <ShieldCheck className="h-5 w-5 text-temple-gold" />
+                  Admin Panel
+                </Link>
+              )}
               {navigation.map((item) =>
                 item.external ? (
                   <a
@@ -629,6 +748,7 @@ export function Header() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
+                    aria-current={isActive(item.href) ? "page" : undefined}
                     className={`block rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-temple-cream ${
                       isActive(item.href)
                         ? "text-temple-red bg-temple-cream/50"

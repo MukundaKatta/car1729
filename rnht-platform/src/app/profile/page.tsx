@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -20,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import type { RefObject } from "react";
 import { useAuthStore } from "@/store/auth";
 import { useLanguageStore } from "@/store/language";
 import { localeNames, type Locale } from "@/lib/i18n/translations";
@@ -89,6 +90,71 @@ const DEFAULT_PREFERENCES: MemberPreferences = {
 
 const PREFERENCES_STORAGE_KEY = "rnht-member-preferences";
 
+// Booking times arrive as a Postgres TIME string ("HH:MM:SS"). formatTime in
+// utils expects a Date/timestamp, so parse the raw column into a 12-hour label
+// (e.g. "10:30:00" → "10:30 AM"). Falls back to the raw value if unparseable.
+function formatBookingTime(time: string | null | undefined): string {
+  if (!time) return "--";
+  const m = /^(\d{1,2}):(\d{2})/.exec(time);
+  if (!m) return time;
+  const hour = Number(m[1]);
+  const minute = Number(m[2]);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return time;
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+// Shared dialog accessibility: move focus into the dialog on open, trap Tab,
+// close on Escape, and restore focus to the trigger on close. Mirrors the
+// pattern in ServiceDetailModal.tsx. `lockScroll` also locks the body scroll.
+function useDialogFocus(
+  open: boolean,
+  ref: RefObject<HTMLElement>,
+  onClose: () => void,
+  lockScroll = false,
+) {
+  useEffect(() => {
+    if (!open) return;
+    if (lockScroll) document.body.style.overflow = "hidden";
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(
+        ref.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+    focusables()[0]?.focus();
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      if (lockScroll) document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [open, ref, onClose, lockScroll]);
+}
+
 // useSearchParams() (the ?tab= deep-link) forces a CSR bailout under static
 // export unless wrapped in <Suspense> — otherwise /profile prerendered to a bare
 // "Loading…" shell (blank flash). This wrapper lets the route prerender a skeleton.
@@ -128,6 +194,9 @@ function ProfileContent() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const familyDialogRef = useRef<HTMLDivElement>(null);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+  const closeDeleteConfirm = useCallback(() => setShowDeleteConfirm(false), []);
 
   // Device-local member preferences (notifications / deities / dietary). Loaded
   // from localStorage after mount to avoid a hydration mismatch under static
@@ -212,6 +281,24 @@ function ProfileContent() {
     ? (requestedTab as Tab)
     : "profile";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  // Keep the rendered tab in sync with the ?tab= param so browser Back/Forward
+  // and a second client-side deep-link (while already on /profile) both work —
+  // useState only seeds once, so without this a later param change is a no-op.
+  useEffect(() => {
+    const next: Tab = tabs.some((t) => t.id === requestedTab)
+      ? (requestedTab as Tab)
+      : "profile";
+    setActiveTab(next);
+  }, [requestedTab]);
+  // Clicking a tab updates state AND the URL so the address bar, shareable
+  // links, and history stay coupled to the visible tab.
+  const selectTab = useCallback(
+    (tab: Tab) => {
+      setActiveTab(tab);
+      router.push(`/profile?tab=${tab}`, { scroll: false });
+    },
+    [router],
+  );
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
   // null = adding a new member; an id = editing that existing member.
@@ -226,6 +313,17 @@ function ProfileContent() {
       setEditingFamilyId(null);
     });
   }, [showAddFamily]);
+  const closeFamilyModal = useCallback(() => {
+    setShowAddFamily(false);
+    setEditingFamilyId(null);
+    setNewMember({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
+  }, []);
+
+  // Dialog a11y: focus trap, Escape-to-close, focus restore (+ body-scroll lock
+  // for the family modal). Hooks run unconditionally, before the auth early
+  // returns below.
+  useDialogFocus(showAddFamily, familyDialogRef, closeFamilyModal, true);
+  useDialogFocus(showDeleteConfirm, deleteDialogRef, closeDeleteConfirm);
   const [bookingFilter, setBookingFilter] = useState<"all" | "upcoming" | "completed">("all");
 
   // Profile form controlled state
@@ -373,12 +471,6 @@ function ProfileContent() {
     setShowAddFamily(true);
   };
 
-  const closeFamilyModal = () => {
-    setShowAddFamily(false);
-    setEditingFamilyId(null);
-    setNewMember(blankMember);
-  };
-
   const handleSaveFamilyMember = () => {
     // Trim so a whitespace-only name can't create a blank-titled card.
     if (!newMember.name.trim() || !newMember.relationship.trim()) return;
@@ -498,11 +590,15 @@ function ProfileContent() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-8 flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1">
+      <div role="tablist" aria-label="Profile sections" className="mt-8 flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            id={`profile-tab-${tab.id}`}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`profile-tabpanel-${tab.id}`}
+            onClick={() => selectTab(tab.id)}
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
               activeTab === tab.id
                 ? "bg-white text-temple-red shadow-sm"
@@ -518,7 +614,7 @@ function ProfileContent() {
       <div className="mt-6">
         {/* Profile Tab */}
         {activeTab === "profile" && (
-          <div className="card p-6">
+          <div role="tabpanel" id="profile-tabpanel-profile" aria-labelledby="profile-tab-profile" className="card p-6">
             <h2 className="font-heading text-lg font-bold text-gray-900">
               Personal Details
             </h2>
@@ -562,23 +658,25 @@ function ProfileContent() {
               <button className="btn-primary" onClick={handleSaveProfile} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </button>
-              {saveError && (
-                <p className="mt-3 text-sm text-red-600">{saveError}</p>
-              )}
-              {saveSuccess && (
-                <p className="mt-3 text-sm text-green-600">
-                  {emailPending
-                    ? "Profile saved. Check your inbox to confirm the new email — your current email stays active for sign-in until you confirm."
-                    : "Profile saved successfully!"}
-                </p>
-              )}
+              <div role="status" aria-live="polite">
+                {saveError && (
+                  <p className="mt-3 text-sm text-red-600">{saveError}</p>
+                )}
+                {saveSuccess && (
+                  <p className="mt-3 text-sm text-green-600">
+                    {emailPending
+                      ? "Profile saved. Check your inbox to confirm the new email — your current email stays active for sign-in until you confirm."
+                      : "Profile saved successfully!"}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Family Tab */}
         {activeTab === "family" && (
-          <div className="space-y-4">
+          <div role="tabpanel" id="profile-tabpanel-family" aria-labelledby="profile-tab-family" className="space-y-4">
             <h2 className="font-heading text-lg font-bold text-gray-900">Family</h2>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
@@ -640,8 +738,8 @@ function ProfileContent() {
               </div>
             </div>
             {showAddFamily && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label={editingFamilyId ? "Edit Family Member" : "Add Family Member"} onClick={closeFamilyModal}>
-                <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeFamilyModal}>
+                <div ref={familyDialogRef} role="dialog" aria-modal="true" aria-label={editingFamilyId ? "Edit Family Member" : "Add Family Member"} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                   <h3 className="font-heading text-lg font-bold">{editingFamilyId ? "Edit Family Member" : "Add Family Member"}</h3>
                   <div className="mt-4 space-y-3">
                     <input type="text" className="input-field" placeholder="Full Name" aria-label="Full Name" value={newMember.name} onChange={(e) => setNewMember((p) => ({ ...p, name: e.target.value }))} />
@@ -673,7 +771,7 @@ function ProfileContent() {
 
         {/* Bookings Tab */}
         {activeTab === "bookings" && (
-          <div className="space-y-4">
+          <div role="tabpanel" id="profile-tabpanel-bookings" aria-labelledby="profile-tab-bookings" className="space-y-4">
             <h2 className="font-heading text-lg font-bold text-gray-900">Bookings</h2>
             <div className="flex flex-wrap gap-2">
               {(["all", "upcoming", "completed"] as const).map((filter) => (
@@ -715,8 +813,8 @@ function ProfileContent() {
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
-                  <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {booking.date}</span>
-                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {booking.time}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {formatDate(booking.date)}</span>
+                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatBookingTime(booking.time)}</span>
                   <span className="font-semibold text-temple-red">{formatCurrency(booking.amount)}</span>
                 </div>
                 {booking.status === "confirmed" && (
@@ -735,7 +833,7 @@ function ProfileContent() {
 
         {/* Donations Tab */}
         {activeTab === "donations" && (
-          <div className="space-y-4">
+          <div role="tabpanel" id="profile-tabpanel-donations" aria-labelledby="profile-tab-donations" className="space-y-4">
             <h2 className="font-heading text-lg font-bold text-gray-900">Donations</h2>
             <div className="card bg-gradient-to-r from-green-50 to-emerald-50 p-5">
               <div className="flex items-center justify-between">
@@ -781,11 +879,11 @@ function ProfileContent() {
 
         {/* Preferences Tab */}
         {activeTab === "preferences" && (
-          <div className="space-y-6">
+          <div role="tabpanel" id="profile-tabpanel-preferences" aria-labelledby="profile-tab-preferences" className="space-y-6">
             <h2 className="font-heading text-lg font-bold text-gray-900">Preferences</h2>
             <div className="card p-5">
               <h3 id="pref-language-label" className="font-heading text-lg font-bold text-gray-900">Preferred Language</h3>
-              <p className="mt-1 text-sm text-gray-600">Changes the language across the app.</p>
+              <p className="mt-1 text-sm text-gray-600">Sets your preferred language for navigation and supported pages.</p>
               <select
                 id="pref-language"
                 aria-labelledby="pref-language-label"
@@ -879,8 +977,8 @@ function ProfileContent() {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-labelledby="delete-account-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 id="delete-account-title" className="font-heading text-xl font-bold text-red-700">Delete your account?</h3>
             <p className="mt-3 text-sm text-gray-600">
               This permanently deletes your devotee account and personal profile
@@ -889,7 +987,7 @@ function ProfileContent() {
               temple for tax/accounting purposes but are no longer linked to you.
             </p>
             {deleteError && (
-              <p className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{deleteError}</p>
+              <p role="alert" className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{deleteError}</p>
             )}
             <div className="mt-6 flex justify-end gap-3">
               <button

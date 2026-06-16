@@ -504,6 +504,10 @@ export default function AdminServicesPage() {
                       src={form.image_url}
                       alt={form.name || "Service image preview"}
                       className="h-40 w-full rounded-lg object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='160' fill='%23f5f0e6'%3E%3Crect width='400' height='160'/%3E%3Ctext x='50%25' y='50%25' fill='%239ca3af' font-size='14' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                      }}
                     />
                     <div className="flex flex-wrap gap-2">
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-temple-maroon px-4 py-2 text-sm font-semibold text-white hover:bg-temple-maroon/90">
@@ -666,6 +670,10 @@ export default function AdminServicesPage() {
                           src={service.image_url}
                           alt={service.name}
                           className="h-12 w-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' fill='%23f5f0e6'%3E%3Crect width='48' height='48'/%3E%3Ctext x='50%25' y='50%25' fill='%239ca3af' font-size='8' text-anchor='middle' dy='.3em'%3EImage%3C/text%3E%3C/svg%3E";
+                          }}
                         />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-temple-cream text-temple-maroon">

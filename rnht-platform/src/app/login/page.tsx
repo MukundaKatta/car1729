@@ -97,12 +97,16 @@ function LoginContent() {
     setPhoneCooldownUntil(Date.now() + seconds * 1000);
   };
 
-  // Redirect if already logged in
+  // Redirect if already logged in — but NOT while the celebratory success
+  // screen is showing. The OTP verify paths set step="success" at the same time
+  // the auth store flips isAuthenticated:true, so without the step guard this
+  // effect would navigate straight to /dashboard and the success screen (with
+  // its "Book a Pooja" CTA) would never render. Let the user click through.
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && step !== "success") {
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, step, router]);
 
   useEffect(() => {
     if (step !== "email_sent" || !supabase) return;
@@ -269,15 +273,20 @@ function LoginContent() {
     }
   };
 
-  // Handle paste of full OTP code
+  // Handle paste of an OTP code into the first box. Fill as many of the 6
+  // boxes as the paste provides (not only an exact-6 paste, which silently
+  // dropped 5- or 7+-digit pastes), then focus the next empty box so the user
+  // can keep typing — mirrors handleOtpChange's multi-char distribution.
   const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
-      setOtp(pasted.split(""));
-      const last = document.getElementById("otp-5");
-      last?.focus();
-    }
+    if (!pasted.length) return;
+    e.preventDefault();
+    const newOtp = ["", "", "", "", "", ""];
+    pasted.split("").forEach((d, i) => {
+      newOtp[i] = d;
+    });
+    setOtp(newOtp);
+    document.getElementById(`otp-${Math.min(pasted.length, 5)}`)?.focus();
   };
 
   if (step === "success") {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { pushOverlay } from "@/lib/overlay-stack";
 import Link from "next/link";
 import {
@@ -113,26 +113,75 @@ export default function CommunityPage() {
   const [selectedOpp, setSelectedOpp] = useState<string | null>(null);
   const [volunteerName, setVolunteerName] = useState("");
   const [volunteerEmail, setVolunteerEmail] = useState("");
+  const [volunteerPhone, setVolunteerPhone] = useState("");
+  const [volunteerShifts, setVolunteerShifts] = useState<Set<string>>(new Set());
+  const [volunteerNotes, setVolunteerNotes] = useState("");
 
-  // Escape key handler and body scroll lock for volunteer modal
+  // Refs for dialog focus management (initial focus, focus trap, focus restore).
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  const emailTrimmed = volunteerEmail.trim();
+  const emailInvalid =
+    emailTrimmed.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
+
+  const resetVolunteerForm = () => {
+    setVolunteerName("");
+    setVolunteerEmail("");
+    setVolunteerPhone("");
+    setVolunteerShifts(new Set());
+    setVolunteerNotes("");
+  };
+
+  // Escape key handler, body scroll lock, initial focus, focus trap, and
+  // focus restore for the volunteer modal.
   useEffect(() => {
     if (!selectedOpp) return;
     document.body.style.overflow = "hidden";
+    // Remember the element that opened the dialog so focus can be restored.
+    const opener = document.activeElement as HTMLElement | null;
+    triggerRef.current = opener;
     const close = () => {
       setSelectedOpp(null);
-      setVolunteerName("");
-      setVolunteerEmail("");
+      resetVolunteerForm();
     };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      // Focus trap: keep Tab/Shift+Tab inside the dialog.
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey) {
+          if (active === first || !dialogRef.current.contains(active)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", handleKey);
+    // Move initial focus into the dialog (first form field).
+    firstFieldRef.current?.focus();
     // Android hardware back closes the modal (instead of navigating away).
     const unregister = pushOverlay(close);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKey);
       unregister();
+      // Restore focus to the element that opened the dialog.
+      triggerRef.current?.focus?.();
     };
   }, [selectedOpp]);
 
@@ -149,22 +198,39 @@ export default function CommunityPage() {
 
       {/* Tabs — flex-wrap so the three pills never push the page wider than
           a phone viewport (this row caused ~35px of horizontal overflow). */}
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
-        {[
+      <div className="mt-8 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Community sections">
+        {([
           { id: "volunteer" as const, label: "Volunteer", icon: HeartHandshake },
           { id: "annadanam" as const, label: "Annadanam", icon: ChefHat },
           { id: "announcements" as const, label: "Announcements", icon: Megaphone },
-        ].map((tab) => (
+        ]).map((tab, index, tabs) => (
           <button
             key={tab.id}
+            id={`community-tab-${tab.id}`}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`community-panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(e) => {
+              if (e.key !== "ArrowRight" && e.key !== "ArrowLeft" && e.key !== "Home" && e.key !== "End") return;
+              e.preventDefault();
+              let next = index;
+              if (e.key === "ArrowRight") next = (index + 1) % tabs.length;
+              else if (e.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+              else if (e.key === "Home") next = 0;
+              else if (e.key === "End") next = tabs.length - 1;
+              const nextTab = tabs[next];
+              setActiveTab(nextTab.id);
+              document.getElementById(`community-tab-${nextTab.id}`)?.focus();
+            }}
             className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors ${
               activeTab === tab.id
                 ? "bg-temple-red text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
-            <tab.icon className="h-4 w-4" />
+            <tab.icon className="h-4 w-4" aria-hidden="true" />
             {tab.label}
           </button>
         ))}
@@ -173,7 +239,7 @@ export default function CommunityPage() {
       <div className="mt-8">
         {/* Volunteer Tab */}
         {activeTab === "volunteer" && (
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-8 lg:grid-cols-3" id="community-panel-volunteer" role="tabpanel" aria-labelledby="community-tab-volunteer">
             <div className="lg:col-span-2 space-y-4">
               <h2 className="font-heading text-xl font-bold text-gray-900">
                 Volunteer Opportunities
@@ -202,7 +268,7 @@ export default function CommunityPage() {
                           className="btn-primary text-sm py-2"
                           onClick={() => setSelectedOpp(opp.id)}
                         >
-                          Sign Up
+                          Enquire
                         </button>
                       </div>
                     </div>
@@ -266,7 +332,7 @@ export default function CommunityPage() {
 
         {/* Annadanam Tab */}
         {activeTab === "annadanam" && (
-          <div className="space-y-6">
+          <div className="space-y-6" id="community-panel-annadanam" role="tabpanel" aria-labelledby="community-tab-annadanam">
             <div className="card bg-gradient-to-r from-green-50 to-emerald-50 p-6">
               <h2 className="font-heading text-xl font-bold text-green-900">
                 Annadanam — Community Meal Service
@@ -334,7 +400,7 @@ export default function CommunityPage() {
 
         {/* Announcements Tab */}
         {activeTab === "announcements" && (
-          <div className="space-y-4">
+          <div className="space-y-4" id="community-panel-announcements" role="tabpanel" aria-labelledby="community-tab-announcements">
             {announcements.map((a) => (
               <div key={a.id} className={`card p-5 ${a.priority === "high" ? "border-l-4 border-l-temple-red" : ""}`}>
                 {a.priority === "high" && (
@@ -353,27 +419,36 @@ export default function CommunityPage() {
 
       {/* Volunteer Sign-Up Modal */}
       {selectedOpp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" onClick={() => { setSelectedOpp(null); setVolunteerName(""); setVolunteerEmail(""); }}>
-          <div className="w-full max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-heading text-xl font-bold text-gray-900">
-              Volunteer Sign-Up
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="vol-signup-title" onClick={() => { setSelectedOpp(null); resetVolunteerForm(); }}>
+          <div ref={dialogRef} className="w-full max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 id="vol-signup-title" className="font-heading text-xl font-bold text-gray-900">
+              Volunteer Enquiry
             </h2>
             <p className="mt-1 text-sm text-gray-500">
               {volunteerOpportunities.find((o) => o.id === selectedOpp)?.title}
             </p>
+            <p className="mt-2 text-xs text-gray-500">
+              This sends an enquiry — the temple will follow up to confirm your
+              volunteering. Nothing is booked automatically yet.
+            </p>
             <div className="mt-4 space-y-3">
               <div>
                 <label htmlFor="vol-name" className="block text-sm font-medium text-gray-700">Full Name *</label>
-                <input id="vol-name" type="text" className="input-field mt-1" placeholder="Full Name *" value={volunteerName} onChange={(e) => setVolunteerName(e.target.value)} />
+                <input ref={firstFieldRef} id="vol-name" type="text" required aria-required="true" className="input-field mt-1" placeholder="Full Name *" value={volunteerName} onChange={(e) => setVolunteerName(e.target.value)} />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="vol-email" className="block text-sm font-medium text-gray-700">Email *</label>
-                  <input id="vol-email" type="email" className="input-field mt-1" placeholder="Email *" value={volunteerEmail} onChange={(e) => setVolunteerEmail(e.target.value)} />
+                  <input id="vol-email" type="email" required aria-required="true" aria-invalid={emailInvalid} aria-describedby={emailInvalid ? "vol-email-error" : undefined} className="input-field mt-1" placeholder="Email *" value={volunteerEmail} onChange={(e) => setVolunteerEmail(e.target.value)} />
+                  {emailInvalid && (
+                    <p id="vol-email-error" className="mt-1 text-xs text-red-600">
+                      Please enter a valid email address (e.g. name@example.com).
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="vol-phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                  <input id="vol-phone" type="tel" className="input-field mt-1" placeholder="Phone" />
+                  <input id="vol-phone" type="tel" className="input-field mt-1" placeholder="Phone" value={volunteerPhone} onChange={(e) => setVolunteerPhone(e.target.value)} />
                 </div>
               </div>
               <div>
@@ -384,25 +459,36 @@ export default function CommunityPage() {
                   .find((o) => o.id === selectedOpp)
                   ?.shifts.map((shift) => (
                     <label key={shift} className="flex items-center gap-2 py-2">
-                      <input type="checkbox" className="rounded text-temple-red" />
+                      <input
+                        type="checkbox"
+                        className="rounded text-temple-red"
+                        checked={volunteerShifts.has(shift)}
+                        onChange={(e) =>
+                          setVolunteerShifts((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(shift);
+                            else next.delete(shift);
+                            return next;
+                          })
+                        }
+                      />
                       <span className="text-sm text-gray-700">{shift}</span>
                     </label>
                   ))}
               </div>
               <div>
                 <label htmlFor="vol-notes" className="block text-sm font-medium text-gray-700">Experience / Notes</label>
-                <textarea id="vol-notes" className="input-field mt-1" rows={2} placeholder="Any experience or notes..." />
+                <textarea id="vol-notes" className="input-field mt-1" rows={2} placeholder="Any experience or notes..." value={volunteerNotes} onChange={(e) => setVolunteerNotes(e.target.value)} />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button className="btn-outline" onClick={() => { setSelectedOpp(null); setVolunteerName(""); setVolunteerEmail(""); }}>Cancel</button>
+              <button className="btn-outline" onClick={() => { setSelectedOpp(null); resetVolunteerForm(); }}>Cancel</button>
               <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!volunteerName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(volunteerEmail.trim())} onClick={() => {
                 // Online volunteer sign-up isn't wired to a backend yet — be
                 // honest instead of claiming a confirmation that never sends.
                 alert("Online volunteer sign-up is coming soon. To volunteer now, please contact the temple at (512) 545-0473 or on WhatsApp and we'll add you.");
                 setSelectedOpp(null);
-                setVolunteerName("");
-                setVolunteerEmail("");
+                resetVolunteerForm();
               }}>
                 Enquire
               </button>

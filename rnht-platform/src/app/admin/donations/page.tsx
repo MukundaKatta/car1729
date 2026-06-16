@@ -241,8 +241,9 @@ function DonationTypesTab() {
           </h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Name</label>
+              <label htmlFor="dt-name" className="block text-sm font-medium text-gray-700">Name</label>
               <input
+                id="dt-name"
                 type="text"
                 className="input-field mt-1"
                 value={form.name}
@@ -257,8 +258,9 @@ function DonationTypesTab() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Slug</label>
+              <label htmlFor="dt-slug" className="block text-sm font-medium text-gray-700">Slug</label>
               <input
+                id="dt-slug"
                 type="text"
                 className="input-field mt-1 font-mono text-sm"
                 value={form.slug}
@@ -266,8 +268,9 @@ function DonationTypesTab() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Sort Order</label>
+              <label htmlFor="dt-sort-order" className="block text-sm font-medium text-gray-700">Sort Order</label>
               <input
+                id="dt-sort-order"
                 type="number"
                 className="input-field mt-1"
                 value={form.sort_order}
@@ -277,8 +280,9 @@ function DonationTypesTab() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label htmlFor="dt-description" className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
+                id="dt-description"
                 className="input-field mt-1"
                 rows={2}
                 value={form.description}
@@ -308,6 +312,7 @@ function DonationTypesTab() {
                     <input
                       type="text"
                       placeholder="key"
+                      aria-label={`Custom field ${i + 1} key`}
                       className="input-field text-sm"
                       value={field.key}
                       onChange={(e) => updateCustomField(i, { key: e.target.value })}
@@ -315,11 +320,13 @@ function DonationTypesTab() {
                     <input
                       type="text"
                       placeholder="Label"
+                      aria-label={`Custom field ${i + 1} label`}
                       className="input-field text-sm"
                       value={field.label}
                       onChange={(e) => updateCustomField(i, { label: e.target.value })}
                     />
                     <select
+                      aria-label={`Custom field ${i + 1} type`}
                       className="input-field text-sm"
                       value={field.type}
                       onChange={(e) =>

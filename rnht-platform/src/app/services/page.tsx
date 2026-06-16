@@ -56,17 +56,25 @@ export default function ServicesPage() {
     return services.filter((service) => {
       if (!service.is_active) return false;
 
-      if (
-        searchQuery &&
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
         // Guard against null/undefined live-catalog fields — a single row with a
-        // missing name or short_description would otherwise throw inside the
-        // filter and blank the whole page.
-        !(service.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !(service.short_description ?? "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      ) {
-        return false;
+        // missing name or description would otherwise throw inside the filter
+        // and blank the whole page. Search across name, short_description,
+        // full_description, and significance so keywords (e.g. graha names like
+        // Rahu/Ketu/Shani) that only appear in the longer copy still match.
+        const haystack = [
+          service.name,
+          service.short_description,
+          service.full_description,
+          service.significance,
+        ]
+          .map((field) => (field ?? "").toLowerCase())
+          .join(" ");
+
+        if (!haystack.includes(query)) {
+          return false;
+        }
       }
 
       if (

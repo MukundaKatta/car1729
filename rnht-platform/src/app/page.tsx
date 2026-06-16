@@ -109,7 +109,10 @@ export default function HomePage() {
               key={stat.label}
               className="group rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
             >
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-temple-gold/20 bg-temple-gold/10 text-lg">
+              <div
+                aria-hidden="true"
+                className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-temple-gold/20 bg-temple-gold/10 text-lg"
+              >
                 {stat.icon}
               </div>
               <p className="font-heading text-lg font-bold text-temple-gold-light sm:text-2xl">
@@ -258,7 +261,7 @@ export default function HomePage() {
               <ul className="mt-6 space-y-3 text-left">
                 {["Nitya Deeparadhana", "Shodashopachara Seva", "Naivedyam", "Pushpa Archana", "Rudrabhishekam"].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-temple-gold-light font-accent">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-temple-gold/20 flex items-center justify-center text-xs text-temple-gold">✓</span>
+                    <span aria-hidden="true" className="flex-shrink-0 w-5 h-5 rounded-full bg-temple-gold/20 flex items-center justify-center text-xs text-temple-gold">✓</span>
                     {item}
                   </li>
                 ))}

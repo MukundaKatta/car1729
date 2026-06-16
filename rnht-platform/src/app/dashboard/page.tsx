@@ -277,10 +277,11 @@ function LoginForm() {
               </div>
               {authMode === "signup" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="dash-login-name" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Full Name
                 </label>
                 <input
+                  id="dash-login-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -292,10 +293,11 @@ function LoginForm() {
               )}
               {method === "email" ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="dash-login-email" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Email Address
                   </label>
                   <input
+                    id="dash-login-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -306,10 +308,11 @@ function LoginForm() {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="dash-login-phone" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Phone Number
                   </label>
                   <input
+                    id="dash-login-phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -380,10 +383,11 @@ function LoginForm() {
                 We sent a verification code to <strong>{normalizedPhone}</strong>
               </p>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="dash-login-otp" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Enter OTP
                 </label>
                 <input
+                  id="dash-login-otp"
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -423,11 +427,12 @@ function LoginForm() {
               {/* Code entry — the only path that completes inside the
                   native apps (the email link signs in the system browser). */}
               <div className="rounded-xl border border-temple-gold/30 bg-white px-4 py-4 text-left">
-                <p className="text-sm font-medium text-temple-maroon">
+                <label htmlFor="dash-email-otp" className="block text-sm font-medium text-temple-maroon">
                   Enter the verification code from the email
-                </p>
+                </label>
                 <div className="mt-3 flex gap-2">
                   <input
+                    id="dash-email-otp"
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
@@ -614,6 +619,11 @@ function OverviewTab() {
       <div>
         <h3 className="font-heading text-lg font-bold text-temple-maroon mb-4">Recent Activity</h3>
         <div className="card divide-y divide-gray-100">
+          {activities.length === 0 && (
+            <p className="p-6 text-center text-sm text-gray-500 font-accent">
+              No recent activity yet. Your bookings and donations will appear here.
+            </p>
+          )}
           {activities.slice(0, 5).map((a) => (
             <div key={a.id} className="flex items-center gap-4 p-4">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
@@ -897,7 +907,7 @@ function DonationsTab() {
       </div>
 
       <p className="text-center text-xs text-gray-400 font-accent">
-        All donations to RNHT are tax-deductible under 501(c)(3). Receipts are available for download.
+        All donations to RNHT are tax-deductible under 501(c)(3). Contact us for a copy of your tax receipt.
       </p>
     </div>
   );
@@ -1020,12 +1030,13 @@ function ProfileTab() {
             { label: "State", key: "state" as const, icon: MapPin },
           ].map((field) => (
             <div key={field.key}>
-              <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+              <label htmlFor={`dash-profile-${field.key}`} className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
                 <field.icon className="h-3 w-3" />
                 {field.label}
               </label>
               {editing ? (
                 <input
+                  id={`dash-profile-${field.key}`}
                   type="text"
                   value={form[field.key]}
                   onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
@@ -1049,12 +1060,13 @@ function ProfileTab() {
             { label: "Rashi", key: "rashi" as const },
           ].map((field) => (
             <div key={field.key}>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label htmlFor={`dash-vedic-${field.key}`} className="block text-xs font-medium text-gray-500 mb-1">
                 <Star className="inline h-3 w-3 mr-1" />
                 {field.label}
               </label>
               {editing ? (
                 <input
+                  id={`dash-vedic-${field.key}`}
                   type="text"
                   value={form[field.key]}
                   onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
@@ -1082,6 +1094,7 @@ function ProfileTab() {
               <input
                 type="text"
                 placeholder="Name"
+                aria-label="Full Name"
                 value={newMember.name}
                 onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
                 className="input-field"
@@ -1089,6 +1102,7 @@ function ProfileTab() {
               <input
                 type="text"
                 placeholder="Relationship (e.g. Spouse)"
+                aria-label="Relationship"
                 value={newMember.relationship}
                 onChange={(e) => setNewMember({ ...newMember, relationship: e.target.value })}
                 className="input-field"
@@ -1096,6 +1110,7 @@ function ProfileTab() {
               <input
                 type="text"
                 placeholder="Gotra (optional)"
+                aria-label="Gotra"
                 value={newMember.gotra}
                 onChange={(e) => setNewMember({ ...newMember, gotra: e.target.value })}
                 className="input-field"
@@ -1216,10 +1231,19 @@ function DashboardContent() {
     <div className="bg-temple-ivory min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Tab Navigation */}
-        <div className="flex gap-1 rounded-2xl bg-white p-1.5 shadow-premium mb-8 overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label="Devotee portal sections"
+          className="flex gap-1 rounded-2xl bg-white p-1.5 shadow-premium mb-8 overflow-x-auto"
+        >
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              id={`dash-tab-${tab.id}`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`dash-panel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all whitespace-nowrap ${
                 activeTab === tab.id
@@ -1234,10 +1258,16 @@ function DashboardContent() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" && <OverviewTab />}
-        {activeTab === "bookings" && <BookingsTab />}
-        {activeTab === "donations" && <DonationsTab />}
-        {activeTab === "profile" && <ProfileTab />}
+        <div
+          role="tabpanel"
+          id={`dash-panel-${activeTab}`}
+          aria-labelledby={`dash-tab-${activeTab}`}
+        >
+          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "bookings" && <BookingsTab />}
+          {activeTab === "donations" && <DonationsTab />}
+          {activeTab === "profile" && <ProfileTab />}
+        </div>
       </div>
     </div>
   );

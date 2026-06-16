@@ -219,9 +219,20 @@ describe("HeroSlideshow", () => {
   it("labels each slide with its position", () => {
     render(<HeroSlideshow />);
     const slides = getAllSlides();
-    expect(slides[0]).toHaveAttribute("aria-label", "Slide 1 of 3");
-    expect(slides[1]).toHaveAttribute("aria-label", "Slide 2 of 3");
-    expect(slides[2]).toHaveAttribute("aria-label", "Slide 3 of 3");
+    // RN-117: slide aria-label is enriched with "title — subtitle" so screen
+    // readers announce the slide's position AND its content.
+    expect(slides[0]).toHaveAttribute(
+      "aria-label",
+      "Slide 1 of 3: Welcome to RNHT — A sacred space for all"
+    );
+    expect(slides[1]).toHaveAttribute(
+      "aria-label",
+      "Slide 2 of 3: Divine Services — Traditional Vedic ceremonies"
+    );
+    expect(slides[2]).toHaveAttribute(
+      "aria-label",
+      "Slide 3 of 3: Temple Tour — Explore our temple"
+    );
   });
 
   it("hides non-active slides with aria-hidden", () => {

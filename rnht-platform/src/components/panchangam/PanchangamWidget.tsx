@@ -19,6 +19,26 @@ type PanchangamData = {
   samvatsara: string;
 };
 
+function formatPanchangamDate(date: string): string {
+  // Parsed as a plain calendar date (no timezone shift) and formatted
+  // client-side, so it stays hydration-safe with the null static date.
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return date;
+  const [, year, month, day] = match;
+  const parsed = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+  );
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export function PanchangamWidget({
   panchangam,
   compact = false,
@@ -26,6 +46,10 @@ export function PanchangamWidget({
   panchangam: PanchangamData;
   compact?: boolean;
 }) {
+  const formattedDate = panchangam.date
+    ? formatPanchangamDate(panchangam.date)
+    : null;
+
   if (compact) {
     return (
       <div className="rounded-xl border border-temple-gold/30 bg-gradient-to-r from-temple-cream to-white p-4 sm:p-6">
@@ -35,6 +59,11 @@ export function PanchangamWidget({
               <Sun className="h-5 w-5 text-temple-gold" />
               Daily Panchangam
             </h3>
+            {formattedDate && (
+              <p className="text-sm font-medium text-gray-700">
+                {formattedDate}
+              </p>
+            )}
             <p className="text-sm text-gray-500">
               {panchangam.vaara}, {panchangam.masa} | {panchangam.samvatsara}{" "}
               Samvatsara
@@ -91,6 +120,9 @@ export function PanchangamWidget({
           <Sun className="h-6 w-6 text-temple-gold" />
           Daily Panchangam
         </h2>
+        {formattedDate && (
+          <p className="mt-1 font-medium text-gray-700">{formattedDate}</p>
+        )}
         <p className="mt-1 text-gray-600">
           {panchangam.vaara} | {panchangam.masa} Masa |{" "}
           {panchangam.samvatsara} Samvatsara

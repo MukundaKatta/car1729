@@ -148,7 +148,8 @@ export function HomePanchangamScroll() {
             <span>&#x2733;</span>
           </div>
           <p className="mx-auto max-w-xl font-accent text-base text-gray-600 sm:text-lg">
-            Vedic almanac for {p.location} on {formattedDate}
+            Vedic almanac for {p.location}
+            {formattedDate ? ` on ${formattedDate}` : ""}
           </p>
         </div>
 

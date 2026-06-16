@@ -47,9 +47,13 @@ describe("PanchangamWidget", () => {
 
     it("displays vaara, masa, and samvatsara", () => {
       render(<PanchangamWidget panchangam={mockPanchangam} />);
-      expect(screen.getByText(/Thursday/)).toBeInTheDocument();
-      expect(screen.getByText(/Phalguna Masa/)).toBeInTheDocument();
-      expect(screen.getByText(/Shobhakrit Samvatsara/)).toBeInTheDocument();
+      // The vaara/masa/samvatsara metadata line. After the RN-096 a11y change,
+      // a separate human-readable formatted-date line ("Thursday, March 12,
+      // 2026") also contains the weekday, so /Thursday/ alone matches two
+      // elements. Scope to the panchangam line that carries all three values.
+      expect(
+        screen.getByText(/Thursday \| Phalguna Masa \| Shobhakrit Samvatsara/)
+      ).toBeInTheDocument();
     });
 
     it("displays location", () => {

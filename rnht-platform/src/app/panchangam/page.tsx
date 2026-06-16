@@ -75,9 +75,9 @@ export default function PanchangamPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-4 lg:items-stretch">
         {/* Left box (outside the main box) — What is Panchangam? */}
         <div className="order-2 rounded-2xl border border-temple-gold/20 bg-white p-6 shadow-premium lg:order-1">
-          <h3 className="font-heading text-lg font-bold text-temple-maroon">
+          <h2 className="font-heading text-lg font-bold text-temple-maroon">
             What is Panchangam?
-          </h3>
+          </h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-600">
             Panchangam (Panchanga) is a Hindu calendar and almanac that tracks
             five key attributes of each day: <strong>Tithi</strong> (lunar day),{" "}
@@ -114,9 +114,9 @@ export default function PanchangamPage() {
 
         {/* Right box (outside the main box) — Understanding Timings */}
         <div className="order-3 rounded-2xl border border-temple-gold/20 bg-white p-6 shadow-premium">
-          <h3 className="font-heading text-lg font-bold text-temple-maroon">
+          <h2 className="font-heading text-lg font-bold text-temple-maroon">
             Understanding Timings
-          </h3>
+          </h2>
           <div className="mt-3 space-y-3 text-sm text-gray-600">
             <div className="flex items-start gap-2">
               <span className="mt-0.5 h-3 w-3 rounded-full bg-red-500 flex-shrink-0" />
@@ -195,9 +195,13 @@ export default function PanchangamPage() {
         </p>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8" aria-busy={loading && !hasError}>
         {loading && !hasError && (
-          <p className="mb-4 text-sm text-gray-600">
+          <p
+            role="status"
+            aria-live="polite"
+            className="mb-4 text-sm text-gray-600"
+          >
             Calculating live Panchangam for {location.label}...
           </p>
         )}

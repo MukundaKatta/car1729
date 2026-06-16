@@ -153,10 +153,13 @@ describe("GalleryPage", () => {
     const images = screen.getAllByRole("img");
     // Click the first image's parent div
     fireEvent.click(images[0].closest("button")!);
-    // Lightbox should be visible - a larger image appears
+    // Lightbox should be visible - a larger image appears. The grid is wrapped
+    // in an inert + aria-hidden background while the lightbox is open (modal
+    // a11y, RN-073), so role queries only see the single lightbox image.
     const allImages = screen.getAllByRole("img");
-    // 25 grid images + 1 lightbox image = 26
-    expect(allImages).toHaveLength(26);
+    expect(allImages).toHaveLength(1);
+    // The one accessible image is the full-size lightbox image.
+    expect(allImages[0]).toHaveAttribute("src", "/gallery/gallery-01.jpg");
   });
 
   it("shows image alt text as caption in lightbox", () => {
@@ -208,7 +211,9 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
     fireEvent.click(images[0].closest("button")!);
-    expect(screen.getAllByRole("img")).toHaveLength(26);
+    // Background grid is inert + aria-hidden while open, so only the lightbox
+    // image is in the accessibility tree.
+    expect(screen.getAllByRole("img")).toHaveLength(1);
     // Find close button (top-right with X)
     const buttons = screen.getAllByRole("button");
     const closeButton = buttons.find(
@@ -216,6 +221,7 @@ describe("GalleryPage", () => {
     );
     expect(closeButton).toBeDefined();
     fireEvent.click(closeButton!);
+    // Closing un-inerts the grid, so all 25 grid images are visible again.
     expect(screen.getAllByRole("img")).toHaveLength(25);
   });
 
@@ -223,11 +229,14 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
     fireEvent.click(images[0].closest("button")!);
-    expect(screen.getAllByRole("img")).toHaveLength(26);
+    // Background grid is inert + aria-hidden while open, so only the lightbox
+    // image is in the accessibility tree.
+    expect(screen.getAllByRole("img")).toHaveLength(1);
     // Click the backdrop (the fixed overlay)
     const backdrop = document.querySelector(".fixed.inset-0");
     expect(backdrop).toBeTruthy();
     fireEvent.click(backdrop!);
+    // Closing un-inerts the grid, so all 25 grid images are visible again.
     expect(screen.getAllByRole("img")).toHaveLength(25);
   });
 
@@ -238,8 +247,12 @@ describe("GalleryPage", () => {
     // Priests category has 2 images
     expect(images).toHaveLength(2);
     fireEvent.click(images[0].closest("button")!);
-    // 2 grid + 1 lightbox = 3
-    expect(screen.getAllByRole("img")).toHaveLength(3);
+    // Background grid is inert + aria-hidden while the lightbox is open, so only
+    // the single lightbox image is in the accessibility tree.
+    const lightboxImages = screen.getAllByRole("img");
+    expect(lightboxImages).toHaveLength(1);
+    // It shows the first Priests image (gallery-07).
+    expect(lightboxImages[0]).toHaveAttribute("src", "/gallery/gallery-07.jpg");
   });
 
   // --- Additional tests for improved coverage ---
@@ -324,14 +337,17 @@ describe("GalleryPage", () => {
     render(<GalleryPage />);
     const images = screen.getAllByRole("img");
     fireEvent.click(images[0].closest("button")!);
-    expect(screen.getAllByRole("img")).toHaveLength(26);
+    // Background grid is inert + aria-hidden while open, so only the lightbox
+    // image is in the accessibility tree.
+    expect(screen.getAllByRole("img")).toHaveLength(1);
 
     // Click on the image container (not the backdrop)
     const imageContainer = document.querySelector(".relative.max-h-\\[85vh\\]");
     expect(imageContainer).toBeTruthy();
     fireEvent.click(imageContainer!);
-    // Lightbox should still be open
-    expect(screen.getAllByRole("img")).toHaveLength(26);
+    // Lightbox should still be open (still exactly the one lightbox image,
+    // grid still inert).
+    expect(screen.getAllByRole("img")).toHaveLength(1);
   });
 
   it("lightbox shows correct image source for first image", () => {

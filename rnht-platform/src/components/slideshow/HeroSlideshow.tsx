@@ -525,7 +525,12 @@ export function HeroSlideshow() {
 
       {/* Slides */}
       <div className="relative h-full">
-        {activeSlides.map((slide, index) => (
+        {activeSlides.map((slide, index) => {
+          const slideDescription = [slide.title, slide.subtitle]
+            .map((part) => part?.trim())
+            .filter(Boolean)
+            .join(" — ");
+          return (
           <div
             key={slide.id}
             className={`${
@@ -535,7 +540,11 @@ export function HeroSlideshow() {
             }`}
             role="group"
             aria-roledescription="slide"
-            aria-label={`Slide ${index + 1} of ${slideCount}`}
+            aria-label={
+              slideDescription
+                ? `Slide ${index + 1} of ${slideCount}: ${slideDescription}`
+                : `Slide ${index + 1} of ${slideCount}`
+            }
             aria-hidden={index !== currentIndex}
           >
             {/* Background */}
@@ -581,7 +590,8 @@ export function HeroSlideshow() {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Navigation Controls */}

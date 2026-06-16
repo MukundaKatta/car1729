@@ -19,7 +19,6 @@ const routes = [
   "/transparency",
   "/privacy",
   "/terms",
-  "/login",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

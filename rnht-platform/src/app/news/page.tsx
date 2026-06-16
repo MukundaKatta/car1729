@@ -113,6 +113,16 @@ export default function NewsPage() {
         </p>
       </div>
 
+      {activeSlug && !loading && !active && (
+        <p
+          role="status"
+          className="mx-auto mt-6 max-w-xl rounded-xl border border-temple-gold/30 bg-temple-gold/10 px-4 py-3 text-center text-sm text-temple-maroon"
+        >
+          That article could not be found — here is the latest news.
+        </p>
+      )}
+
+      <h2 className="sr-only">Latest posts</h2>
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => (

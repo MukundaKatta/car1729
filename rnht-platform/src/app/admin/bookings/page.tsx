@@ -273,6 +273,8 @@ export default function AdminBookingsPage() {
                 Booking Details
               </h2>
               <button
+                type="button"
+                aria-label="Close"
                 onClick={() => setSelectedBooking(null)}
                 className="text-gray-400 hover:text-gray-600"
               >

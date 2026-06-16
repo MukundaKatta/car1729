@@ -196,9 +196,9 @@ export default function CalendarPage() {
             >
               &larr;
             </button>
-            <h3 className="text-xl font-heading font-bold">
+            <h2 className="text-xl font-heading font-bold">
               {months[selectedMonth]} {selectedYear}
-            </h3>
+            </h2>
             <button
               onClick={() => {
                 setSelectedDay(null);
@@ -341,11 +341,14 @@ export default function CalendarPage() {
 
       {view === "list" && !loading && (
         filteredEvents.length > 0 ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          <>
+            <h2 className="sr-only">Upcoming events</h2>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          </>
         ) : (
           <p className="mt-12 text-center text-gray-500">
             No upcoming events in this category right now. Check back soon or

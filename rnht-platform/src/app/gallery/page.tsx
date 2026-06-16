@@ -38,6 +38,9 @@ const categories = ["All", ...Array.from(new Set(galleryImages.map((img) => img.
 export default function GalleryPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // True until the current full-size lightbox image finishes loading, so a
+  // spinner can be shown instead of a blank box on slow networks (RN-162).
+  const [lightboxImgLoading, setLightboxImgLoading] = useState(false);
 
   const filtered =
     selectedCategory === "All"
@@ -49,6 +52,13 @@ export default function GalleryPage() {
   // returns to the triggering thumbnail on close.
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
+  // Background content (header + filters + grid) is made inert while the
+  // lightbox is open so screen-reader virtual-cursor navigation can't escape
+  // the modal (RN-073 / WCAG 2.4.3 / 4.1.2).
+  const backgroundRef = useRef<HTMLDivElement>(null);
+  // Grid buttons keyed by image src so focus can be restored to the photo
+  // currently being viewed, not just the originally-clicked one (RN-160).
+  const gridButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const openLightbox = (filteredIndex: number) => {
     triggerRef.current = (document.activeElement as HTMLElement) ?? null;
@@ -86,6 +96,12 @@ export default function GalleryPage() {
     }
   }, [lightboxIndex, filtered.length, closeLightbox]);
 
+  // Show the spinner whenever the viewed image changes (open + Prev/Next); the
+  // image's onLoad/onError clears it (RN-162).
+  useEffect(() => {
+    if (lightboxIndex !== null) setLightboxImgLoading(true);
+  }, [lightboxIndex]);
+
   // Keyboard navigation + body scroll lock for lightbox
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -108,10 +124,26 @@ export default function GalleryPage() {
   // Keyed on open/close (not the index) so navigating Prev/Next doesn't steal
   // focus back to the trigger mid-viewing.
   const lightboxOpen = lightboxIndex !== null;
+  // Tracks the src currently being viewed so close-focus lands on the matching
+  // grid thumbnail even after Prev/Next navigation (RN-160). Kept in a ref so
+  // the open-keyed cleanup below reads the latest value without re-running.
+  const currentSrcRef = useRef<string | null>(null);
+  currentSrcRef.current =
+    lightboxIndex !== null && lightboxIndex < filtered.length
+      ? filtered[lightboxIndex].src
+      : null;
+
   useEffect(() => {
     if (!lightboxOpen) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
+    // Take the background out of the accessibility tree + tab order so AT
+    // virtual-cursor/rotor navigation stays inside the modal (RN-073).
+    const background = backgroundRef.current;
+    if (background) {
+      background.setAttribute("inert", "");
+      background.setAttribute("aria-hidden", "true");
+    }
     const focusables = () =>
       Array.from(dialog.querySelectorAll<HTMLElement>("button:not([disabled])"));
     focusables()[0]?.focus(); // move focus into the dialog
@@ -132,12 +164,25 @@ export default function GalleryPage() {
     dialog.addEventListener("keydown", trapTab);
     return () => {
       dialog.removeEventListener("keydown", trapTab);
-      triggerRef.current?.focus(); // restore focus to the thumbnail on close
+      if (background) {
+        background.removeAttribute("inert");
+        background.removeAttribute("aria-hidden");
+      }
+      // Restore focus to the thumbnail matching the photo last viewed, falling
+      // back to the original trigger if that button no longer exists (RN-160).
+      // We intentionally read the live ref map at cleanup time so it reflects
+      // the image the user navigated to, not the one captured at open.
+      const src = currentSrcRef.current;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const target = (src && gridButtonRefs.current[src]) || triggerRef.current;
+      target?.focus();
     };
   }, [lightboxOpen]);
 
   return (
     <div>
+      {/* Header + filters + grid: made inert while the lightbox is open (RN-073). */}
+      <div ref={backgroundRef}>
       {/* Burgundy + gold themed header to match the rest of the site */}
       <section
         className="relative overflow-hidden"
@@ -176,9 +221,10 @@ export default function GalleryPage() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
+            aria-pressed={selectedCategory === cat}
             className={`min-h-[44px] rounded-full px-5 text-sm font-medium transition-colors ${
               selectedCategory === cat
-                ? "bg-temple-red text-white"
+                ? "bg-temple-red text-white ring-2 ring-temple-red ring-offset-2"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
@@ -193,6 +239,9 @@ export default function GalleryPage() {
           <button
             key={img.src}
             type="button"
+            ref={(el) => {
+              gridButtonRefs.current[img.src] = el;
+            }}
             className="mb-4 break-inside-avoid cursor-pointer overflow-hidden rounded-xl group bg-transparent border-0 p-0 text-left w-full"
             aria-label={`View ${img.alt}`}
             onClick={() => openLightbox(i)}
@@ -207,8 +256,11 @@ export default function GalleryPage() {
           </button>
         ))}
       </div>
+      </div>
+      </div>
 
-      {/* Lightbox */}
+      {/* Lightbox — rendered as a sibling of the inert background so AT focus
+          stays inside the modal (RN-073). */}
       {lightboxIndex !== null && lightboxIndex < filtered.length && (
         <div
           ref={dialogRef}
@@ -242,23 +294,35 @@ export default function GalleryPage() {
             <ChevronRight className="h-8 w-8" />
           </button>
           <div
-            className="relative max-h-[85vh] max-w-[90vw]"
+            className="relative flex max-h-[85vh] max-w-[90vw] flex-col"
             onClick={(e) => e.stopPropagation()}
           >
+            {lightboxImgLoading && (
+              <div
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                role="status"
+                aria-live="polite"
+              >
+                <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <span className="sr-only">Loading image…</span>
+              </div>
+            )}
             <Image
               src={filtered[lightboxIndex].src}
               alt={filtered[lightboxIndex].alt}
               width={1200}
               height={900}
-              className="max-h-[85vh] w-auto rounded-lg object-contain"
+              priority
+              onLoad={() => setLightboxImgLoading(false)}
+              onError={() => setLightboxImgLoading(false)}
+              className="min-h-0 w-auto flex-1 rounded-lg object-contain"
             />
-            <p className="mt-3 text-center text-sm text-gray-300">
+            <p className="mt-3 shrink-0 text-center text-sm text-gray-300">
               {filtered[lightboxIndex].alt}
             </p>
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }

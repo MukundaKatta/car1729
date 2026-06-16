@@ -42,10 +42,17 @@ export function useIsAdmin() {
         if (!cancelled) setState({ isAdmin: false, loading: false });
         return;
       }
-      const { data: sess } = await supabase.auth.getSession();
-      const uid = sess.session?.user.id;
-      const admin = await isAdmin(uid);
-      if (!cancelled) setState({ isAdmin: admin, loading: false });
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const uid = sess.session?.user.id;
+        const admin = await isAdmin(uid);
+        if (!cancelled) setState({ isAdmin: admin, loading: false });
+      } catch {
+        // A failed session lookup must not throw an unhandled rejection — treat
+        // it as "not an admin" and stop loading (the admin layout still guards
+        // server-side / on its own check).
+        if (!cancelled) setState({ isAdmin: false, loading: false });
+      }
     }
     check();
     const { data: sub } = supabase?.auth.onAuthStateChange(() => {

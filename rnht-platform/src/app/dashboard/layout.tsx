@@ -7,6 +7,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: canonicalPath("/dashboard"),
   },
+  openGraph: {
+    title: "Dashboard",
+    description: "Temple member dashboard for bookings, donations, and profile details.",
+    url: canonicalPath("/dashboard"),
+    images: [],
+  },
   robots: {
     index: false,
     follow: false,

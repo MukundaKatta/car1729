@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { pushOverlay } from "@/lib/overlay-stack";
 import {
   BookOpen,
@@ -205,8 +205,11 @@ export default function EducationPage() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  // Element that opened the modal, so focus can be restored to it on close.
+  const triggerRef = useRef<HTMLElement | null>(null);
 
-  // Escape key handler and body scroll lock for registration modal
+  // Escape key handler, body scroll lock, and focus management for the modal.
   useEffect(() => {
     if (!selectedProgram) return;
     document.body.style.overflow = "hidden";
@@ -215,16 +218,54 @@ export default function EducationPage() {
       setRegName("");
       setRegEmail("");
     };
+    const getFocusable = () =>
+      dialogRef.current
+        ? Array.from(
+            dialogRef.current.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          )
+        : [];
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key === "Tab") {
+        // Trap focus within the dialog so Tab/Shift+Tab cannot reach the
+        // still-rendered background content behind the overlay.
+        const focusable = getFocusable();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey) {
+          if (active === first || !dialogRef.current?.contains(active)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (active === last || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", handleKey);
+    // Move focus into the dialog (its first focusable control, else the panel).
+    const focusTimer = window.setTimeout(() => {
+      const focusable = getFocusable();
+      (focusable[0] ?? dialogRef.current)?.focus();
+    }, 0);
     // Android hardware back closes the modal (instead of navigating away).
     const unregister = pushOverlay(close);
     return () => {
       document.body.style.overflow = "";
       document.removeEventListener("keydown", handleKey);
+      window.clearTimeout(focusTimer);
       unregister();
+      // Restore focus to the control that opened the dialog.
+      triggerRef.current?.focus();
+      triggerRef.current = null;
     };
   }, [selectedProgram]);
 
@@ -314,7 +355,10 @@ export default function EducationPage() {
               </div>
               <button
                 className="btn-primary mt-4 w-full text-sm"
-                onClick={() => setSelectedProgram(program)}
+                onClick={(e) => {
+                  triggerRef.current = e.currentTarget;
+                  setSelectedProgram(program);
+                }}
               >
                 Register Now
               </button>
@@ -325,9 +369,9 @@ export default function EducationPage() {
 
       {/* Registration Modal */}
       {selectedProgram && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" onClick={() => { setSelectedProgram(null); setRegName(""); setRegEmail(""); }}>
-          <div className="max-h-[85vh] sm:max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-heading text-xl font-bold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { setSelectedProgram(null); setRegName(""); setRegEmail(""); }}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="reg-modal-title" tabIndex={-1} className="max-h-[85vh] sm:max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-2xl focus:outline-none" onClick={(e) => e.stopPropagation()}>
+            <h2 id="reg-modal-title" className="font-heading text-xl font-bold text-gray-900">
               Register: {selectedProgram.name}
             </h2>
             <div className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">

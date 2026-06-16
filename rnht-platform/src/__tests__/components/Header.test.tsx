@@ -598,9 +598,11 @@ describe("Header", () => {
     const removeSpy = vi.spyOn(document, "removeEventListener");
     render(<Header />);
     // Open picker
-    fireEvent.click(screen.getByLabelText("Select language"));
-    // Close picker by clicking the button again
-    fireEvent.click(screen.getByLabelText("Select language"));
+    fireEvent.click(screen.getByRole("button", { name: /select language/i }));
+    // Close picker by clicking the button again. Once the picker is open, the
+    // menu container also exposes aria-label="Select language", so scope to the
+    // toggle button by role to disambiguate from the menu.
+    fireEvent.click(screen.getByRole("button", { name: /select language/i }));
     const mousedownCalls = removeSpy.mock.calls.filter((c) => c[0] === "mousedown");
     expect(mousedownCalls.length).toBeGreaterThanOrEqual(1);
     removeSpy.mockRestore();

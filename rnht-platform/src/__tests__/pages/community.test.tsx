@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import React from "react";
 
 import CommunityPage from "@/app/community/page";
@@ -17,16 +17,18 @@ describe("CommunityPage", () => {
 
   it("opens the volunteer signup modal", () => {
     render(<CommunityPage />);
-    fireEvent.click(screen.getAllByText("Sign Up")[0]);
-    expect(screen.getByText("Volunteer Sign-Up")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByText("Enquire")[0]);
+    expect(screen.getByText("Volunteer Enquiry")).toBeInTheDocument();
   });
 
   it("submits the signup form when required fields are filled", () => {
     render(<CommunityPage />);
-    fireEvent.click(screen.getAllByText("Sign Up")[0]);
+    fireEvent.click(screen.getAllByText("Enquire")[0]);
     fireEvent.change(screen.getByPlaceholderText("Full Name *"), { target: { value: "Rajesh Sharma" } });
     fireEvent.change(screen.getByPlaceholderText("Email *"), { target: { value: "rajesh@example.com" } });
-    fireEvent.click(screen.getByText("Enquire"));
+    // The modal's submit button is the "Enquire" control inside the dialog.
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Enquire" }));
     expect(window.alert).toHaveBeenCalled();
   });
 
