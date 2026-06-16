@@ -19,7 +19,9 @@ import {
 import { usePanchangamStore } from "@/store/panchangam";
 
 function formatHeaderDate(date: string, timeZone: string) {
+  if (!date) return "";
   const value = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(value.getTime())) return "";
   return new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     day: "2-digit",
@@ -30,7 +32,9 @@ function formatHeaderDate(date: string, timeZone: string) {
 }
 
 function getDisplayDateParts(date: string, timeZone: string) {
+  if (!date) return { weekday: "", month: "", day: "", year: "" };
   const value = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(value.getTime())) return { weekday: "", month: "", day: "", year: "" };
   const weekday = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     timeZone,
@@ -54,7 +58,9 @@ function getDisplayDateParts(date: string, timeZone: string) {
 export function HomePanchangamScroll() {
   const location = usePanchangamStore((s) => s.location);
   const [p, setP] = useState<ComputedPanchangam>(() =>
-    createPanchangamLoadingState(location)
+    // null date -> stable, date-free placeholder for SSG/hydration (avoids the
+    // build-vs-view-day hydration mismatch); real date arrives via useEffect.
+    createPanchangamLoadingState(location, null)
   );
   const [hasError, setHasError] = useState(false);
   const calendarYear = new Date().getFullYear();

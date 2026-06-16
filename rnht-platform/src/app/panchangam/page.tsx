@@ -15,7 +15,9 @@ export default function PanchangamPage() {
   const setLocation = usePanchangamStore((s) => s.setLocation);
   const detectCurrentLocation = usePanchangamStore((s) => s.detectCurrentLocation);
   const [computed, setComputed] = useState<ComputedPanchangam>(() =>
-    createPanchangamLoadingState(location)
+    // null date -> no today's-date baked into the static HTML (avoids the
+    // build-vs-view-day hydration mismatch). The real date arrives via useEffect.
+    createPanchangamLoadingState(location, null)
   );
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);

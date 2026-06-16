@@ -513,10 +513,14 @@ function getSamvatsara(date: Date, masa: string, timeZone: string) {
 
 export function createPanchangamLoadingState(
   location: PanchangamLocation,
-  date = new Date()
+  // Pass `null` for the initial SSG/hydration render: baking today's date into
+  // the static HTML causes a hydration text mismatch (React #425) when the page
+  // is viewed on a different day than it was built. The real date is filled in
+  // client-side once computePanchangam runs in a useEffect.
+  date: Date | null = new Date()
 ): ComputedPanchangam {
-  const dateString = getZonedDateString(date, location.timeZone);
-  const vaara = getWeekday(date, location.timeZone);
+  const dateString = date ? getZonedDateString(date, location.timeZone) : "";
+  const vaara = date ? getWeekday(date, location.timeZone) : "";
 
   return {
     ...samplePanchangam,
