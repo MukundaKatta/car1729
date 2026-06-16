@@ -88,7 +88,7 @@ describe("SponsorshipPage", () => {
     it("renders the section heading", () => {
       render(<SponsorshipPage />);
       expect(
-        screen.getByText("Service Packages (Save up to 25%)")
+        screen.getByText("Service Packages (Save up to 22%)")
       ).toBeInTheDocument();
     });
 
