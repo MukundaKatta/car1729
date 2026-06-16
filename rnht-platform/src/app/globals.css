@@ -28,7 +28,7 @@
     @apply inline-flex items-center justify-center rounded-lg bg-temple-red px-7 py-3.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:bg-temple-red-dark hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-temple-red disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 disabled:hover:translate-y-0;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border-2 border-temple-gold bg-transparent px-7 py-3 text-sm font-semibold text-temple-gold shadow-sm transition-all duration-300 hover:bg-temple-gold hover:text-white hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-temple-gold;
+    @apply inline-flex items-center justify-center rounded-lg border-2 border-temple-gold bg-transparent px-7 py-3 text-sm font-semibold text-temple-gold-deep shadow-sm transition-all duration-300 hover:bg-temple-gold hover:text-white hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-temple-gold;
   }
   .btn-outline {
     @apply inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-7 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-300 hover:bg-gray-50 hover:border-temple-gold hover:text-temple-gold hover:shadow-md active:scale-[0.98];

@@ -162,7 +162,7 @@ export default function HomePage() {
         <div className="gold-particles" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold">Our Promise</p>
+            <p className="font-accent text-sm font-semibold tracking-[0.2em] uppercase text-temple-gold-deep">Our Promise</p>
             <h2 className="mt-2 section-heading">Why Choose RNHT</h2>
             <div className="ornament-divider"><span>&#x2733;</span></div>
             <p className="mx-auto max-w-xl text-gray-600 font-accent text-lg">

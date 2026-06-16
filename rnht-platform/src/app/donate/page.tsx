@@ -572,7 +572,7 @@ function DonateContent() {
       <div className="mt-8 rounded-3xl border border-temple-gold/20 bg-white/95 p-6 shadow-premium">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-temple-gold-deep">
               Donate Your Way
             </p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-temple-maroon">
@@ -682,7 +682,7 @@ function DonateContent() {
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{fund.name}</p>
                     {fund.description && (
-                      <p className="text-xs text-gray-500">{fund.description}</p>
+                      <p className="text-xs text-gray-600">{fund.description}</p>
                     )}
                   </div>
                 </label>

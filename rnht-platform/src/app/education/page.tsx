@@ -307,7 +307,7 @@ export default function EducationPage() {
                     style={{ width: `${(program.enrolled / program.capacity) * 100}%` }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   {program.capacity - program.enrolled} spots remaining
                 </p>
               </div>

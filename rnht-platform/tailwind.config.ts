@@ -13,6 +13,9 @@ const config: Config = {
           gold: "#C5973E",
           "gold-light": "#E8D5A3",
           "gold-dark": "#9B7730",
+          // WCAG-AA accessible gold (5.09:1 on white) for small text / eyebrow
+          // labels on light backgrounds, where #C5973E (2.67:1) fails contrast.
+          "gold-deep": "#8B6914",
           red: "#B91C32",
           "red-dark": "#7A1020",
           saffron: "#E85D04",

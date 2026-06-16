@@ -72,7 +72,7 @@ export default function NewsPage() {
               className="aspect-[16/9] w-full rounded-2xl object-cover"
             />
           )}
-          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-temple-gold">
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-temple-gold-deep">
             {active.category}
           </p>
           <h1 className="mt-2 font-heading text-3xl font-bold text-temple-maroon sm:text-4xl">
@@ -149,7 +149,7 @@ export default function NewsPage() {
                     <div className="h-40 w-full bg-gradient-to-br from-temple-maroon to-[#5E0A1F]" />
                   )}
                   <div className="flex flex-1 flex-col p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-temple-gold">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-temple-gold-deep">
                       {post.category}
                     </p>
                     <h3 className="mt-2 font-heading text-lg font-bold text-temple-maroon transition-colors group-hover:text-temple-red">

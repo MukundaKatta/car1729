@@ -138,7 +138,7 @@ export default function SponsorshipPage() {
                 <p className="mt-3 text-xs text-gray-500">{bundle.duration}</p>
                 <div className="mt-4 flex items-end justify-between">
                   <div>
-                    <p className="text-sm text-gray-400 line-through">
+                    <p className="text-sm text-gray-500 line-through">
                       {formatCurrency(bundle.individualTotal)}
                     </p>
                     <p className="text-2xl font-bold text-temple-red">

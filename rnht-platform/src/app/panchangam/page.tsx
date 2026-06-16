@@ -176,14 +176,14 @@ export default function PanchangamPage() {
             );
           })}
         </div>
-        <p className="mt-3 text-xs text-gray-500">
+        <p className="mt-3 text-xs text-gray-600">
           Timings are shown in your selected location&apos;s timezone.
         </p>
       </div>
 
       <div className="mt-8">
         {loading && !hasError && (
-          <p className="mb-4 text-sm text-gray-500">
+          <p className="mb-4 text-sm text-gray-600">
             Calculating live Panchangam for {location.label}...
           </p>
         )}

@@ -107,7 +107,7 @@ export default function StreamingPage() {
               <p className="font-heading text-lg font-bold text-temple-maroon">
                 {item.name}
               </p>
-              <p className="mt-1 text-sm font-semibold text-temple-gold-dark">
+              <p className="mt-1 text-sm font-semibold text-temple-gold-deep">
                 {item.time}
               </p>
               <p className="mt-2 text-sm text-gray-600">{item.detail}</p>

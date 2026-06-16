@@ -195,7 +195,7 @@ export default function CommunityPage() {
                         ))}
                       </div>
                       <div className="mt-3 flex items-center justify-between">
-                        <span className="text-sm text-green-600 font-medium">
+                        <span className="text-sm text-green-700 font-medium">
                           {opp.spotsAvailable} spots available
                         </span>
                         <button

@@ -140,7 +140,7 @@ export function HomePanchangamScroll() {
       <div className="gold-particles" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold">
+          <p className="font-accent text-sm font-semibold uppercase tracking-[0.2em] text-temple-gold-deep">
             Daily Guidance
           </p>
           <h2 className="mt-2 section-heading">Today&rsquo;s Panchangam</h2>
@@ -200,7 +200,7 @@ export function HomePanchangamScroll() {
               <div className="rounded-2xl border border-temple-gold/40 bg-[#FFF8E7]/95 px-4 py-3 sm:max-w-[18rem]">
                 {p.festival ? (
                   <>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-saffron">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-red">
                       Festival &middot; Vrata
                     </p>
                     <p className="mt-1 font-heading text-base font-bold leading-snug text-temple-maroon sm:text-lg">
@@ -209,7 +209,7 @@ export function HomePanchangamScroll() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-saffron">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-red">
                       Today&rsquo;s Tithi
                     </p>
                     <p className="mt-1 font-heading text-base font-bold leading-snug text-temple-maroon sm:text-lg">
