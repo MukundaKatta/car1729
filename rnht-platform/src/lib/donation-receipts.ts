@@ -281,20 +281,22 @@ export async function checkAndSendReceipt(userId: string): Promise<void> {
 
   const rows = donations as unknown as DonationRow[];
 
-  const total = rows.reduce((sum, d) => sum + Number(d.amount ?? 0), 0);
-  if (total < TAX_RECEIPT_THRESHOLD_USD) return;
-
   // Recipient = the most recent gift's email/name (rows are ordered
   // created_at desc), preferring the donor's freshest contact details.
   const primary = rows[0];
   const primaryEmail = primary.donor_email;
 
   // Only the donations recorded under the address we actually email may be
-  // marked receipted. If this user's gifts span multiple donor_email values
-  // (email change, mix of authed + guest-linked gifts), the rows under the
-  // other address(es) stay unmarked so a future call can still deliver their
-  // summary instead of permanently suppressing it.
+  // summarized, totalled, AND marked receipted — all three must use the SAME
+  // set. If this user's gifts span multiple donor_email values (email change,
+  // mix of authed + guest-linked gifts), the rows under the other address(es)
+  // stay out of this email and unmarked, so a future call can still deliver
+  // their own summary instead of listing/charging them here or suppressing them.
   const sameEmail = rows.filter((d) => d.donor_email === primaryEmail);
+
+  const total = sameEmail.reduce((sum, d) => sum + Number(d.amount ?? 0), 0);
+  if (total < TAX_RECEIPT_THRESHOLD_USD) return;
+
   const unsentForPrimary = sameEmail.some((d) => !d.tax_receipt_sent);
   if (!unsentForPrimary) return;
 
@@ -303,7 +305,7 @@ export async function checkAndSendReceipt(userId: string): Promise<void> {
     name: primary.donor_name,
     year,
     total,
-    donations: rows,
+    donations: sameEmail,
   });
 
   const ids = sameEmail.map((d) => d.id);

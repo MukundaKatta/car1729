@@ -19,8 +19,9 @@ export async function POST(request: Request) {
     if (result.status === "COMPLETED" && result.donationId) {
       const supabase = getServiceSupabase();
       if (!supabase) {
+        // 500 (not 503): a missing service key is a permanent misconfiguration.
         console.error("PayPal webhook: service Supabase not configured");
-        return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+        return NextResponse.json({ error: "Server not configured" }, { status: 500 });
       }
       const { data, error } = await supabase
         .from("donations")

@@ -180,12 +180,23 @@ export default function AdminPriestsPage() {
       : await supabase.from("priests").insert(payload);
     if (writeErr) {
       // The new head was never committed but the prior head was demoted —
-      // re-promote it so we don't leave the table with zero heads.
+      // re-promote it so we don't leave the table with zero heads. If even that
+      // re-promotion fails, surface it explicitly: the table really is left with
+      // no head and an admin must fix it manually.
       if (demotedHeadId) {
-        await supabase
+        const { error: restoreErr } = await supabase
           .from("priests")
           .update({ is_head: true })
           .eq("id", demotedHeadId);
+        setSaving(false);
+        if (restoreErr) {
+          setError(
+            `Save failed (${writeErr.message}) AND restoring the previous head priest failed (${restoreErr.message}). No priest is currently marked as head — please set one manually and reload.`,
+          );
+        } else {
+          setError(writeErr.message);
+        }
+        return;
       }
       setSaving(false);
       setError(writeErr.message);

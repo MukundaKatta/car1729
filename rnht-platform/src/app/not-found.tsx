@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Page Not Found",
+  // Keep the 404 out of search indexes (it would otherwise inherit the root
+  // layout's index:true) — error pages should never appear in results.
+  robots: { index: false, follow: false },
 };
 
 import Link from "next/link";

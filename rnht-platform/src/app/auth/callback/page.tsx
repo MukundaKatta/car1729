@@ -35,8 +35,13 @@ export default function AuthCallbackPage() {
 
     // Fallback: check session after timeout
     const timeout = setTimeout(async () => {
-      if (!supabase) return;
       if (navigated) return;
+      // Show the error screen rather than silently stranding the user on the
+      // "Signing you in…" spinner if supabase became unavailable.
+      if (!supabase) {
+        setError(true);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (navigated) return;
       if (session) {

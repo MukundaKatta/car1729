@@ -244,13 +244,21 @@ function EventFormModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  // Hold the latest onClose in a ref so the mount-once effect below always calls
+  // the current one without listing it as a dependency — onClose is an inline
+  // prop (new ref every parent render), and depending on it re-ran this effect
+  // on each render, stealing focus back to the title field while the user typed
+  // in another input and re-attaching the listener.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Lock body scroll, close on Escape, and manage focus while the modal is open.
+  // Runs once on mount (the modal mounts/unmounts per open), not on every render.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", handleKey);
     // Move initial focus into the dialog.
@@ -260,7 +268,7 @@ function EventFormModal({
       document.removeEventListener("keydown", handleKey);
       previouslyFocused?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   const handleSave = async () => {
     if (!supabase) return;

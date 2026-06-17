@@ -27,8 +27,10 @@ export async function POST(request: Request) {
 
   const supabase = getServiceSupabase();
   if (!supabase) {
+    // 500 (not 503): a missing service key is a permanent misconfiguration, not
+    // a transient outage. Matches the signature-failure path above.
     console.error("Stripe webhook: service Supabase not configured");
-    return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
 
   if (event.type === "checkout.session.completed") {

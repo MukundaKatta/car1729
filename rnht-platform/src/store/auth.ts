@@ -469,8 +469,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     if (error) return { error: error.message };
 
+    // Mirror exactly what was written to the DB: the trimmed email (newEmail),
+    // not the raw updates.email, so local state never diverges from the row.
     set((state) => ({
-      user: state.user ? { ...state.user, ...updates } : null,
+      user: state.user
+        ? { ...state.user, ...updates, ...(newEmail !== undefined && { email: newEmail }) }
+        : null,
     }));
     return emailChangePending ? { emailChangePending: true } : {};
   },

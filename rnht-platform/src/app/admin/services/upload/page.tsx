@@ -135,9 +135,12 @@ export default function AdminServicesUploadPage() {
       .update({ is_current: true })
       .eq("id", pdf.id);
     if (setErr) {
-      // The clear succeeded but the set failed — restore the prior current
-      // row so the public download does not silently disappear.
-      if (previousCurrentId && previousCurrentId !== pdf.id) {
+      // The clear succeeded but the set failed — restore the prior current row
+      // so the public download does not silently disappear. Restore whenever a
+      // prior current existed, INCLUDING when it is this same pdf (e.g. the user
+      // re-activated the already-current PDF and the set failed) — otherwise the
+      // table is left with zero current rows.
+      if (previousCurrentId) {
         await supabase
           .from("service_pdfs")
           .update({ is_current: true })

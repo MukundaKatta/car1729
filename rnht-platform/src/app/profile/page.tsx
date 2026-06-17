@@ -316,20 +316,21 @@ function ProfileContent() {
   const [newMember, setNewMember] = useState({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
   const [familyError, setFamilyError] = useState("");
 
-  // Android back button: close the Add/Edit Family dialog instead of navigating.
-  useEffect(() => {
-    if (!showAddFamily) return;
-    return pushOverlay(() => {
-      setShowAddFamily(false);
-      setEditingFamilyId(null);
-    });
-  }, [showAddFamily]);
   const closeFamilyModal = useCallback(() => {
     setShowAddFamily(false);
     setEditingFamilyId(null);
     setNewMember({ name: "", relationship: "", gotra: "", nakshatra: "", rashi: "", dob: "" });
     setFamilyError("");
   }, []);
+
+  // Android back button: close the Add/Edit Family dialog instead of navigating.
+  // Reuse closeFamilyModal so the back button does the SAME full cleanup (also
+  // clears the in-progress member + error), not a partial reset that leaves
+  // stale form data on the next open.
+  useEffect(() => {
+    if (!showAddFamily) return;
+    return pushOverlay(closeFamilyModal);
+  }, [showAddFamily, closeFamilyModal]);
 
   // Dialog a11y: focus trap, Escape-to-close, focus restore (+ body-scroll lock
   // for the family modal). Hooks run unconditionally, before the auth early

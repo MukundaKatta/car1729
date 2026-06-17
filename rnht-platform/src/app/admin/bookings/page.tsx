@@ -116,6 +116,7 @@ export default function AdminBookingsPage() {
       );
       return;
     }
+    setError(null); // clear any stale error from a previous failed attempt
     setBookingsData((prev) =>
       prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
     );
