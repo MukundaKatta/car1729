@@ -158,6 +158,10 @@ export default function AdminServicesUploadPage() {
       confirmMessage: `Delete "${pdf.file_name}"? This also removes the file from storage.`,
       approvalReason: `Delete services PDF "${pdf.file_name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         await supabase.storage.from(BUCKET).remove([pdf.storage_path]);
         const { error: delErr } = await supabase
           .from("service_pdfs")

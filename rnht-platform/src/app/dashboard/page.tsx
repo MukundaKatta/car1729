@@ -138,6 +138,7 @@ function LoginForm() {
     let cancelled = false;
 
     const checkSession = async () => {
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancelled && session?.user) {
         window.location.reload();

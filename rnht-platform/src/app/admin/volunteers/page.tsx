@@ -119,6 +119,10 @@ export default function AdminVolunteersPage() {
       confirmMessage: `Delete "${item.title}"?`,
       approvalReason: `Delete volunteer opportunity "${item.title}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: delErr } = await supabase
           .from("volunteer_opportunities")
           .delete()

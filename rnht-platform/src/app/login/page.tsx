@@ -114,6 +114,7 @@ function LoginContent() {
     let cancelled = false;
 
     const checkSession = async () => {
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancelled && session?.user) {
         router.replace("/dashboard");

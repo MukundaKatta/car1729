@@ -190,6 +190,10 @@ export default function AdminNewsPage() {
         : `Unpublish "${post.title}" and remove it from the public feed?`,
       approvalReason: `${nextPublished ? "Publish" : "Unpublish"} news post "${post.title}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error } = await supabase
           .from("news_posts")
           .update({
@@ -214,6 +218,10 @@ export default function AdminNewsPage() {
       confirmMessage: `Delete "${post.title}"? This can't be undone.`,
       approvalReason: `Delete news post "${post.title}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error } = await supabase.from("news_posts").delete().eq("id", post.id);
         if (error) {
           setError(error.message);

@@ -51,6 +51,7 @@ export default function AdminEventsPage() {
       confirmMessage: "Are you sure you want to delete this event?",
       approvalReason: `Delete event "${event.title}"`,
       run: async () => {
+        if (!supabase) { setError("Not connected. Please reload."); return; }
         const { error: delErr } = await supabase.from("events").delete().eq("id", event.id);
         if (delErr) { setError(delErr.message); return; }
         await refresh();

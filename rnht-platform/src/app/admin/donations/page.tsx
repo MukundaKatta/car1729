@@ -159,6 +159,10 @@ function DonationTypesTab() {
         : `Deactivate "${type.name}" from the donation form?`,
       approvalReason: `${nextActive ? "Restore" : "Deactivate"} donation type "${type.name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: toggleErr } = await supabase
           .from("donation_types")
           .update({ is_active: nextActive })
@@ -180,6 +184,10 @@ function DonationTypesTab() {
       confirmMessage: `Delete "${type.name}"? Donations already tagged with this fund won't be deleted.`,
       approvalReason: `Delete donation type "${type.name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: delErr } = await supabase
           .from("donation_types")
           .delete()

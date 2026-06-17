@@ -205,6 +205,10 @@ export default function AdminPriestsPage() {
       confirmMessage: `Delete "${priest.name}"? This can't be undone.`,
       approvalReason: `Delete priest "${priest.name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: delErr } = await supabase.from("priests").delete().eq("id", priest.id);
         if (delErr) {
           setError(delErr.message);

@@ -18,6 +18,10 @@ export async function POST(request: Request) {
 
     if (result.status === "COMPLETED" && result.donationId) {
       const supabase = getServiceSupabase();
+      if (!supabase) {
+        console.error("PayPal webhook: service Supabase not configured");
+        return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+      }
       const { data, error } = await supabase
         .from("donations")
         .update({ payment_status: "completed" })

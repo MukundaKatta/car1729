@@ -26,6 +26,10 @@ export async function POST(request: Request) {
   }
 
   const supabase = getServiceSupabase();
+  if (!supabase) {
+    console.error("Stripe webhook: service Supabase not configured");
+    return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+  }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;

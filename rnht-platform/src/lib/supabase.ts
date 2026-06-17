@@ -10,14 +10,18 @@ const supabaseClient =
     ? createClient(supabaseUrl, supabaseAnonKey)
     : null;
 
-// Export typed as non-null for convenience; consumers that run during
-// build (stores, pages) already catch errors via try/catch.
-export const supabase = supabaseClient as NonNullable<typeof supabaseClient>;
+// Honestly typed as possibly-null: it IS null when env vars are missing (static
+// builds / misconfig). Consumers must guard with `if (!supabase) ...`; the type
+// now enforces that instead of a NonNullable cast hiding it (RN-082/155).
+export const supabase = supabaseClient;
 
+// Return type is inferred (SupabaseClient<...> | null) from the real
+// createClient() call — do NOT annotate with ReturnType<typeof createClient>,
+// which resolves the schema generic to `never` and breaks .from().insert().
 export function getServiceSupabase() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
-    return null as unknown as ReturnType<typeof createClient>;
+    return null;
   }
   return createClient(supabaseUrl, serviceRoleKey);
 }

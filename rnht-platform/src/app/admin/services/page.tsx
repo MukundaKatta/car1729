@@ -337,6 +337,10 @@ export default function AdminServicesPage() {
         : `Deactivate "${service.name}" from the live services list?`,
       approvalReason: `${nextActive ? "Restore" : "Deactivate"} service "${service.name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: toggleErr } = await supabase
           .from("services")
           .update({ is_active: nextActive })
@@ -359,6 +363,10 @@ export default function AdminServicesPage() {
       confirmMessage: `Delete "${service.name}"? This can't be undone.`,
       approvalReason: `Delete service "${service.name}"`,
       run: async () => {
+        if (!supabase) {
+          setError("Not connected. Please reload.");
+          return;
+        }
         const { error: delErr } = await supabase.from("services").delete().eq("id", service.id);
         if (delErr) {
           setError(delErr.message);

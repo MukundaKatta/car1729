@@ -67,6 +67,12 @@ export async function POST(request: Request) {
     }
 
     const supabase = getServiceSupabase();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Server is not configured for payments." },
+        { status: 503 }
+      );
+    }
     const label = fundLabels[fundType] || "Donation";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -192,6 +198,9 @@ export async function GET(request: Request) {
     }
 
     const supabase = getServiceSupabase();
+    if (!supabase) {
+      return NextResponse.json({ error: "Server is not configured." }, { status: 503 });
+    }
     const { data, error } = await supabase
       .from("donations")
       .update({ payment_status: "completed" })

@@ -310,7 +310,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
   fetchUserData: async () => {
     const authUser = get().authUser;
-    if (!authUser) return;
+    if (!authUser || !supabase) return;
 
     // Fetch profile. maybeSingle() (not single()) so a not-yet-created row
     // returns data:null without an error — letting the fallback seed below run
