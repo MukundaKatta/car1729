@@ -59,6 +59,7 @@ export default function AdminVolunteersPage() {
 
   function startNew() {
     setForm(emptyForm);
+    setError(null); // don't carry a stale error from a previous failed save
     setShowForm(true);
   }
 
@@ -82,6 +83,10 @@ export default function AdminVolunteersPage() {
     setError(null);
     if (!form.title.trim()) {
       setError("Title is required.");
+      return;
+    }
+    if (!form.description.trim()) {
+      setError("Description is required.");
       return;
     }
     setSaving(true);
@@ -138,7 +143,7 @@ export default function AdminVolunteersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading flex items-center gap-2">
           <HeartHandshake className="h-7 w-7 text-temple-red" />
           Volunteer Opportunities
@@ -241,10 +246,17 @@ export default function AdminVolunteersPage() {
               </label>
               <input
                 type="tel"
+                inputMode="tel"
                 className="input-field mt-1"
+                placeholder="(512) 555-0123"
                 value={form.contact_phone}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, contact_phone: e.target.value }))
+                  // Restrict to phone characters (digits + + ( ) - space) so
+                  // letters/symbols can't be typed into a phone field.
+                  setForm((f) => ({
+                    ...f,
+                    contact_phone: e.target.value.replace(/[^\d+()\-\s]/g, ""),
+                  }))
                 }
               />
             </div>

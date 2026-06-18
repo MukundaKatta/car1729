@@ -93,6 +93,13 @@ function DonationTypesTab() {
       return;
     }
     const slug = form.slug.trim() || slugify(form.name);
+    // slugify() drops non-alphanumerics, so a name like "###" yields an empty
+    // slug — reject it (an empty slug breaks the public donate form's fund
+    // matching and collides on the unique constraint).
+    if (!slug) {
+      setError("Name must contain at least one letter or number.");
+      return;
+    }
     // Validate + normalize custom fields: donor answers on the public form are
     // keyed by field.key, so empty/duplicate/malformed keys collide or lose
     // donor input. Require a non-empty label, derive a normalized slug key, and
@@ -226,7 +233,7 @@ function DonationTypesTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-heading text-xl font-bold text-temple-maroon">
           Donation Types
         </h2>

@@ -69,7 +69,7 @@ export default function AdminEventsPage() {
         Back to Dashboard
       </Link>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading">Manage Events</h1>
         <button
           className="btn-primary flex items-center gap-2"
@@ -271,7 +271,10 @@ function EventFormModal({
   }, []);
 
   const handleSave = async () => {
-    if (!supabase) return;
+    if (!supabase) {
+      setFormError("Not connected to the database. Please reload and try again.");
+      return;
+    }
     const trimmedTitle = title.trim();
     if (!trimmedTitle || !startDate) {
       setFormError("Title and date are required.");
@@ -419,7 +422,7 @@ function EventFormModal({
           <button
             className="btn-primary"
             onClick={handleSave}
-            disabled={!title || !startDate || saving}
+            disabled={!title.trim() || !startDate || saving}
           >
             {saving
               ? "Saving…"

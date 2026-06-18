@@ -234,7 +234,7 @@ export default function AdminNewsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading flex items-center gap-2">
           <Newspaper className="h-7 w-7 text-temple-red" />
           News &amp; Updates

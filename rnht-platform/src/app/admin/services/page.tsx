@@ -382,12 +382,12 @@ export default function AdminServicesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading flex items-center gap-2">
           <FileText className="h-7 w-7 text-temple-red" />
           Manage Services
         </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/admin/services/upload"
             className="btn-outline flex items-center gap-2"
@@ -477,14 +477,24 @@ export default function AdminServicesPage() {
                 className="input-field mt-1"
                 value={form.category_id}
                 onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
+                disabled={categories.length === 0}
               >
-                <option value="">Select category…</option>
+                <option value="">
+                  {categories.length === 0 ? "No categories yet" : "Select category…"}
+                </option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
               </select>
+              {categories.length === 0 && (
+                <p className="mt-1 text-xs text-amber-700">
+                  No service categories exist yet. Click{" "}
+                  <span className="font-semibold">“Sync Catalog”</span> above to load the
+                  standard categories, then choose one here.
+                </p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">

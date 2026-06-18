@@ -249,6 +249,10 @@ function SlideEditor({
 
   const handleSave = async () => {
     setSaveError("");
+    if (!form.title.trim()) {
+      setSaveError("Please enter a title for this slide.");
+      return;
+    }
     const ctaLink = form.ctaLink.trim();
     const url = form.url.trim();
     if (ctaLink && !isSafeLink(ctaLink)) {
@@ -258,6 +262,13 @@ function SlideEditor({
     // Skip validating the placeholder shown for inline-uploaded data URLs.
     if (url && !url.startsWith("data:") && !isSafeLink(url)) {
       setSaveError("Media URL must be an internal path starting with “/” (e.g. /slideshow/photo.jpg) or an https:// URL.");
+      return;
+    }
+    // Require a photo or video: previously a slide with no media was created
+    // silently (and a failed upload — e.g. missing storage bucket — left the
+    // media empty without blocking the save).
+    if (!url) {
+      setSaveError("Please add a photo or video for this slide — upload one above, or paste an image/video URL.");
       return;
     }
     const normalized = { ...form, ctaLink, url };
@@ -477,7 +488,7 @@ export default function AdminSlideshowPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Link
           href="/admin"
           className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -692,7 +703,7 @@ export default function AdminSlideshowPage() {
             Add a title and description for each slide — these appear as overlay text on the homepage.
           </li>
           <li>
-            Leave the media empty to use the default temple gradient background.
+            Each slide needs a photo or video (upload one, or paste an image/video URL).
           </li>
           <li>
             Slides auto-rotate every 6 seconds. Reorder with arrows, toggle visibility with the eye icon.

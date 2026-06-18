@@ -300,6 +300,11 @@ describe("AdminSlideshowPage", () => {
     const titleInput = screen.getByPlaceholderText("e.g., Rudra Narayana Hindu Temple");
     fireEvent.change(titleInput, { target: { value: "New Slide Title" } });
 
+    // A photo/video is now required before a slide can be created — provide a
+    // media URL so the save proceeds.
+    const mediaInput = screen.getByPlaceholderText("/slideshow/photo.jpg or https://...");
+    fireEvent.change(mediaInput, { target: { value: "/slideshow/photo.jpg" } });
+
     // Click the save button in the editor footer (contains "Add Slide" text in btn-primary)
     const addSlideBtns = screen.getAllByText("Add Slide");
     const footerSaveBtn = addSlideBtns.find(

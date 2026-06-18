@@ -232,7 +232,7 @@ export default function AdminPriestsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading flex items-center gap-2">
           <Users className="h-7 w-7 text-temple-red" />
           Priests
@@ -321,9 +321,13 @@ export default function AdminPriestsPage() {
               <label className="block text-sm font-medium text-gray-700">Phone</label>
               <input
                 type="tel"
+                inputMode="tel"
                 className="input-field mt-1"
                 value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  // Restrict to phone characters so letters can't be entered.
+                  setForm((f) => ({ ...f, phone: e.target.value.replace(/[^\d+()\-\s]/g, "") }))
+                }
                 placeholder="+15125450473"
               />
             </div>
