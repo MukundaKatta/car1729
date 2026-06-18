@@ -174,10 +174,18 @@ async function handleCreate(req: Request): Promise<Response> {
     );
   }
   // Allowlist the fund: fund_type is plain TEXT with no DB constraint, so a
-  // direct API call could otherwise insert arbitrary fund names. fundLabels is
-  // the canonical fund registry (drives the Stripe line item + receipt label),
-  // so every legitimate fund is a key here — reject anything else.
-  if (!fundType || !(fundType in fundLabels)) {
+  // direct API call could otherwise insert arbitrary fund names. A fund is valid
+  // if it is an ACTIVE row in donation_types (the admin-managed source of truth,
+  // so funds added in the admin panel work) OR a hardcoded fundLabels key
+  // (legacy/standard funds, e.g. deity sevas). Reject anything in neither.
+  const { data: fundRow } = await supabase
+    .from("donation_types")
+    .select("name")
+    .eq("slug", fundType)
+    .eq("is_active", true)
+    .maybeSingle();
+  const inFundLabels = !!fundType && fundType in fundLabels;
+  if (!fundRow && !inFundLabels) {
     return new Response(
       JSON.stringify({ error: "Unknown donation fund" }),
       { status: 400, headers: jsonHeaders },
@@ -186,7 +194,8 @@ async function handleCreate(req: Request): Promise<Response> {
   // Authoritative server-side rounding to whole cents (never trust the client).
   const cleanAmount = Math.round(amount * 100) / 100;
 
-  const label = fundLabels[fundType] ?? "Donation";
+  // Prefer the admin-managed name; fall back to the legacy label.
+  const label = fundRow?.name ?? fundLabels[fundType] ?? "Donation";
   const userId = await resolveUserId(req);
 
   const { data: donation, error: dbError } = await supabase
@@ -226,11 +235,27 @@ async function handleCreate(req: Request): Promise<Response> {
   }
 
   if (paymentMethod === "paypal") {
-    const order = await createPayPalOrder({
-      amount: cleanAmount,
-      description: label,
-      donationId: donation.id,
-    });
+    let order;
+    try {
+      order = await createPayPalOrder({
+        amount: cleanAmount,
+        description: label,
+        donationId: donation.id,
+      });
+    } catch (payErr) {
+      // PayPal order-create failed (e.g. missing/invalid PAYPAL creds). Delete
+      // the just-inserted pending donation so it doesn't linger as an orphan,
+      // and return a clear error instead of an opaque 500.
+      console.error("PayPal order create failed:", payErr);
+      await supabase.from("donations").delete().eq("id", donation.id);
+      return new Response(
+        JSON.stringify({
+          error:
+            "Could not start the PayPal payment. Please try another payment method or contact the temple.",
+        }),
+        { status: 502, headers: jsonHeaders },
+      );
+    }
     await supabase
       .from("donations")
       .update({ payment_intent_id: order.id })
@@ -310,7 +335,15 @@ async function handleVerify(req: Request): Promise<Response> {
     );
   }
 
-  const fundLabel = fundLabels[data.fund_type] ?? "Temple Fund";
+  // Resolve the receipt label from the admin-managed donation_types first, so
+  // admin-created funds show their real name on the receipt; fall back to the
+  // legacy fundLabels map, then a generic label.
+  const { data: fundRow } = await supabase
+    .from("donation_types")
+    .select("name")
+    .eq("slug", data.fund_type)
+    .maybeSingle();
+  const fundLabel = fundRow?.name ?? fundLabels[data.fund_type] ?? "Temple Fund";
 
   // Atomic flip: only the verify that actually transitions pending -> completed
   // updates a row and sends the receipt. Concurrent/refresh verifies update 0
