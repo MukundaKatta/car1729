@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
 /**
@@ -135,6 +136,23 @@ const CSS = `
 `;
 
 export function HeroSlideshow() {
+  // On mobile the hero shows ONE panel at a time and auto-rotates through all
+  // three deity views as a slider; on sm+ all three render side by side, so
+  // `active` only drives the sub-sm crossfade. Starts on the center (priority)
+  // image to keep it as the mobile LCP.
+  const [active, setActive] = useState(1);
+  useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return; // honor reduced-motion: hold on the center image
+    const id = setInterval(
+      () => setActive((i) => (i + 1) % PANELS.length),
+      3500,
+    );
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <>
       {/* dangerouslySetInnerHTML avoids JSX text-serialization: a plain
@@ -149,12 +167,14 @@ export function HeroSlideshow() {
         {/* Shimmering gold top border */}
         <div className="border-shimmer absolute top-0 inset-x-0 h-[3px] z-30" />
 
-        {/* ── Three panels — all on sm+, center only on mobile ─────── */}
+        {/* ── Three panels — side by side on sm+, auto-rotating slider on mobile ─────── */}
         <div className="absolute inset-0 grid grid-cols-1 sm:grid-cols-3">
           {PANELS.map((panel, i) => (
             <div
               key={i}
-              className={`hero-panel-shell relative overflow-hidden ${i !== 1 ? "hidden sm:block" : ""}`}
+              className={`hero-panel-shell overflow-hidden absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
+                i === active ? "opacity-100" : "opacity-0"
+              } sm:relative sm:inset-auto sm:opacity-100 sm:transition-none`}
               style={panel.style}
             >
 
@@ -183,13 +203,13 @@ export function HeroSlideshow() {
               {/* Inner edge shadow — blends panels toward center */}
               {i === 0 && (
                 <div
-                  className="absolute inset-y-0 right-0 w-16 pointer-events-none z-10"
+                  className="absolute inset-y-0 right-0 w-16 pointer-events-none z-10 hidden sm:block"
                   style={{ background: "linear-gradient(to right, transparent, rgba(42,6,18,0.58))" }}
                 />
               )}
               {i === 2 && (
                 <div
-                  className="absolute inset-y-0 left-0 w-16 pointer-events-none z-10"
+                  className="absolute inset-y-0 left-0 w-16 pointer-events-none z-10 hidden sm:block"
                   style={{ background: "linear-gradient(to left, transparent, rgba(42,6,18,0.58))" }}
                 />
               )}
