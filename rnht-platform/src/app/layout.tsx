@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
-import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
+import { Nunito, Cormorant_Garamond } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FallingPetals } from "@/components/effects/FallingPetals";
@@ -12,13 +12,14 @@ import { CapacitorInit } from "@/components/CapacitorInit";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
-// Self-hosted (bundled) so the decorative headings actually render — and work
-// offline in the native apps. Exposed as CSS variables used by --font-heading/
-// --font-accent below.
-const playfair = Playfair_Display({
+// Self-hosted (bundled) so the headings render in a readable, warm rounded sans
+// (Nunito) — and work offline in the native apps. Client asked for a more
+// legible heading face than the previous high-contrast serif. Exposed as CSS
+// variables used by --font-heading/--font-accent below.
+const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-playfair",
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-nunito",
   display: "swap",
 });
 const cormorant = Cormorant_Garamond({
@@ -132,10 +133,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${cormorant.variable}`}
+      className={`${nunito.variable} ${cormorant.variable}`}
       style={
         {
-          "--font-heading": 'var(--font-playfair), Georgia, "Times New Roman", serif',
+          "--font-heading": 'var(--font-nunito), system-ui, -apple-system, "Segoe UI", sans-serif',
           "--font-accent": 'var(--font-cormorant), Georgia, "Times New Roman", serif',
         } as CSSProperties
       }

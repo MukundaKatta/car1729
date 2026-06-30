@@ -32,7 +32,7 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
   {
     id: "general",
     slug: "general",
-    name: "General Temple Fund",
+    name: "General Temple Donation",
     description: "Unrestricted contribution supporting all temple activities",
     custom_fields: [],
   },
@@ -43,16 +43,16 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
 const ZELLE_PHONE = "(512) 545-0473";
 
 const donationFundLabels: Record<string, string> = {
-  general: "General Temple Fund",
-  building: "Building Fund",
-  priest: "Priest Fund",
-  annadanam: "Annadanam Fund",
-  festival: "Festival Fund",
-  education: "Education Fund",
+  general: "General Temple Donation",
+  building: "Building Donation",
+  priest: "Priest Donation",
+  annadanam: "Annadanam Donation",
+  festival: "Festival Donation",
+  education: "Education Donation",
 };
 
 function donationFundLabel(slug: string) {
-  return donationFundLabels[slug] || "Temple Fund";
+  return donationFundLabels[slug] || "Temple Donation";
 }
 
 // useSearchParams() forces a CSR bailout under static export unless it sits
@@ -286,7 +286,7 @@ function DonateContent() {
       ? Math.min(Math.round(amount * 100) / 100, MAX_DONATION)
       : 0;
   const displayedAmount = confirmedAmount ?? effectiveAmount;
-  const displayedFundName = confirmedFundName ?? activeFund?.name ?? "Temple Fund";
+  const displayedFundName = confirmedFundName ?? activeFund?.name ?? "Temple Donation";
 
   function setCustomField(key: string, value: string) {
     setCustomFieldValues((prev) => ({ ...prev, [key]: value }));
@@ -804,10 +804,10 @@ function DonateContent() {
               {verifyError}
             </div>
           )}
-          {/* Fund */}
+          {/* Donation */}
           <div className="card p-5">
             <h2 className="font-heading text-lg font-bold text-gray-900">
-              Choose a Fund
+              Choose a Donation
             </h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {fundTypes.map((fund) => (

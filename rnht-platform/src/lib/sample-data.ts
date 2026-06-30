@@ -92,7 +92,7 @@ export const sampleServices: Service[] = [
   {
     id: "svc-2",
     category_id: "cat-2",
-    name: "DEVI SAPTASHATI PARAYANAM (DEVI MAHATMYA PATH) CHANDI PATH",
+    name: "CHANDI PARAYANAM / CHANDI PATH",
     slug: "devi-saptashati-parayanam",
     short_description:
       "A sacred Chandi Path of 700 verses invoking the Divine Mother for courage, protection, peace, and spiritual harmony.",

@@ -124,7 +124,7 @@ const en: TranslationKeys = {
   "donate.title": "Support Our Temple",
   "donate.subtitle": "Your contributions help maintain the temple and support community programs",
   "donate.amount": "Donation Amount",
-  "donate.fund": "Select Fund",
+  "donate.fund": "Select Donation",
   "donate.recurring": "Make this a recurring donation",
   "donate.dollarADay": "Dollar A Day Program",
   "donate.zelle": "Donate via Zelle",

@@ -27,7 +27,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ["var(--font-heading)", "Georgia", "serif"],
+        heading: ["var(--font-heading)", "system-ui", "-apple-system", "sans-serif"],
         accent: ["var(--font-accent)", "Georgia", "serif"],
         body: ["system-ui", "-apple-system", "sans-serif"],
       },

@@ -3,12 +3,12 @@
 // porting from). Both the Edge Function and the verification step reach
 // for this map, so update both in one place.
 export const fundLabels: Record<string, string> = {
-  general: "General Temple Fund",
-  building: "Building Fund",
-  priest: "Priest Fund",
-  annadanam: "Annadanam Fund",
-  festival: "Festival Fund",
-  education: "Education Fund",
+  general: "General Temple Donation",
+  building: "Building Donation",
+  priest: "Priest Donation",
+  annadanam: "Annadanam Donation",
+  festival: "Festival Donation",
+  education: "Education Donation",
   "rudra-narayana": "Sri Rudra Narayana Seva",
   ganesha: "Lord Ganesha Seva",
   lakshmi: "Goddess Lakshmi Seva",

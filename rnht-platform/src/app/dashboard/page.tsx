@@ -765,7 +765,7 @@ function DonationsTab() {
   const { donations } = useAuthStore();
   const [showQuickDonate, setShowQuickDonate] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(51);
-  const [selectedFund, setSelectedFund] = useState("General Temple Fund");
+  const [selectedFund, setSelectedFund] = useState("General Temple Donation");
 
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
@@ -776,11 +776,8 @@ function DonationsTab() {
   // when donation_types is unseeded — a name-only deep-link would silently fall
   // back to "General" and mis-attribute the gift.
   const fundSlugByLabel: Record<string, string> = {
-    "General Temple Fund": "general",
-    "Annadanam Fund": "annadanam",
-    "Priest Fund": "priest",
-    "Building Fund": "building",
-    "Education Fund": "education",
+    "General Temple Donation": "general",
+    "Festival Donation": "festival",
   };
 
   const handleQuickDonate = () => {
@@ -806,9 +803,9 @@ function DonationsTab() {
           <h3 className="font-heading font-bold text-temple-maroon mb-4">Quick Donation</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Fund</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Donation</label>
               <div className="flex flex-wrap gap-2">
-                {["General Temple Fund", "Annadanam Fund", "Priest Fund", "Building Fund", "Education Fund"].map((f) => (
+                {["General Temple Donation", "Festival Donation"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setSelectedFund(f)}

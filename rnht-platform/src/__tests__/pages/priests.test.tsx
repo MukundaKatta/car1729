@@ -140,7 +140,12 @@ describe("PriestsPage", () => {
 
   it("shows education information", () => {
     render(<PriestsPage />);
-    expect(screen.getByText(/Krishna Yajurvedam.*Andhra Pradesh/i)).toBeInTheDocument();
+    // The new verbatim bio also mentions "Krishna Yajurvedam … Andhra Pradesh",
+    // so this phrase now appears in both the Education line and the About text —
+    // assert it's present (≥1) rather than requiring a single match.
+    expect(
+      screen.getAllByText(/Krishna Yajurvedam.*Andhra Pradesh/i).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Krishna Yajur Veda.*Tirupati/i)).toBeInTheDocument();
   });
 
@@ -208,12 +213,13 @@ describe("PriestsPage", () => {
     });
   });
 
-  it("shows a 'Book with <given name>' link per priest (skipping honorifics)", () => {
+  it("shows a 'Book with Panditji' link per priest (client-requested label)", () => {
     render(<PriestsPage />);
-    // e.g. "Book with Aditya" / "Book with Raghurama" — not "Book with Shri"
-    const bookLinks = screen.getAllByRole("link", { name: /book with (Aditya|Raghurama)/i });
-    expect(bookLinks.length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByRole("link", { name: /book with Shri/i })).toBeNull();
+    // Client asked for a uniform "Book with Panditji" CTA on every priest card.
+    const bookLinks = screen.getAllByRole("link", { name: /book with Panditji/i });
+    expect(bookLinks).toHaveLength(2);
+    // The old per-name label must be gone.
+    expect(screen.queryByRole("link", { name: /book with (Aditya|Raghurama|Shri)/i })).toBeNull();
   });
 
   it("renders Education section headers", () => {

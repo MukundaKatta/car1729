@@ -22,9 +22,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("next/font/google", () => ({
-  Playfair_Display: () => ({
-    className: "mock-playfair",
-    variable: "--font-heading",
+  Nunito: () => ({
+    className: "mock-nunito",
+    variable: "--font-nunito",
   }),
   Cormorant_Garamond: () => ({
     className: "mock-cormorant",
