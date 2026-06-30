@@ -762,14 +762,51 @@ function BookingsTab() {
 
 /* ─── Donations Tab ─── */
 function DonationsTab() {
-  const { donations } = useAuthStore();
+  const { donations, user } = useAuthStore();
   const [showQuickDonate, setShowQuickDonate] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(51);
   const [selectedFund, setSelectedFund] = useState("General Temple Donation");
+  const [receiptYear, setReceiptYear] = useState<number | "">("");
+  const [generatingReceipt, setGeneratingReceipt] = useState(false);
 
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
   const recurringTotal = completedDonations.filter((d) => d.recurring).reduce((s, d) => s + d.amount, 0);
+
+  // Tax years that actually have completed gifts, newest first — the receipt is
+  // generated per calendar (tax) year.
+  const receiptYears = Array.from(
+    new Set(
+      completedDonations
+        .map((d) => new Date(d.date).getFullYear())
+        .filter((yr) => Number.isFinite(yr)),
+    ),
+  ).sort((a, b) => b - a);
+  const activeReceiptYear: number | "" = receiptYear || receiptYears[0] || "";
+
+  // Build + download an official tax-receipt PDF for the selected year. jsPDF is
+  // dynamically imported so it stays out of the main dashboard bundle.
+  const handleEarnReceipt = async () => {
+    const yr = Number(activeReceiptYear);
+    if (!yr) return;
+    const yearDonations = completedDonations.filter(
+      (d) => new Date(d.date).getFullYear() === yr,
+    );
+    if (yearDonations.length === 0) return;
+    setGeneratingReceipt(true);
+    try {
+      const { generateTaxReceiptPdf } = await import("@/lib/tax-receipt-pdf");
+      generateTaxReceiptPdf({
+        donorName: user?.name || "",
+        donorEmail: user?.email || "",
+        year: yr,
+        donations: yearDonations,
+        generatedAt: new Date(),
+      });
+    } finally {
+      setGeneratingReceipt(false);
+    }
+  };
 
   // Stable slugs mirroring the donate page's fund mapping. Passing the slug
   // (not the display name) lets the donate page match the requested fund even
@@ -789,12 +826,42 @@ function DonationsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-heading text-xl font-bold text-temple-maroon">My Donations</h2>
-        <button onClick={() => setShowQuickDonate(!showQuickDonate)} className="btn-primary text-sm px-5 py-2.5">
-          <Heart className="mr-2 h-4 w-4" />
-          Donate Now
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {receiptYears.length > 0 && (
+            <>
+              <label htmlFor="receipt-year" className="sr-only">
+                Tax year for receipt
+              </label>
+              <select
+                id="receipt-year"
+                value={activeReceiptYear}
+                onChange={(e) => setReceiptYear(Number(e.target.value))}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 focus:border-temple-gold focus:outline-none"
+                aria-label="Tax year for receipt"
+              >
+                {receiptYears.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleEarnReceipt}
+                disabled={generatingReceipt}
+                className="btn-outline text-sm px-4 py-2.5 disabled:opacity-60"
+              >
+                <Receipt className="mr-2 inline h-4 w-4" />
+                {generatingReceipt ? "Preparing…" : "Earn Tax Receipt"}
+              </button>
+            </>
+          )}
+          <button onClick={() => setShowQuickDonate(!showQuickDonate)} className="btn-primary text-sm px-5 py-2.5">
+            <Heart className="mr-2 h-4 w-4" />
+            Donate Now
+          </button>
+        </div>
       </div>
 
       {/* Quick Donate Panel */}
