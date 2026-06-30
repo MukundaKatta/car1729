@@ -105,10 +105,12 @@ describe("PriestsPage", () => {
     expect(screen.getByText("Senior Priest")).toBeInTheDocument();
   });
 
-  it("shows initials for both priests", () => {
+  it("shows a photo for both priests", () => {
     render(<PriestsPage />);
-    expect(screen.getByText("AS")).toBeInTheDocument();
-    expect(screen.getByText("RS")).toBeInTheDocument();
+    // Both priests now have real photos, so the avatar renders the image (with
+    // the priest's name as alt text) instead of the initials fallback.
+    expect(screen.getByAltText("Pt. Shri Aditya Sharma")).toBeInTheDocument();
+    expect(screen.getByAltText("Pt. Shri Raghurama Sharma")).toBeInTheDocument();
   });
 
   it("shows experience for both priests", () => {

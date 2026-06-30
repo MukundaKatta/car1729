@@ -23,7 +23,7 @@ const priests = [
     id: "priest-1",
     name: "Pt. Shri Aditya Sharma",
     title: "Founder & Head Priest",
-    image: null,
+    image: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/priests/aditya-sharma.jpg`,
     initials: "AS",
     experience: "20+ years",
     specialization: "Krishna Yajurvedam, Yajurveda Smartam, Vastu, Astrology",
@@ -40,7 +40,7 @@ const priests = [
     id: "priest-2",
     name: "Pt. Shri Raghurama Sharma",
     title: "Senior Priest",
-    image: null,
+    image: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/priests/raghurama-sharma.jpg`,
     initials: "RS",
     experience: "15+ years",
     specialization: "Krishna Yajurveda, Smartha Traditions, Panchadasa Karmas",
@@ -81,7 +81,7 @@ export default function PriestsPage() {
                   <img
                     src={priest.image}
                     alt={priest.name}
-                    className="h-40 w-36 rounded-xl object-cover shadow-md ring-1 ring-temple-gold/30"
+                    className="h-40 w-36 rounded-xl object-cover object-top shadow-md ring-1 ring-temple-gold/30"
                   />
                 ) : (
                   <div className="flex h-40 w-36 items-center justify-center rounded-xl bg-temple-red text-4xl font-heading font-bold text-white shadow-md ring-1 ring-temple-gold/30">
