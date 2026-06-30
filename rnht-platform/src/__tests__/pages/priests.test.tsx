@@ -130,7 +130,7 @@ describe("PriestsPage", () => {
   it("shows phone numbers for both priests", () => {
     render(<PriestsPage />);
     expect(screen.getByText("(512) 545-0473")).toBeInTheDocument();
-    expect(screen.getByText("(512) 998-0112")).toBeInTheDocument();
+    expect(screen.getByText("(512) 988-0112")).toBeInTheDocument();
   });
 
   it("does not surface placeholder priest emails", () => {
