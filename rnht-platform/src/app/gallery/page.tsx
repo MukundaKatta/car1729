@@ -256,6 +256,19 @@ export default function GalleryPage() {
           </button>
         ))}
       </div>
+
+      {/* See All Images — opens the temple's full Google Photos album (client-provided). */}
+      <div className="mt-10 flex justify-center">
+        <a
+          href="https://photos.google.com/share/AF1QipNp1Bx2WgxAWNsXPJxlCGouTnlr5LloSH_I4n34AwnhZXVMy5_1joSLpx5jAb4EeA?pli=1&key=OVBWdGJPdnBSaWd5MVVlbUVKdF82WnRMZF8yTklB"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full bg-temple-red px-8 py-3 text-sm font-semibold text-white shadow-premium transition-colors hover:bg-temple-maroon"
+        >
+          <Camera className="h-4 w-4" />
+          See All Images
+        </a>
+      </div>
       </div>
       </div>
 
