@@ -735,14 +735,18 @@ function LoginContent() {
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="e.g. 602164"
+                    placeholder="e.g. 60216428"
                     className="input-field flex-1 text-center tracking-[0.2em]"
                     value={emailCode}
-                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    // Supabase EMAIL codes are 8 digits (phone codes are 6). A
+                    // 6-digit cap here silently truncated the emailed code, so
+                    // code entry could never succeed (live E2E find, 2026-07-01).
+                    // Accept 6–8 so a future length change stays sign-in-able.
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
                   />
                   <button
                     className="btn-primary px-5"
-                    disabled={loading || emailCode.length !== 6}
+                    disabled={loading || emailCode.length < 6}
                     onClick={async () => {
                       setLoading(true);
                       setError("");
