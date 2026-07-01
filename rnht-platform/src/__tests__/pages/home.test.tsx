@@ -30,20 +30,13 @@ describe("HomePage", () => {
     expect(screen.getByTestId("home-panchangam-scroll")).toBeInTheDocument();
   });
 
-  it("shows the quick action bar with the three primary CTAs", () => {
+  it("shows the four home action tiles", () => {
     render(<HomePage />);
-    expect(screen.getByText("Join WhatsApp Group")).toBeInTheDocument();
-    expect(screen.getByText("Book Pooja")).toBeInTheDocument();
-    expect(screen.getAllByText("Donate").length).toBeGreaterThan(0);
-  });
-
-  it("shows the trust stats section with current values", () => {
-    render(<HomePage />);
-    expect(screen.getByText("Est. 2022")).toBeInTheDocument();
-    // 36+ matches the actual service catalog count (was an inflated "50+").
-    expect(screen.getByText("36+")).toBeInTheDocument();
-    expect(screen.getAllByText("Experienced Priests").length).toBeGreaterThan(0);
-    expect(screen.getByText("12+")).toBeInTheDocument();
+    // Action-tile band (replaced the old stat band + the duplicate CTA row).
+    expect(screen.getByText("Book a Pooja")).toBeInTheDocument();
+    expect(screen.getByText("Ask Panditji")).toBeInTheDocument();
+    expect(screen.getByText("Today's Panchangam")).toBeInTheDocument();
+    expect(screen.getByText("Offer a Seva")).toBeInTheDocument();
   });
 
   it("renders the priest booking call-to-action area", () => {

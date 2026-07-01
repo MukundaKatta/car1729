@@ -9,6 +9,7 @@ import {
   MessageCircle,
   BookOpen,
   Heart,
+  Sun,
 } from "lucide-react";
 
 const testimonials = [
@@ -96,63 +97,71 @@ export default function HomePage() {
       {/* Hero — Three-panel animated slideshow with Ken Burns effect */}
       <HeroSlideshow />
 
-      {/* Stats Bar — below hero */}
+      {/* Action tiles — below hero. Four things devotees come here to do
+          (replaces the old stat band + merges in the earlier CTA button row so
+          the actions aren't duplicated). Each tile is a tappable link. */}
       <section className="border-b border-temple-gold/15 bg-[#25050F]">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-7 sm:grid-cols-4 sm:gap-5 sm:px-6 lg:px-8">
-          {[
-            { value: "Est. 2022", label: "Serving the Community", icon: "🙏" },
-            { value: "36+", label: "Vedic Services Offered", icon: "🪔" },
-            { value: "2", label: "Experienced Priests", icon: "📿" },
-            { value: "12+", label: "Texas Cities Served", icon: "📍" },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="group rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
-            >
-              <div
-                aria-hidden="true"
-                className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-temple-gold/20 bg-temple-gold/10 text-lg"
-              >
-                {stat.icon}
-              </div>
-              <p className="font-heading text-lg font-bold text-temple-gold-light sm:text-2xl">
-                {stat.value}
-              </p>
-              <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+          <Link
+            href="/services"
+            className="group flex flex-col items-center rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-temple-gold/40 hover:bg-white/[0.05]"
+          >
+            <span aria-hidden="true" className="mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-temple-gold/25 bg-temple-gold/10 text-temple-gold-light transition-colors group-hover:bg-temple-gold/20">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <p className="font-heading text-base font-bold text-temple-gold-light sm:text-lg">
+              Book a Pooja
+            </p>
+            <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
+              36+ Vedic services
+            </p>
+          </Link>
 
-      {/* Quick Action Bar — primary CTAs moved here from the hero */}
-      <section className="border-b border-temple-gold/15 bg-[#25050F] text-white">
-        <div className="mx-auto flex max-w-5xl flex-col items-stretch justify-center gap-3 px-4 py-5 sm:flex-row sm:items-center sm:gap-4 sm:px-6 lg:px-8">
           <a
             href="https://wa.me/message/P3YRA2XY3GI7F1"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:flex-none sm:min-w-[200px]"
-            style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
+            className="group flex flex-col items-center rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-temple-gold/40 hover:bg-white/[0.05]"
           >
-            <MessageCircle className="h-4 w-4" />
-            Join WhatsApp Group
+            <span aria-hidden="true" className="mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-temple-gold/25 bg-temple-gold/10 text-temple-gold-light transition-colors group-hover:bg-temple-gold/20">
+              <MessageCircle className="h-5 w-5" />
+            </span>
+            <p className="font-heading text-base font-bold text-temple-gold-light sm:text-lg">
+              Ask Panditji
+            </p>
+            <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
+              Chat on WhatsApp
+            </p>
           </a>
+
           <Link
-            href="/services"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-temple-maroon-deep transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:flex-none sm:min-w-[180px]"
-            style={{ background: "linear-gradient(135deg, #B8872E 0%, #E8D5A3 45%, #C5973E 100%)" }}
+            href="/panchangam"
+            className="group flex flex-col items-center rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-temple-gold/40 hover:bg-white/[0.05]"
           >
-            <BookOpen className="h-4 w-4" />
-            Book Pooja
+            <span aria-hidden="true" className="mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-temple-gold/25 bg-temple-gold/10 text-temple-gold-light transition-colors group-hover:bg-temple-gold/20">
+              <Sun className="h-5 w-5" />
+            </span>
+            <p className="font-heading text-base font-bold text-temple-gold-light sm:text-lg">
+              Today&apos;s Panchangam
+            </p>
+            <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
+              Tithi &amp; muhurtham
+            </p>
           </Link>
+
           <Link
             href="/donate"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-temple-gold/70 bg-temple-maroon/30 px-6 py-3 text-sm font-bold text-temple-gold-light backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-temple-maroon/50 sm:flex-none sm:min-w-[180px]"
+            className="group flex flex-col items-center rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-temple-gold/40 hover:bg-white/[0.05]"
           >
-            <Heart className="h-4 w-4" />
-            Donate
+            <span aria-hidden="true" className="mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-temple-gold/25 bg-temple-gold/10 text-temple-gold-light transition-colors group-hover:bg-temple-gold/20">
+              <Heart className="h-5 w-5" />
+            </span>
+            <p className="font-heading text-base font-bold text-temple-gold-light sm:text-lg">
+              Offer a Seva
+            </p>
+            <p className="mt-1 text-xs font-accent font-medium tracking-wide text-gray-300 sm:text-sm">
+              Support the temple
+            </p>
           </Link>
         </div>
       </section>
