@@ -72,16 +72,19 @@ export function ServiceCard({ service }: { service: Service }) {
           fallbackIcon={icon}
           onImageClick={() => setShowModal(true)}
         />
+        <div className="ornament-divider mt-4 px-4" aria-hidden="true">
+          <span>&#x2733;</span>
+        </div>
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="block w-full cursor-pointer px-4 pt-4 text-left"
+          className="block w-full cursor-pointer px-5 pt-2 text-center"
           aria-label={`View details for ${service.name}`}
         >
-          <h3 className="font-heading font-bold text-gray-900 leading-tight">
+          <h3 className="font-heading text-lg font-bold leading-tight text-temple-maroon">
             {service.name}
           </h3>
-          <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+          <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-4">
             {service.short_description}
           </p>
         </button>

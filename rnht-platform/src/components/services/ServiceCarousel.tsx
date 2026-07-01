@@ -6,14 +6,18 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 /**
  * Accessible image carousel for service galleries (client-provided photos).
  *
- * - Crossfades between images; respects prefers-reduced-motion.
- * - Prev/next arrows + dot indicators + "n / N" counter shown only when there
- *   is more than one image.
+ * Vertical (portrait) frame that shows the ENTIRE image — never cropped. Each
+ * slide is the full image (`object-contain`) over a soft blurred copy of itself
+ * (`object-cover` + blur), so portrait images fill the frame and landscape ones
+ * sit on a tasteful backdrop instead of empty bars. (Client feedback 2026-07-01:
+ * the old `object-cover` landscape frame was cutting images off.)
+ *
+ * - Crossfades between slides; respects prefers-reduced-motion.
+ * - Prev/next arrows + dots + "n / N" counter only when there's >1 image.
  * - Touch-swipe on mobile, ArrowLeft/ArrowRight when focused.
  * - `onImageClick` (card usage) makes the active image a button that opens the
- *   detail modal; arrows/dots stopPropagation so they never trigger it. The
- *   controls are DOM siblings of the image button (never nested) to keep ARIA
- *   valid.
+ *   detail modal; arrows/dots stopPropagation so they never trigger it. Controls
+ *   are DOM siblings of the image button (never nested) to keep ARIA valid.
  * - With 0 images it renders the category-icon placeholder instead.
  */
 export function ServiceCarousel({
@@ -33,7 +37,6 @@ export function ServiceCarousel({
   const touchX = useRef<number | null>(null);
   const count = images.length;
 
-  // Clamp if the image list ever shrinks.
   useEffect(() => {
     if (active > count - 1) setActive(Math.max(0, count - 1));
   }, [count, active]);
@@ -43,12 +46,13 @@ export function ServiceCarousel({
     [count],
   );
 
-  const heightClass = variant === "card" ? "h-40" : "h-64 sm:h-80";
+  // Vertical frame. Portrait (3:4) so the full image shows without cropping.
+  const aspectClass = variant === "card" ? "aspect-[3/4]" : "aspect-[4/5]";
 
   if (count === 0) {
     return (
       <div
-        className={`flex ${heightClass} w-full items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20`}
+        className={`flex ${aspectClass} w-full items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20`}
       >
         <span className="text-5xl opacity-60">{fallbackIcon ?? "🙏"}</span>
       </div>
@@ -78,24 +82,39 @@ export function ServiceCarousel({
   const ImageLayer = (
     <>
       {images.map((src, i) => (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
+        <div
           key={src}
-          src={src}
-          alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
-          loading={i === 0 ? "eager" : "lazy"}
           aria-hidden={i !== active}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 motion-reduce:transition-none ${
+          className={`absolute inset-0 transition-opacity duration-500 motion-reduce:transition-none ${
             i === active ? "opacity-100" : "opacity-0"
           }`}
-        />
+        >
+          {/* Blurred backdrop fills the frame so contained images never sit on
+              empty bars. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt=""
+            aria-hidden="true"
+            loading={i === 0 ? "eager" : "lazy"}
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+          />
+          {/* The full image — object-contain guarantees nothing is cropped. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
+            loading={i === 0 ? "eager" : "lazy"}
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        </div>
       ))}
     </>
   );
 
   return (
     <div
-      className={`group/carousel relative w-full overflow-hidden ${heightClass} bg-temple-maroon-deep`}
+      className={`group/carousel relative w-full overflow-hidden ${aspectClass} bg-temple-maroon-deep`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       onKeyDown={onKeyDown}
@@ -104,7 +123,6 @@ export function ServiceCarousel({
       aria-label={`${alt} image gallery`}
       tabIndex={variant === "modal" && count > 1 ? 0 : undefined}
     >
-      {/* Active image: a button that opens the modal in card usage, else static. */}
       {onImageClick ? (
         <button
           type="button"
@@ -120,13 +138,10 @@ export function ServiceCarousel({
 
       {count > 1 && (
         <>
-          {/* Counter — top-left so it never collides with the modal's
-              top-right close button. */}
           <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white">
             {active + 1} / {count}
           </span>
 
-          {/* Prev / Next */}
           <button
             type="button"
             aria-label="Previous image"
@@ -158,7 +173,6 @@ export function ServiceCarousel({
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          {/* Dots */}
           <div className="absolute inset-x-0 bottom-2 flex items-center justify-center gap-1.5">
             {images.map((_, i) => (
               <button
