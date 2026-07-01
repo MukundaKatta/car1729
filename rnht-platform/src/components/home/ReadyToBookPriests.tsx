@@ -23,7 +23,7 @@ const fallback: FallbackPriest[] = [
     id: "fallback-1",
     name: "Pt. Aditya Sharma",
     title: "Founder & Head Priest",
-    image_url: "/priests/pandit-aditya-2.jpeg",
+    image_url: "/priests/aditya-sharma.jpg",
     whatsapp_url: "https://wa.me/15125450473",
     phone: "+15125450473",
   },
@@ -31,14 +31,17 @@ const fallback: FallbackPriest[] = [
     id: "fallback-2",
     name: "Pt. Raghurama Sharma",
     title: "Senior Priest",
-    image_url: null,
+    image_url: "/priests/raghurama-sharma.jpg",
     whatsapp_url: "https://wa.me/15129980112",
     phone: "+15129980112",
   },
 ];
 
+// Local photo fallbacks by name — used when the DB priests row has no image_url
+// (both live rows are currently null), so the home cards still show real photos.
 const localImagesByName: Record<string, string> = {
-  "Pt. Aditya Sharma": "/priests/pandit-aditya-2.jpeg",
+  "Pt. Aditya Sharma": "/priests/aditya-sharma.jpg",
+  "Pt. Raghurama Sharma": "/priests/raghurama-sharma.jpg",
 };
 
 function initials(name: string): string {
