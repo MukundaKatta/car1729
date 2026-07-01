@@ -25,6 +25,9 @@ import type { CSSProperties } from "react";
 const PANELS = [
   {
     objectPos: "5% 20%",
+    // Mobile slider is full-width (one panel at a time), so each deity needs a
+    // different crop center than the narrow desktop 3-column layout to sit centered.
+    mobilePos: "9% 50%",
     label: "Shiva lingam adorned with flowers",
     style: {
       "--drift-x-start": "1.4%",
@@ -36,6 +39,7 @@ const PANELS = [
   },
   {
     objectPos: "50% 18%",
+    mobilePos: "50% 50%",
     label: "Goddess Lakshmi in full regalia",
     style: {
       "--drift-x-start": "0%",
@@ -47,6 +51,7 @@ const PANELS = [
   },
   {
     objectPos: "95% 30%",
+    mobilePos: "92% 50%",
     label: "Narayana with garlands",
     style: {
       "--drift-x-start": "-1.4%",
@@ -80,6 +85,11 @@ const CSS = `
     animation-name            : sacred-panel;
     will-change               : transform;
   }
+
+  /* Per-deity crop center: --op-m centers each deity in the full-width mobile
+     slider; --op-d keeps the original 3-column framing on sm+. */
+  .hero-kb-img { object-position: var(--op-m); }
+  @media (min-width: 640px) { .hero-kb-img { object-position: var(--op-d); } }
 
   /* ── Top border shimmer ─────────────────────────────────────────────── */
   @keyframes border-shimmer {
@@ -184,8 +194,8 @@ export function HeroSlideshow() {
                   src="/deity-collage.jpg"
                   alt={panel.label}
                   fill
-                  className="object-cover"
-                  style={{ objectPosition: panel.objectPos }}
+                  className="object-cover hero-kb-img"
+                  style={{ "--op-m": panel.mobilePos, "--op-d": panel.objectPos } as CSSProperties}
                   sizes="34vw"
                   quality={95}
                   priority={i === 1}
