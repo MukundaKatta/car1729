@@ -23,7 +23,7 @@ const priests = [
     id: "priest-1",
     name: "Pt. Shri Aditya Sharma",
     title: "Founder & Head Priest",
-    image: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/priests/aditya-sharma.jpg`,
+    image: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/priests/aditya-sharma-v2.jpg`,
     initials: "AS",
     experience: "20+ years",
     specialization: "Krishna Yajurvedam, Yajurveda Smartam, Vastu, Astrology",
