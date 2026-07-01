@@ -5,6 +5,8 @@ import { X, MessageCircle, Phone } from "lucide-react";
 import type { Service } from "@/types/database";
 import { usePanditjiWhatsApp } from "@/store/panditji";
 import { pushOverlay } from "@/lib/overlay-stack";
+import { ServiceCarousel } from "./ServiceCarousel";
+import { serviceGallery } from "@/lib/service-images";
 
 /**
  * Simplified service detail modal.
@@ -23,6 +25,7 @@ export function ServiceDetailModal({
 }) {
   const whatsappUrl = usePanditjiWhatsApp();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const galleryImages = serviceGallery(service.slug);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -103,19 +106,19 @@ export function ServiceDetailModal({
           <X className="h-5 w-5" />
         </button>
 
-        {/* Header */}
-        {service.image_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={service.image_url}
-            alt={service.name}
-            className="h-56 w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-40 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/30">
-            <span className="text-6xl opacity-60">{categoryIcon}</span>
-          </div>
-        )}
+        {/* Header gallery — full swipeable slideshow of the service's photos. */}
+        <ServiceCarousel
+          images={
+            galleryImages.length
+              ? galleryImages
+              : service.image_url
+                ? [service.image_url]
+                : []
+          }
+          alt={service.name}
+          variant="modal"
+          fallbackIcon={categoryIcon}
+        />
 
         <div className="p-6">
           <h2 id="modal-title" className="font-heading text-2xl font-bold text-temple-maroon">

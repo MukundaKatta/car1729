@@ -4,8 +4,10 @@ import { useState } from "react";
 import { MessageCircle, Phone, ClipboardList } from "lucide-react";
 import type { Service } from "@/types/database";
 import { ServiceDetailModal } from "./ServiceDetailModal";
+import { ServiceCarousel } from "./ServiceCarousel";
 import { usePanditjiWhatsApp } from "@/store/panditji";
 import { getRegistrationUrl } from "@/lib/service-registration";
+import { serviceGallery } from "@/lib/service-images";
 
 const categoryIcons: Record<string, string> = {
   "cat-1": "🙏", // Puja & Shanti
@@ -45,41 +47,43 @@ export function ServiceCard({ service }: { service: Service }) {
   const whatsappHref = buildWhatsAppHref(panditjiWhatsApp, whatsappMessage);
   const registerUrl = getRegistrationUrl(service.slug);
 
+  // Client-provided gallery for this service (0..10 images). Fall back to the
+  // single DB image_url, then to the category-icon placeholder (ServiceCarousel
+  // renders the placeholder itself when the list is empty).
+  const gallery = serviceGallery(service.slug);
+  const images = gallery.length
+    ? gallery
+    : service.image_url
+      ? [service.image_url]
+      : [];
+
   return (
     <>
       <div className="card overflow-hidden group">
-        {/* Only the image + text open the modal — a real <button> containing
-            non-interactive content. The action links below are separate, so we
-            no longer nest interactive <a>s inside a role="button" (invalid ARIA)
-            nor double-fire on keyboard activation. */}
+        {/* Image gallery (swipeable slideshow when the service has multiple
+            photos). Clicking the image opens the modal; the carousel's own
+            arrows/dots stopPropagation, so they never open it. The title/text
+            below is a separate <button> — interactive controls stay siblings,
+            never nested (valid ARIA). */}
+        <ServiceCarousel
+          images={images}
+          alt={service.name}
+          variant="card"
+          fallbackIcon={icon}
+          onImageClick={() => setShowModal(true)}
+        />
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="block w-full cursor-pointer text-left"
+          className="block w-full cursor-pointer px-4 pt-4 text-left"
           aria-label={`View details for ${service.name}`}
         >
-          {service.image_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={service.image_url}
-              alt={service.name}
-              className="h-36 w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-36 items-center justify-center bg-gradient-to-br from-temple-cream to-temple-gold/20">
-              <span className="text-5xl opacity-60 transition-transform group-hover:scale-110">
-                {icon}
-              </span>
-            </div>
-          )}
-          <div className="px-4 pt-4">
-            <h3 className="font-heading font-bold text-gray-900 leading-tight">
-              {service.name}
-            </h3>
-            <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-              {service.short_description}
-            </p>
-          </div>
+          <h3 className="font-heading font-bold text-gray-900 leading-tight">
+            {service.name}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+            {service.short_description}
+          </p>
         </button>
         <div className="px-4 pb-4">
           <div className="mt-4 space-y-2">
