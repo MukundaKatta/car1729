@@ -81,10 +81,10 @@ export function ServiceCard({ service }: { service: Service }) {
           className="block w-full cursor-pointer px-5 pt-2 text-center"
           aria-label={`View details for ${service.name}`}
         >
-          <h3 className="font-heading text-lg font-bold leading-tight text-temple-maroon">
+          <h3 className="font-heading text-base font-bold leading-tight text-temple-maroon">
             {service.name}
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-4">
+          <p className="mt-1.5 text-sm leading-relaxed text-gray-600 line-clamp-3">
             {service.short_description}
           </p>
         </button>

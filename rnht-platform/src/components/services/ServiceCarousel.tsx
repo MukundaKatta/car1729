@@ -46,8 +46,9 @@ export function ServiceCarousel({
     [count],
   );
 
-  // Vertical frame. Portrait (3:4) so the full image shows without cropping.
-  const aspectClass = variant === "card" ? "aspect-[3/4]" : "aspect-[4/5]";
+  // Vertical frame — portrait so the full image shows (object-contain, never
+  // cropped). 4:5 on the card keeps it compact (client asked for smaller cards).
+  const aspectClass = variant === "card" ? "aspect-[4/5]" : "aspect-[4/5]";
 
   if (count === 0) {
     return (
