@@ -90,24 +90,37 @@ export function ServiceCarousel({
             i === active ? "opacity-100" : "opacity-0"
           }`}
         >
-          {/* Blurred backdrop fills the frame so contained images never sit on
-              empty bars. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt=""
-            aria-hidden="true"
-            loading={i === 0 ? "eager" : "lazy"}
-            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
-          />
-          {/* The full image — object-contain guarantees nothing is cropped. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
-            loading={i === 0 ? "eager" : "lazy"}
-            className="absolute inset-0 h-full w-full object-contain"
-          />
+          {variant === "modal" ? (
+            <>
+              {/* Modal: blurred backdrop + object-contain so the FULL image is
+                  visible (no crop) when viewing details. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt=""
+                aria-hidden="true"
+                loading={i === 0 ? "eager" : "lazy"}
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
+                loading={i === 0 ? "eager" : "lazy"}
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            </>
+          ) : (
+            /* Card: fill the frame (top-anchored so the subject is kept and the
+               decorative arch masks the less-important bottom edge). */
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={src}
+              alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
+              loading={i === 0 ? "eager" : "lazy"}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+          )}
         </div>
       ))}
     </>
@@ -174,7 +187,14 @@ export function ServiceCarousel({
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          <div className="absolute inset-x-0 bottom-2 flex items-center justify-center gap-1.5">
+          {/* Dots — modal only. On the card the decorative arch overlays the
+              bottom of the image, so dots would be hidden; the counter + arrows
+              convey multiple images there. */}
+          <div
+            className={`absolute inset-x-0 bottom-2 flex items-center justify-center gap-1.5 ${
+              variant === "card" ? "hidden" : ""
+            }`}
+          >
             {images.map((_, i) => (
               <button
                 key={i}

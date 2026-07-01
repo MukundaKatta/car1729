@@ -17,6 +17,15 @@ const categoryIcons: Record<string, string> = {
   "cat-5": "🔥", // Rudrabhishekam & Abhishekam
 };
 
+// Torana (canopy) arch that separates the image from the content — traced pixel
+// -for-pixel from the client's Vector.png so it matches their reference exactly.
+// CREAM fills the panel below the arch (masks the image bottom); STROKE is the
+// gold outline of the arch curve. viewBox is 1000×240, stretched to card width.
+const ARCH_CREAM =
+  "M0,201 L8.9,201 L22.3,173 L36.8,159 L51.3,152 L65.8,147 L79.2,143 L93.8,137 L108.3,124 L122.8,71 L136.2,49 L150.7,35 L165.2,26 L179.7,19 L193.1,14 L207.6,9 L222.1,6 L236.6,4 L250.0,2 L264.5,1 L279.0,0 L293.5,0 L306.9,0 L321.4,0 L335.9,1 L350.4,2 L363.8,3 L378.3,3 L392.9,4 L407.4,4 L420.8,4 L435.3,4 L449.8,4 L464.3,3 L477.7,3 L492.2,2 L506.7,2 L521.2,3 L534.6,3 L549.1,4 L563.6,4 L578.1,4 L591.5,4 L606.0,4 L620.5,3 L635.0,3 L648.4,2 L662.9,1 L677.5,0 L692.0,0 L705.4,0 L719.9,0 L734.4,1 L748.9,2 L762.3,3 L776.8,6 L791.3,9 L805.8,13 L819.2,18 L833.7,25 L848.2,34 L862.7,48 L876.1,68 L890.6,122 L905.1,137 L919.6,143 L933.0,147 L947.5,151 L962.1,158 L976.6,171 L991.1,200 L1000,200 L1000,240 L0,240 Z";
+const ARCH_STROKE =
+  "M0,201 L8.9,201 L22.3,173 L36.8,159 L51.3,152 L65.8,147 L79.2,143 L93.8,137 L108.3,124 L122.8,71 L136.2,49 L150.7,35 L165.2,26 L179.7,19 L193.1,14 L207.6,9 L222.1,6 L236.6,4 L250.0,2 L264.5,1 L279.0,0 L293.5,0 L306.9,0 L321.4,0 L335.9,1 L350.4,2 L363.8,3 L378.3,3 L392.9,4 L407.4,4 L420.8,4 L435.3,4 L449.8,4 L464.3,3 L477.7,3 L492.2,2 L506.7,2 L521.2,3 L534.6,3 L549.1,4 L563.6,4 L578.1,4 L591.5,4 L606.0,4 L620.5,3 L635.0,3 L648.4,2 L662.9,1 L677.5,0 L692.0,0 L705.4,0 L719.9,0 L734.4,1 L748.9,2 L762.3,3 L776.8,6 L791.3,9 L805.8,13 L819.2,18 L833.7,25 L848.2,34 L862.7,48 L876.1,68 L890.6,122 L905.1,137 L919.6,143 L933.0,147 L947.5,151 L962.1,158 L976.6,171 L991.1,200 L1000,200";
+
 /**
  * Build a WhatsApp chat link with a prefilled `text` message.
  *
@@ -28,7 +37,6 @@ const categoryIcons: Record<string, string> = {
  */
 function buildWhatsAppHref(baseUrl: string, encodedMessage: string): string {
   const url = baseUrl.trim();
-  // Invite short-links don't support prefilled text — leave them untouched.
   if (/wa\.me\/message\//i.test(url)) {
     return url;
   }
@@ -47,9 +55,9 @@ export function ServiceCard({ service }: { service: Service }) {
   const whatsappHref = buildWhatsAppHref(panditjiWhatsApp, whatsappMessage);
   const registerUrl = getRegistrationUrl(service.slug);
 
-  // Client-provided gallery for this service (0..10 images). Fall back to the
-  // single DB image_url, then to the category-icon placeholder (ServiceCarousel
-  // renders the placeholder itself when the list is empty).
+  // Client-provided gallery (0..10 images). Fall back to the single DB
+  // image_url, then to the category-icon placeholder (ServiceCarousel renders
+  // the placeholder itself when the list is empty).
   const gallery = serviceGallery(service.slug);
   const images = gallery.length
     ? gallery
@@ -57,39 +65,81 @@ export function ServiceCard({ service }: { service: Service }) {
       ? [service.image_url]
       : [];
 
+  // Split a trailing "(...)" into a smaller subtitle, matching the reference
+  // (e.g. "SRI SEETA RAMA KALYANAM (CELESTIAL WEDDING CEREMONY OF SEETA RAMA)").
+  const nameMatch = service.name.match(/^(.*?)\s*(\(.*\))\s*$/);
+  const titleMain = nameMatch ? nameMatch[1].trim() : service.name;
+  const titleSub = nameMatch ? nameMatch[2].trim() : null;
+
+  const flourish = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/decor/flourish.png`;
+
   return (
     <>
-      <div className="card overflow-hidden group">
-        {/* Image gallery (swipeable slideshow when the service has multiple
-            photos). Clicking the image opens the modal; the carousel's own
-            arrows/dots stopPropagation, so they never open it. The title/text
-            below is a separate <button> — interactive controls stay siblings,
-            never nested (valid ARIA). */}
-        <ServiceCarousel
-          images={images}
-          alt={service.name}
-          variant="card"
-          fallbackIcon={icon}
-          onImageClick={() => setShowModal(true)}
-        />
-        <div className="ornament-divider mt-4 px-4" aria-hidden="true">
-          <span>&#x2733;</span>
+      <div className="group flex flex-col overflow-hidden rounded-[26px] border border-temple-gold/45 bg-[#fdf8ee] shadow-sm transition-shadow hover:shadow-md">
+        {/* Image + torana arch. The arch (cream) overlays the image bottom so
+            the white content appears to arch up into the photo. Clicking the
+            image opens the modal; carousel arrows stopPropagation. */}
+        <div className="relative">
+          <ServiceCarousel
+            images={images}
+            alt={service.name}
+            variant="card"
+            fallbackIcon={icon}
+            onImageClick={() => setShowModal(true)}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-[-1px]"
+            style={{ aspectRatio: "1000 / 240" }}
+          >
+            <svg
+              viewBox="0 0 1000 240"
+              preserveAspectRatio="none"
+              className="h-full w-full"
+            >
+              <path d={ARCH_CREAM} fill="#fdf8ee" />
+              <path
+                d={ARCH_STROKE}
+                fill="none"
+                stroke="#C99A3A"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="block w-full cursor-pointer px-5 pt-2 text-center"
-          aria-label={`View details for ${service.name}`}
-        >
-          <h3 className="font-heading text-base font-bold leading-tight text-temple-maroon">
-            {service.name}
-          </h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-gray-600 line-clamp-3">
-            {service.short_description}
-          </p>
-        </button>
-        <div className="px-4 pb-4">
-          <div className="mt-4 space-y-2">
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-1 flex-col px-5 pb-5 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={flourish}
+            alt=""
+            aria-hidden="true"
+            className="mx-auto mt-1 h-3.5 w-auto max-w-[65%] object-contain"
+          />
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="mt-2 block w-full cursor-pointer text-center"
+            aria-label={`View details for ${service.name}`}
+          >
+            <h3 className="font-heading text-lg font-bold leading-snug text-temple-maroon">
+              {titleMain}
+            </h3>
+            {titleSub && (
+              <p className="mt-0.5 text-[11px] font-medium leading-tight text-temple-maroon/70">
+                {titleSub}
+              </p>
+            )}
+            <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-3">
+              {service.short_description}
+            </p>
+          </button>
+
+          <div className="mt-auto space-y-2 pt-4">
             {registerUrl && (
               <a
                 href={registerUrl}
@@ -115,7 +165,7 @@ export function ServiceCard({ service }: { service: Service }) {
               </a>
               <a
                 href="tel:+15125450473"
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-temple-cream px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/15"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-white px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/10"
                 aria-label={`Call the temple about ${service.name}`}
               >
                 <Phone className="h-4 w-4" />
