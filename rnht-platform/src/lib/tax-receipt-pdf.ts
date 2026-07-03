@@ -7,7 +7,7 @@ import type { Donation } from "@/store/auth";
 const TEMPLE = {
   name: "Rudra Narayana Hindu Temple",
   addressLines: ["2025 Rushing Ranch Path", "Georgetown, TX 78628"],
-  ein: "EIN: __-_______", // TODO(client): replace with the temple's real EIN
+  ein: "Federal Tax Identification Number: 93-2940113", // from client PDF 2026-07-03
   status: "A registered 501(c)(3) non-profit organization",
 };
 
