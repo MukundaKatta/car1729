@@ -799,6 +799,7 @@ function DonationsTab() {
       generateTaxReceiptPdf({
         donorName: user?.name || "",
         donorEmail: user?.email || "",
+        donorAddress: user?.address || undefined,
         year: yr,
         donations: yearDonations,
         generatedAt: new Date(),

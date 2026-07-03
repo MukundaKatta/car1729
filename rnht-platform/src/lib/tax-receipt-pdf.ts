@@ -2,21 +2,28 @@ import { jsPDF } from "jspdf";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Donation } from "@/store/auth";
 
-// Temple identity used on the receipt letterhead. Address matches the donation
-// receipt on file. EIN is a placeholder until the client provides the real one.
+// Temple identity used on the receipt letterhead — matches the client's
+// donation-template PDF (2026-07-03) verbatim.
 const TEMPLE = {
   name: "Rudra Narayana Hindu Temple",
-  addressLines: ["2025 Rushing Ranch Path", "Georgetown, TX 78628"],
-  ein: "Federal Tax Identification Number: 93-2940113", // from client PDF 2026-07-03
-  status: "A registered 501(c)(3) non-profit organization",
+  addressLines: ["2025 Rushing Ranch Path", "Georgetown, TX 78628", "United States"],
+  ein: "Federal Tax Identification Number: 93-2940113",
+  status: "IRS Status: 501(c)(3) Religious Non-Profit Organization",
+};
+
+// Signer block from the client's template.
+const SIGNER = {
+  name: "Venkata Panchagnula",
+  title: "President",
+  org: "Rudra Narayana Hindu Temple",
 };
 
 // Placeholder asset slots — when the client sends the official letterhead, stamp,
-// and authorized-signature images, set these to the (bundled or data-URL) image
+// and authorized-signature PNGs, set these to the (bundled or data-URL) image
 // sources and the render code below will draw them in place of the placeholders.
-const LETTERHEAD_IMAGE: string | undefined = undefined; // TODO(client): header artwork
-const STAMP_IMAGE: string | undefined = undefined; // TODO(client): official stamp
-const SIGNATURE_IMAGE: string | undefined = undefined; // TODO(client): signature
+const LETTERHEAD_IMAGE: string | undefined = undefined; // TODO(client): temple logo/emblem
+const STAMP_IMAGE: string | undefined = undefined; // TODO(client): official stamp PNG
+const SIGNATURE_IMAGE: string | undefined = undefined; // TODO(client): signature PNG
 
 const MAROON: [number, number, number] = [94, 10, 31];
 const GOLD: [number, number, number] = [197, 151, 62];
@@ -27,6 +34,8 @@ const INK: [number, number, number] = [40, 40, 40];
 export interface TaxReceiptOptions {
   donorName: string;
   donorEmail: string;
+  /** Devotee mailing address, when set on the profile. */
+  donorAddress?: string;
   /** Calendar/tax year the receipt covers. */
   year: number;
   /** Donations already filtered to `year` and to completed/received gifts. */
@@ -36,13 +45,16 @@ export interface TaxReceiptOptions {
 }
 
 /**
- * Generates an official annual donation (tax) receipt PDF for one tax year and
- * triggers a download. Client-side only (uses jsPDF). The letterhead/stamp/
- * signature render as placeholders until the client's images are supplied above.
+ * Generates the "Year-End Charitable Donation Acknowledgment" PDF for one tax
+ * year and triggers a download. The letter follows the client's template PDF
+ * exactly (2026-07-03): letterhead, date/devotee block, subject, the approved
+ * thank-you sentence, the transaction table (in place of the template's summary
+ * box), the IRS Required Disclosure, and the president's signature block. The
+ * template's crossed-out passages are intentionally omitted. Client-side only
+ * (jsPDF); stamp/signature render as placeholders until the PNGs arrive.
  */
 export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
-  const { donorName, donorEmail, year, donations } = opts;
-  const generatedAt = opts.generatedAt ?? new Date();
+  const { donorName, donorEmail, donorAddress, year, donations } = opts;
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -54,62 +66,90 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   const stroke = (c: [number, number, number]) => doc.setDrawColor(c[0], c[1], c[2]);
   const ink = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
 
-  // ── Letterhead band ──
+  // ── Letterhead ──
   fill(MAROON);
-  doc.rect(0, 0, pageW, 96, "F");
+  doc.rect(0, 0, pageW, 104, "F");
   if (LETTERHEAD_IMAGE) {
     try {
-      doc.addImage(LETTERHEAD_IMAGE, "PNG", margin, 18, 60, 60);
+      doc.addImage(LETTERHEAD_IMAGE, "PNG", margin, 20, 64, 64);
     } catch {
       /* fall through to placeholder */
     }
   } else {
     stroke(GOLD);
     doc.setLineWidth(1);
-    doc.roundedRect(margin, 22, 52, 52, 6, 6, "S");
+    doc.roundedRect(margin, 24, 56, 56, 6, 6, "S");
     doc.setFontSize(7);
     ink(GOLD);
-    doc.text("LOGO", margin + 26, 51, { align: "center" });
+    doc.text("LOGO", margin + 28, 55, { align: "center" });
   }
   ink([255, 255, 255]);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text(TEMPLE.name, margin + 68, 42);
+  doc.setFontSize(17);
+  doc.text(TEMPLE.name.toUpperCase(), margin + 72, 40);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  ink(GOLD);
-  doc.text(TEMPLE.status, margin + 68, 58);
   ink([235, 220, 200]);
-  doc.setFontSize(8);
-  doc.text(`${TEMPLE.addressLines.join("  •  ")}  •  ${TEMPLE.ein}`, margin + 68, 72);
+  doc.text(TEMPLE.addressLines.join(", "), margin + 72, 56);
+  doc.text(TEMPLE.ein, margin + 72, 70);
+  ink(GOLD);
+  doc.text(TEMPLE.status, margin + 72, 84);
 
-  let y = 132;
+  let y = 138;
 
-  // ── Title ──
+  // ── Title (per template) ──
   ink(MAROON);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text(`Official Annual Donation Receipt — ${year}`, margin, y);
-  y += 24;
+  doc.setFontSize(14);
+  doc.text("YEAR-END CHARITABLE DONATION ACKNOWLEDGMENT", pageW / 2, y, {
+    align: "center",
+  });
+  stroke(GOLD);
+  doc.setLineWidth(1);
+  doc.line(margin, y + 8, pageW - margin, y + 8);
+  y += 30;
 
-  // ── Donor block ──
+  // ── Date / devotee block (template fields) ──
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   ink(INK);
-  doc.text(`Donor: ${donorName || "—"}`, margin, y);
-  y += 15;
+  doc.text(`Date: December 31, ${year}`, margin, y);
+  y += 16;
+  doc.text("To:", margin, y);
+  y += 16;
+  doc.text(`Devotee Name: ${donorName || "—"}`, margin, y);
+  y += 16;
+  if (donorAddress) {
+    doc.text(`Address: ${donorAddress}`, margin, y);
+    y += 16;
+  }
   if (donorEmail) {
     doc.text(`Email: ${donorEmail}`, margin, y);
-    y += 15;
+    y += 16;
   }
-  doc.text(`Tax year: January 1 – December 31, ${year}`, margin, y);
-  y += 15;
-  ink(GRAY);
-  doc.setFontSize(8.5);
-  doc.text(`Receipt issued: ${formatDate(generatedAt)}`, margin, y);
-  y += 24;
+  y += 6;
 
-  // ── Table ──
+  // ── Subject ──
+  doc.setFont("helvetica", "bold");
+  doc.text(
+    `Subject: Acknowledgment of Charitable Contributions – Tax Year ${year}`,
+    margin,
+    y,
+  );
+  y += 20;
+
+  // ── Salutation + approved body sentence (crossed-out passages omitted) ──
+  doc.setFont("helvetica", "normal");
+  doc.text(`Dear ${donorName || "Devotee"},`, margin, y);
+  y += 18;
+  const body =
+    `On behalf of Rudra Narayana Hindu Temple, we sincerely thank you for your ` +
+    `generous donations made during the calendar year ${year}.`;
+  const bodyLines = doc.splitTextToSize(body, contentW) as string[];
+  doc.text(bodyLines, margin, y);
+  y += bodyLines.length * 13 + 12;
+
+  // ── Transaction table (replaces the template's summary box, per client) ──
   const colDate = margin + 6;
   const colReceipt = margin + 112;
   const colType = margin + 252;
@@ -138,8 +178,8 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   );
   for (const d of sorted) {
-    // Leave room at the bottom for the total + statement + signature block.
-    if (y + rowH > pageH - 150) {
+    // Leave room at the bottom for the total + disclosure + signature block.
+    if (y + rowH > pageH - 210) {
       doc.addPage();
       y = margin;
       drawTableHeader();
@@ -168,26 +208,34 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   ink(MAROON);
-  doc.text(`Total contributions for ${year}`, colDate, y + 13);
+  doc.text(`Total Charitable Contributions — ${year}`, colDate, y + 13);
   doc.text(formatCurrency(total), colAmount, y + 13, { align: "right" });
-  y += 32;
+  y += 34;
 
-  // ── IRS statement ──
+  // ── IRS Required Disclosure (template wording, verbatim) ──
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  ink(INK);
+  doc.text("IRS Required Disclosure", margin, y);
+  y += 14;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(9);
   ink(GRAY);
-  const statement =
-    "No goods or services were provided by Rudra Narayana Hindu Temple in exchange for these " +
-    "contributions. This receipt confirms tax-deductible charitable donations under Section 501(c)(3) " +
-    "of the Internal Revenue Code. Please retain it for your records and consult your tax advisor " +
-    "regarding deductibility.";
-  const stmtLines = doc.splitTextToSize(statement, contentW) as string[];
-  doc.text(stmtLines, margin, y);
-  y += stmtLines.length * 11 + 26;
+  const disclosure1 =
+    "No goods or services were provided in exchange for your contributions, other than " +
+    "intangible religious benefits, in accordance with IRS regulations.";
+  const d1 = doc.splitTextToSize(disclosure1, contentW) as string[];
+  doc.text(d1, margin, y);
+  y += d1.length * 11 + 8;
+  const disclosure2 =
+    "This letter serves as an official acknowledgment for income tax purposes under " +
+    "Section 170(f)(8) of the Internal Revenue Code.";
+  const d2 = doc.splitTextToSize(disclosure2, contentW) as string[];
+  doc.text(d2, margin, y);
+  y += d2.length * 11 + 20;
 
-  // ── Stamp + signature (placeholders until the client's images arrive) ──
-  const footY = Math.max(y, pageH - 132);
-  // Official stamp (left)
+  // ── Stamp (left) + signature block (right, per template) ──
+  const footY = Math.max(y, pageH - 150);
   if (STAMP_IMAGE) {
     try {
       doc.addImage(STAMP_IMAGE, "PNG", margin, footY, 96, 80);
@@ -200,26 +248,33 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
     doc.setLineDashPattern([3, 3], 0);
     doc.roundedRect(margin, footY, 120, 80, 6, 6, "S");
     doc.setLineDashPattern([], 0);
+    ink(GRAY);
+    doc.setFontSize(7.5);
+    doc.text("Official Temple Stamp", margin + 60, footY + 92, { align: "center" });
   }
-  ink(GRAY);
-  doc.setFontSize(7.5);
-  doc.text("Official Temple Stamp", margin + 60, footY + 92, { align: "center" });
 
-  // Authorized signature (right)
-  const sigX = pageW - margin - 200;
+  const sigX = pageW - margin - 210;
   if (SIGNATURE_IMAGE) {
     try {
-      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 40, footY + 16, 120, 44);
+      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 45, footY - 6, 120, 44);
     } catch {
       /* ignore */
     }
   }
   stroke(GRAY);
   doc.setLineWidth(0.7);
-  doc.line(sigX, footY + 64, sigX + 200, footY + 64);
-  doc.text("Authorized Signature", sigX + 100, footY + 78, { align: "center" });
+  doc.line(sigX, footY + 42, sigX + 210, footY + 42);
+  ink(INK);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(SIGNER.name, sigX + 105, footY + 58, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(SIGNER.title, sigX + 105, footY + 72, { align: "center" });
+  ink(GRAY);
+  doc.text(SIGNER.org, sigX + 105, footY + 85, { align: "center" });
 
-  doc.save(`RNHT-Tax-Receipt-${year}.pdf`);
+  doc.save(`RNHT-Donation-Acknowledgment-${year}.pdf`);
 }
 
 // Truncate text with an ellipsis so a long donation-type name can't overflow
