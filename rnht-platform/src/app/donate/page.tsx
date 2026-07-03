@@ -40,7 +40,7 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
 
 // Temple Zelle contact number — kept in one place so the three places that
 // surface it (success screen, payment panel, Zelle section) stay in sync.
-const ZELLE_PHONE = "(512) 545-0473";
+const ZELLE_PHONE = "rudranarayanahindutemple@gmail.com";
 
 const donationFundLabels: Record<string, string> = {
   general: "General Temple Donation",
