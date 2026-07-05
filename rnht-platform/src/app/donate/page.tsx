@@ -92,6 +92,10 @@ function DonateContent() {
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [donorName, setDonorName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
+  // Optional phone so the temple can follow up on Zelle pledges (payment happens
+  // outside the app, so a reachable contact matters). Stored on the donation via
+  // custom_fields.donor_phone — no schema change needed.
+  const [donorPhone, setDonorPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "zelle" | "paypal">(
     "stripe"
   );
@@ -497,6 +501,10 @@ function DonateContent() {
           normalizedCustomFields[f.key] = raw;
         }
       }
+      // Stash the donor's phone so the temple can follow up (esp. on Zelle
+      // pledges). Rides in custom_fields — the edge fn already persists it.
+      const phone = donorPhone.trim();
+      if (phone) normalizedCustomFields.donor_phone = phone;
 
       // All methods create a donation record — Zelle is recorded as a pending
       // pledge (the transfer itself happens in the donor's banking app).
@@ -930,6 +938,27 @@ function DonateContent() {
                   onChange={(e) => setDonorName(e.target.value)}
                   placeholder="Your name (optional)"
                 />
+              </div>
+              <div>
+                <label
+                  htmlFor="donor-phone"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Phone
+                </label>
+                <input
+                  id="donor-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  className="input-field mt-1"
+                  value={donorPhone}
+                  onChange={(e) => setDonorPhone(e.target.value)}
+                  placeholder="(512) 555-0123 (optional)"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Helps us reach you to confirm a Zelle transfer.
+                </p>
               </div>
               {customFields.map((field) => (
                 <div key={field.key}>

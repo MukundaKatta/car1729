@@ -531,6 +531,9 @@ type InflowRow = {
   source: "donation" | "service";
   date: string;
   donor: string;
+  /** Donor contact for follow-up (esp. pending Zelle pledges). */
+  email: string;
+  phone: string;
   fund_or_service: string;
   amount: number;
   status: string;
@@ -557,7 +560,7 @@ function DonationInflowTab() {
       const [donationsResp, bookingsResp, donationSumResp, bookingSumResp] = await Promise.all([
         supabase
           .from("donations")
-          .select("id, donor_name, donor_email, amount, fund_type, payment_status, created_at")
+          .select("id, donor_name, donor_email, amount, fund_type, payment_status, created_at, custom_fields")
           .gte("created_at", yearStart)
           .order("created_at", { ascending: false })
           .limit(100),
@@ -589,15 +592,26 @@ function DonationInflowTab() {
       const donations = donationsResp.data ?? [];
       const bookings = bookingsResp.data ?? [];
 
-      const donationRows: InflowRow[] = donations.map((d) => ({
-        id: `d-${d.id}`,
-        source: "donation",
-        date: (d.created_at as string) ?? "",
-        donor: (d.donor_name as string) || (d.donor_email as string) || "—",
-        fund_or_service: (d.fund_type as string) ?? "General",
-        amount: Number(d.amount ?? 0),
-        status: (d.payment_status as string) ?? "pending",
-      }));
+      const donationRows: InflowRow[] = donations.map((d) => {
+        const cf = (d.custom_fields ?? {}) as Record<string, unknown>;
+        const phone =
+          typeof cf.donor_phone === "string"
+            ? cf.donor_phone
+            : typeof cf.phone === "string"
+              ? cf.phone
+              : "";
+        return {
+          id: `d-${d.id}`,
+          source: "donation",
+          date: (d.created_at as string) ?? "",
+          donor: (d.donor_name as string) || (d.donor_email as string) || "—",
+          email: (d.donor_email as string) ?? "",
+          phone,
+          fund_or_service: (d.fund_type as string) ?? "General",
+          amount: Number(d.amount ?? 0),
+          status: (d.payment_status as string) ?? "pending",
+        };
+      });
 
       const serviceRows: InflowRow[] = bookings.map((b) => {
         const rel = (b as unknown as { services: { name: string } | { name: string }[] | null }).services;
@@ -607,6 +621,8 @@ function DonationInflowTab() {
           source: "service",
           date: (b.created_at as string) ?? "",
           donor: (b.devotee_name as string) || (b.devotee_email as string) || "—",
+          email: (b.devotee_email as string) ?? "",
+          phone: "",
           fund_or_service: svc ?? "Service",
           amount: Number(b.total_amount ?? 0),
           status: (b.payment_status as string) ?? "pending",
@@ -662,6 +678,9 @@ function DonationInflowTab() {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 hidden sm:table-cell">
                 Donor / Devotee
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 hidden lg:table-cell">
+                Contact
+              </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 hidden md:table-cell">
                 Fund / Service
               </th>
@@ -676,13 +695,13 @@ function DonationInflowTab() {
           <tbody className="divide-y divide-gray-100 bg-white">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
                   No inflow this year yet.
                 </td>
               </tr>
@@ -705,6 +724,27 @@ function DonationInflowTab() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">
                     {row.donor}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-600 hidden lg:table-cell">
+                    {row.email ? (
+                      <a
+                        href={`mailto:${row.email}`}
+                        className="block truncate text-blue-600 hover:underline"
+                      >
+                        {row.email}
+                      </a>
+                    ) : null}
+                    {row.phone ? (
+                      <a
+                        href={`tel:${row.phone.replace(/[^\d+]/g, "")}`}
+                        className="block text-blue-600 hover:underline"
+                      >
+                        {row.phone}
+                      </a>
+                    ) : null}
+                    {!row.email && !row.phone ? (
+                      <span className="text-gray-400">—</span>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
                     {row.fund_or_service}
