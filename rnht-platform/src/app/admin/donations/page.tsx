@@ -671,11 +671,28 @@ function DonationInflowTab() {
       .from("donations")
       .update({ payment_status: "completed" })
       .eq("id", row.rawId);
-    setMarking(null);
     if (error) {
+      setMarking(null);
       setActionError(`Couldn't mark as received: ${error.message}`);
       return;
     }
+    // Best-effort: email the donor their tax-deductible receipt (server-side,
+    // admin-verified). Never blocks the status change — if it can't send (e.g.
+    // no verified email domain yet), the pledge is still marked received.
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        await supabase.functions.invoke("send-donation-receipt", {
+          body: { donationId: row.rawId },
+          headers: { "x-user-token": session.access_token },
+        });
+      }
+    } catch (e) {
+      console.error("[receipt] send-on-mark-received failed:", e);
+    }
+    setMarking(null);
     await load();
   }
 
