@@ -10,9 +10,9 @@ export type PanchangamLocation = {
 export type ComputedPanchangam = typeof samplePanchangam;
 
 export const DEFAULT_LOCATION: PanchangamLocation = {
-  lat: 30.6333,
-  lon: -97.6778,
-  label: "Georgetown, TX",
+  lat: 30.2672,
+  lon: -97.7431,
+  label: "Austin, TX",
   timeZone: "America/Chicago",
 };
 

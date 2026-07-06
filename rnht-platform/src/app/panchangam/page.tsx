@@ -27,7 +27,7 @@ export default function PanchangamPage() {
   // Geolocation is requested ONLY when the devotee taps "Use current location"
   // (see the button below) — never automatically on mount. Auto-prompting was
   // both a privacy concern and, on iOS, required a usage-description string;
-  // the page falls back to DEFAULT_LOCATION (Georgetown, TX) until the user opts in.
+  // the page falls back to DEFAULT_LOCATION (Austin, TX) until the user opts in.
 
   // Tracks the latest in-flight load so stale async results (e.g. a location
   // change that lands after a background refresh) can be discarded.

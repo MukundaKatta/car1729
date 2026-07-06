@@ -129,7 +129,6 @@ export const usePanchangamStore = create<PanchangamStore>()(
 );
 
 export const PRESET_LOCATIONS: PanchangamLocation[] = [
-  { lat: 30.6333, lon: -97.6778, label: "Georgetown, TX", timeZone: "America/Chicago" },
   { lat: 30.2672, lon: -97.7431, label: "Austin, TX", timeZone: "America/Chicago" },
   { lat: 32.7767, lon: -96.797, label: "Dallas, TX", timeZone: "America/Chicago" },
   { lat: 29.7604, lon: -95.3698, label: "Houston, TX", timeZone: "America/Chicago" },
