@@ -7,6 +7,7 @@ import {
   CreditCard,
   ShieldCheck,
   CheckCircle,
+  Clock,
   LogIn,
   UserPlus,
   Receipt,
@@ -581,20 +582,29 @@ function DonateContent() {
         aria-live="polite"
         className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8"
       >
-        <CheckCircle className="mx-auto h-20 w-20 text-green-500" aria-hidden="true" />
+        {paymentMethod === "zelle" ? (
+          // Zelle isn't paid yet at this point — show a pending clock, not a
+          // green "done" check, so the screen doesn't read as complete.
+          <Clock className="mx-auto h-20 w-20 text-amber-500" aria-hidden="true" />
+        ) : (
+          <CheckCircle className="mx-auto h-20 w-20 text-green-500" aria-hidden="true" />
+        )}
         <h1
           ref={successHeadingRef}
           tabIndex={-1}
           className="mt-6 text-3xl font-heading font-bold text-gray-900 outline-none"
         >
-          {t("donate.thankYou", locale)}
+          {paymentMethod === "zelle"
+            ? "One step left — send your Zelle transfer"
+            : t("donate.thankYou", locale)}
         </h1>
         <p className="mt-4 text-lg text-gray-600">
           {paymentMethod === "zelle" ? (
             <>
-              Your pledge of <strong>{formatCurrency(displayedAmount)}</strong> to
-              the {displayedFundName} has been recorded. Please complete it via
-              Zelle to finish your donation.
+              Your donation of <strong>{formatCurrency(displayedAmount)}</strong>{" "}
+              to the {displayedFundName} is <strong>reserved and pending</strong>.
+              It&apos;s only complete once your Zelle transfer is received &mdash;
+              please send it now to finish.
             </>
           ) : (
             <>
@@ -603,10 +613,16 @@ function DonateContent() {
             </>
           )}
         </p>
-        <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-800">
+        <div
+          className={`mt-6 rounded-lg p-4 text-sm ${
+            paymentMethod === "zelle"
+              ? "bg-amber-50 text-amber-900"
+              : "bg-green-50 text-green-800"
+          }`}
+        >
           <p>
             {paymentMethod === "zelle"
-              ? "Once we receive your Zelle transfer, we'll mark it complete and email your tax-deductible receipt. RNHT is a registered 501(c)(3) nonprofit organization."
+              ? "Only after we receive your Zelle transfer will your donation be confirmed and your tax-deductible receipt emailed. RNHT is a registered 501(c)(3) nonprofit organization."
               : "A tax-deductible receipt will be emailed to you. RNHT is a registered 501(c)(3) nonprofit organization."}
           </p>
           {isAuthenticated && (
