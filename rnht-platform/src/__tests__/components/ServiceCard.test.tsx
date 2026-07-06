@@ -78,15 +78,31 @@ describe("ServiceCard", () => {
     expect(cta.getAttribute("href")).toBe("tel:+15125450473");
   });
 
-  it("opens the detail modal when the card body is clicked", () => {
+  it("opens the detail modal when the card is clicked", () => {
     render(<ServiceCard service={makeService()} />);
-    fireEvent.click(screen.getByRole("button", { name: /ganapathi homam/i }));
+    // The card exposes "View details" buttons (image overlay + card body); either
+    // opens the modal. Click the first.
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: /view details for ganapathi homam/i,
+      })[0]
+    );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("renders a category icon", () => {
-    render(<ServiceCard service={makeService({ category_id: "cat-1" })} />);
-    // Each category maps to an emoji; cat-1 is 🙏
+  it("renders a category icon when the service has no image", () => {
+    // A slug that matches no gallery and no category-fallback keyword falls
+    // through to the category-icon placeholder.
+    render(
+      <ServiceCard
+        service={makeService({
+          category_id: "cat-1",
+          slug: "special-blessing",
+          name: "Special Blessing",
+        })}
+      />
+    );
+    // Each category maps to an emoji; cat-1 defaults to 🙏
     expect(screen.getByText("🙏")).toBeInTheDocument();
   });
 

@@ -110,11 +110,11 @@ describe("NotFound", () => {
     expect(link).toHaveAttribute("href", "/services");
   });
 
-  it("has an Events Calendar link pointing to /calendar", () => {
+  it("has a View Gallery link pointing to /gallery", () => {
     render(<NotFound />);
-    const link = screen.getByRole("link", { name: /events calendar/i });
+    const link = screen.getByRole("link", { name: /view gallery/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/calendar");
+    expect(link).toHaveAttribute("href", "/gallery");
   });
 
   it("renders exactly three navigation links", () => {

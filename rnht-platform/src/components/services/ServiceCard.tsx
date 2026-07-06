@@ -7,7 +7,7 @@ import { ServiceDetailModal } from "./ServiceDetailModal";
 import { ServiceCarousel } from "./ServiceCarousel";
 import { usePanditjiWhatsApp } from "@/store/panditji";
 import { getRegistrationUrl } from "@/lib/service-registration";
-import { serviceGallery } from "@/lib/service-images";
+import { serviceGallery, serviceCategoryFallback } from "@/lib/service-images";
 
 const categoryIcons: Record<string, string> = {
   "cat-1": "🙏", // Puja & Shanti
@@ -56,14 +56,15 @@ export function ServiceCard({ service }: { service: Service }) {
   const registerUrl = getRegistrationUrl(service.slug);
 
   // Client-provided gallery (0..10 images). Fall back to the single DB
-  // image_url, then to the category-icon placeholder (ServiceCarousel renders
-  // the placeholder itself when the list is empty).
+  // image_url, then to a category-appropriate photo reused from another service
+  // of the same type (homam→homam, kalyanam→kalyanam, etc.), then finally to the
+  // category-icon placeholder (ServiceCarousel renders that when the list is empty).
   const gallery = serviceGallery(service.slug);
   const images = gallery.length
     ? gallery
     : service.image_url
       ? [service.image_url]
-      : [];
+      : serviceCategoryFallback(service.slug);
 
   // Split a trailing "(...)" into a smaller subtitle, matching the reference
   // (e.g. "SRI SEETA RAMA KALYANAM (CELESTIAL WEDDING CEREMONY OF SEETA RAMA)").

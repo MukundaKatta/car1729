@@ -194,3 +194,46 @@ export function serviceGallery(slug: string | null | undefined): string[] {
 
 /** Slugs that have at least one client-provided image. */
 export const SERVICE_SLUGS_WITH_IMAGES = Object.keys(RAW_GALLERY);
+
+// Category-appropriate fallback images for services that have no gallery of
+// their own (e.g. the various homams, navagraha poojas, parayanas). Per the
+// client (2026-07-03): "wherever there is a Homam service, use a suitable Homam
+// image." Rather than a generic icon, we reuse the temple's OWN existing photos
+// from a service of the same liturgical category. Rules are matched top-to-bottom
+// against the slug, so more specific keywords must come first (homam before puja;
+// homam before rudra/abhishekam so "rudra-homam" reads as a homam).
+const CATEGORY_FALLBACK: Array<[RegExp, string[]]> = [
+  [/homam|homa|yagna|yaga|havan/, ["chandi-homam/1.jpg", "chandi-homam/5.jpg", "nakshatra-shanthi-homa/2.jpg"]],
+  [/rudrabhishek|abhishek|lingarchana/, ["maha-lingarchana/1.jpg", "laghunyasa-ekavaara-rudrabhishekam/2.jpg"]],
+  [/kalyanam|wedding|vivaham/, ["srinivasa-kalyanam/1.jpg", "sri-seeta-rama-kalyanam/2.jpg"]],
+  [/vratam|vrata/, ["laksha-varti-vratam/1.jpg", "satyanarayana-vratam/1.jpg"]],
+  [/parayana|parayanam|gita|veda|stotra|sundarakanda|upakarma|upaakarma|devotion/, ["devi-saptashati-parayanam/1.jpg", "sundarakanda-path-parayanam/1.jpg"]],
+  [/shraddham|shraddha|samvatsareekam|ancestor|pitru/, ["hiranya-shraddham/1.jpg", "anna-shraddham/1.jpg"]],
+  [/jyotish|jyothish|kundali|muhoortham|muhurtham|dharma|astrolog|timing|consultation/, ["surya-yantra-namaskara-puja/2.jpg"]],
+  [/navagraha|graha|shanti|shanthi|vastu|udaka/, ["udaka-shanthi-puja/1.jpg", "surya-yantra-namaskara-puja/1.jpg"]],
+  [/puja|pooja|business|opening|archana/, ["ganapathi-puja/1.jpg", "punyahavachanam/1.jpg"]],
+];
+
+/** Stable non-negative hash of a string (so a given slug always maps to the same image). */
+function hashSlug(slug: string): number {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/**
+ * Category-appropriate fallback image(s) for a service with no gallery of its own,
+ * reusing the temple's existing photos. Returns [] when no category matches (the
+ * card then shows the category icon). basePath-aware.
+ */
+export function serviceCategoryFallback(slug: string | null | undefined): string[] {
+  if (!slug) return [];
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  for (const [re, pool] of CATEGORY_FALLBACK) {
+    if (re.test(slug)) {
+      const pick = pool[hashSlug(slug) % pool.length];
+      return [`${base}/services/${pick}`];
+    }
+  }
+  return [];
+}

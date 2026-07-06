@@ -27,8 +27,8 @@ export default function NotFound() {
         <Link href="/services" className="btn-secondary">
           View Services
         </Link>
-        <Link href="/calendar" className="btn-outline">
-          Events Calendar
+        <Link href="/gallery" className="btn-outline">
+          View Gallery
         </Link>
       </div>
     </div>
