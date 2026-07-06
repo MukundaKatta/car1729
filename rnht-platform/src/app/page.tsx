@@ -35,7 +35,7 @@ const testimonials = [
   },
   {
     name: "Prakash M.",
-    location: "Georgetown, TX",
+    location: "Austin, TX",
     text: "RNHT helped us with a housewarming ceremony on short notice and still made everything feel deeply traditional and well prepared. The guidance before the event was excellent too.",
   },
   {

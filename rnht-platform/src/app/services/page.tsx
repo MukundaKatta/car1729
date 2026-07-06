@@ -99,7 +99,7 @@ export default function ServicesPage() {
         </p>
         <p className="mt-2 text-xs text-gray-500">
           Service areas: Kyle, Manor, Austin, Dallas, Houston, Lakeway, Bee Cave,
-          Georgetown, Round Rock, San Antonio, Leander, Dripping Springs, and more.
+          Round Rock, San Antonio, Leander, Dripping Springs, and more.
         </p>
       </div>
 

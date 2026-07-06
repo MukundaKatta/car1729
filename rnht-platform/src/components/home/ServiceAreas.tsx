@@ -5,7 +5,6 @@ const cities = [
   "Kyle",
   "Manor",
   "Round Rock",
-  "Georgetown",
   "Lakeway",
   "Bee Cave",
   "Leander",

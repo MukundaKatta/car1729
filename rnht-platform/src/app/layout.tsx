@@ -112,7 +112,7 @@ const jsonLd = {
     longitude: -97.795671,
   },
   areaServed: [
-    "Austin", "Kyle", "Manor", "Round Rock", "Georgetown",
+    "Austin", "Kyle", "Manor", "Round Rock",
     "San Antonio", "Dallas", "Houston", "Lakeway", "Bee Cave",
     "Leander", "Dripping Springs",
   ],

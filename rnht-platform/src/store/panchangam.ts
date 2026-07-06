@@ -119,9 +119,17 @@ export const usePanchangamStore = create<PanchangamStore>()(
       // panchangam scroll / /panchangam, or silently compute for bad coords.
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PanchangamStore> | undefined;
-        const location = isValidLocation(persisted?.location)
+        let location = isValidLocation(persisted?.location)
           ? persisted!.location
           : DEFAULT_LOCATION;
+        // The temple retired "Georgetown, TX" as a location in favor of
+        // "Austin, TX". A browser that persisted the old Georgetown default/
+        // preset BEFORE that change would otherwise keep showing Georgetown
+        // indefinitely (a valid persisted value is kept as-is) — migrate any
+        // lingering Georgetown selection to the new Austin default.
+        if (location.label === "Georgetown, TX") {
+          location = DEFAULT_LOCATION;
+        }
         return { ...currentState, location };
       },
     }
