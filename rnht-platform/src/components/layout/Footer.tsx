@@ -68,18 +68,6 @@ export function Footer() {
             >
               Contact Us
             </a>
-            <Link
-              href="/terms"
-              className="rounded-full border border-temple-gold/20 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-gray-200 transition-all duration-300 hover:border-temple-gold/45 hover:bg-white/[0.08] hover:text-white"
-            >
-              Terms of Use
-            </Link>
-            <Link
-              href="/privacy"
-              className="rounded-full border border-temple-gold/20 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-gray-200 transition-all duration-300 hover:border-temple-gold/45 hover:bg-white/[0.08] hover:text-white"
-            >
-              Privacy Policy
-            </Link>
           </div>
 
           {/* Devotional blessing + tax-deductible note (client request) */}
@@ -132,9 +120,30 @@ export function Footer() {
 
       <div className="h-px bg-gradient-to-r from-transparent via-temple-gold/20 to-transparent" />
 
-      <p className="py-4 text-center text-xs text-gray-400">
-        &copy; Rudra Narayana Hindu Temple. All rights reserved.
-      </p>
+      {/* Terms + Privacy live at the very bottom as small, muted links next to
+          the social area (client request) — present but intentionally low-key. */}
+      <div className="flex flex-col items-center gap-2 py-4 text-center text-xs">
+        <div className="flex items-center gap-3 text-gray-500">
+          <Link
+            href="/terms"
+            className="transition-colors hover:text-gray-300 hover:underline"
+          >
+            Terms of Use
+          </Link>
+          <span aria-hidden="true" className="text-gray-600">
+            &middot;
+          </span>
+          <Link
+            href="/privacy"
+            className="transition-colors hover:text-gray-300 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+        </div>
+        <p className="text-gray-400">
+          &copy; Rudra Narayana Hindu Temple. All rights reserved.
+        </p>
+      </div>
     </footer>
   );
 }
