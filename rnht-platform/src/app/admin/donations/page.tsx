@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { DollarSign, Plus, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { DollarSign, Plus, Edit2, Trash2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
@@ -528,6 +528,8 @@ function DonationTypesTab() {
 
 type InflowRow = {
   id: string;
+  /** Raw DB primary key (unprefixed) — used to target the row for updates. */
+  rawId: string;
   source: "donation" | "service";
   date: string;
   donor: string;
@@ -544,9 +546,10 @@ function DonationInflowTab() {
   const [loading, setLoading] = useState(true);
   const [donationTotal, setDonationTotal] = useState(0);
   const [serviceTotal, setServiceTotal] = useState(0);
+  const [marking, setMarking] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
+  const load = useCallback(async () => {
       if (!supabase) {
         setLoading(false);
         return;
@@ -602,6 +605,7 @@ function DonationInflowTab() {
               : "";
         return {
           id: `d-${d.id}`,
+          rawId: d.id as string,
           source: "donation",
           date: (d.created_at as string) ?? "",
           donor: (d.donor_name as string) || (d.donor_email as string) || "—",
@@ -618,6 +622,7 @@ function DonationInflowTab() {
         const svc = Array.isArray(rel) ? rel[0]?.name : rel?.name;
         return {
           id: `s-${b.id}`,
+          rawId: b.id as string,
           source: "service",
           date: (b.created_at as string) ?? "",
           donor: (b.devotee_name as string) || (b.devotee_email as string) || "—",
@@ -641,9 +646,38 @@ function DonationInflowTab() {
       );
       setRows(merged);
       setLoading(false);
-    }
-    load();
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Mark a pending pledge (esp. a Zelle transfer the temple has confirmed in
+  // its bank) as received. Allowed by the "Admins can update donations" RLS
+  // policy (migration 006); flips payment_status to completed so it counts
+  // toward the year's total and stops showing as an open pledge.
+  async function markReceived(row: InflowRow) {
+    if (!supabase || row.source !== "donation") return;
+    if (
+      !window.confirm(
+        `Mark ${formatCurrency(row.amount)} from ${row.donor} as received? This records the pledge as completed.`
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    setMarking(row.id);
+    const { error } = await supabase
+      .from("donations")
+      .update({ payment_status: "completed" })
+      .eq("id", row.rawId);
+    setMarking(null);
+    if (error) {
+      setActionError(`Couldn't mark as received: ${error.message}`);
+      return;
+    }
+    await load();
+  }
 
   return (
     <div>
@@ -665,6 +699,11 @@ function DonationInflowTab() {
       <h2 className="mt-8 font-heading text-xl font-bold text-temple-maroon">
         Recent Inflow
       </h2>
+      {actionError && (
+        <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
       <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -753,9 +792,25 @@ function DonationInflowTab() {
                     {formatCurrency(row.amount)}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs ${
+                        row.status === "completed" || row.status === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
                       {row.status}
                     </span>
+                    {row.source === "donation" && row.status === "pending" && (
+                      <button
+                        onClick={() => markReceived(row)}
+                        disabled={marking === row.id}
+                        className="mt-1 flex items-center gap-1 rounded-md border border-green-300 px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-50 disabled:opacity-60"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {marking === row.id ? "Marking…" : "Mark received"}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
