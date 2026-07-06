@@ -28,6 +28,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
 import { fundLabels } from "../_shared/fund-labels.ts";
 import { sendDonationReceipt } from "../_shared/receipt.ts";
+import { sendPledgeNotification } from "../_shared/notify.ts";
 
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ?? "";
@@ -228,6 +229,20 @@ async function handleCreate(req: Request): Promise<Response> {
   // donation (it shows in the donor's dashboard; admins mark it completed in
   // Admin → Donations once the transfer arrives in the bank).
   if (paymentMethod === "zelle") {
+    // Best-effort: alert the temple so they can watch for the bank transfer and
+    // mark it received. Never blocks the pledge (awaited but self-catching).
+    const donorPhone =
+      customFields && typeof customFields.donor_phone === "string"
+        ? customFields.donor_phone
+        : null;
+    await sendPledgeNotification({
+      donorName,
+      donorEmail,
+      donorPhone,
+      amount: cleanAmount,
+      fundLabel: label,
+      method: "Zelle",
+    }).catch((e) => console.error("[notify] pledge notification error:", e));
     return new Response(
       JSON.stringify({ ok: true, donationId: donation.id }),
       { headers: jsonHeaders },
