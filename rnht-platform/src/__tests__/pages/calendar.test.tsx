@@ -1,84 +1,35 @@
-/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 import React from "react";
 
+// The public Events Calendar was retired — the page now just redirects home.
+const replaceMock = vi.fn();
 vi.mock("next/link", () => ({
-  default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
-}));
-vi.mock("next/image", () => ({
-  default: (props: any) => <img {...props} />,
+  default: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: replaceMock, back: vi.fn() }),
   usePathname: () => "/calendar",
   useSearchParams: () => new URLSearchParams(),
 }));
 
 import CalendarPage from "@/app/calendar/page";
 
-describe("CalendarPage", () => {
-  // List view filters out past non-recurring events. The sampleEvents fixture
-  // uses March/April 2026 dates, so pin the clock to 2026-03-01 for these
-  // tests to see them as upcoming.
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-01T12:00:00Z"));
-  });
-  afterEach(() => {
-    vi.useRealTimers();
+describe("CalendarPage (retired → redirects home)", () => {
+  beforeEach(() => replaceMock.mockClear());
+
+  it("redirects to the homepage on mount", () => {
+    render(<CalendarPage />);
+    expect(replaceMock).toHaveBeenCalledWith("/");
   });
 
-  it("renders the heading and subtitle", () => {
+  it("shows a redirect notice with a link home", () => {
     render(<CalendarPage />);
-    expect(screen.getByRole("heading", { name: /temple calendar/i })).toBeInTheDocument();
-    expect(screen.getByText(/stay connected with festivals/i)).toBeInTheDocument();
-  });
-
-  it("shows all sample events in list view by default", () => {
-    render(<CalendarPage />);
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
-    expect(screen.getByText("Sri Rama Navami")).toBeInTheDocument();
-    expect(screen.getByText("Weekly Bhajan Sandhya")).toBeInTheDocument();
-    expect(screen.getByText("Yoga & Meditation Session")).toBeInTheDocument();
-    expect(screen.getByText("Community Annadanam")).toBeInTheDocument();
-  });
-
-  it("filters festival events", () => {
-    render(<CalendarPage />);
-    fireEvent.click(screen.getByText("Festivals"));
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
-    expect(screen.getByText("Sri Rama Navami")).toBeInTheDocument();
-    expect(screen.getByText("Hanuman Jayanti")).toBeInTheDocument();
-    expect(screen.queryByText("Weekly Bhajan Sandhya")).not.toBeInTheDocument();
-  });
-
-  it("filters class events", () => {
-    render(<CalendarPage />);
-    fireEvent.click(screen.getByText("Classes"));
-    expect(screen.getByText("Yoga & Meditation Session")).toBeInTheDocument();
-    expect(screen.queryByText("Ugadi Celebrations 2026")).not.toBeInTheDocument();
-  });
-
-  it("filters community events", () => {
-    render(<CalendarPage />);
-    fireEvent.click(screen.getAllByText("Community")[0]);
-    expect(screen.getByText("Community Annadanam")).toBeInTheDocument();
-    expect(screen.queryByText("Sri Rama Navami")).not.toBeInTheDocument();
-  });
-
-  it("switches to calendar view and shows weekday headers", () => {
-    render(<CalendarPage />);
-    fireEvent.click(screen.getByText("Calendar"));
-    expect(screen.getByText("Sun")).toBeInTheDocument();
-    expect(screen.getByText("Mon")).toBeInTheDocument();
-    expect(screen.getByText("Tue")).toBeInTheDocument();
-  });
-
-  it("can switch back to list view", () => {
-    render(<CalendarPage />);
-    fireEvent.click(screen.getByText("Calendar"));
-    fireEvent.click(screen.getByText("List"));
-    expect(screen.getByText("Ugadi Celebrations 2026")).toBeInTheDocument();
+    expect(screen.getByText(/redirecting/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /home/i })).toHaveAttribute("href", "/");
   });
 });
