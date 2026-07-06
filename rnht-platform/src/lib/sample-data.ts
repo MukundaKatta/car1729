@@ -1515,7 +1515,7 @@ export const sampleServices: Service[] = [
   {
     id: "svc-jyotisham",
     category_id: "cat-1",
-    name: "JYOTHISHAM / KUNDALI",
+    name: "JYOTHISHAM / KUNDALI (ASTROLOGY / HOROSCOPE CONSULTATION)",
     slug: "jyotisham",
     short_description: "Personalised Vedic astrology consultation for guidance on life, career, marriage, and remedies.",
     full_description: "Jyotisham offers a detailed reading of your Vedic horoscope (jataka) to provide insight into career, marriage, health, finances, and the timing of events. The consultation includes analysis of planetary positions and dashas along with recommended remedies (parihara) for challenging periods.\n\nASTROLOGY / HOROSCOPE CONSULTATION\n\nJathakam is the preparation of a detailed Vedic horoscope based on the exact birth details, charting planetary positions, dashas, and yogas. It serves as the foundation for astrological guidance, matchmaking, and remedial measures throughout one\u2019s life.",
