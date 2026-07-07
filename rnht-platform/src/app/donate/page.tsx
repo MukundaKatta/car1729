@@ -1039,7 +1039,7 @@ function DonateContent() {
             {paymentMethod === "zelle" && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 <p>
-                  <strong>Phone:</strong> {ZELLE_PHONE}
+                  <strong>Email:</strong> {ZELLE_PHONE}
                 </p>
                 <p>
                   <strong>Name:</strong> Rudra Narayana Hindu Temple
