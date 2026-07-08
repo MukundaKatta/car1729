@@ -198,8 +198,8 @@ describe("PriestsPage", () => {
 
   it("shows stats for both priests", () => {
     render(<PriestsPage />);
-    expect(screen.getByText("20+ yrs")).toBeInTheDocument();
-    expect(screen.getByText("15+ yrs")).toBeInTheDocument();
+    // Both priests now show 20+ yrs (client 07-08: Raghurama Ji raised 15 -> 20).
+    expect(screen.getAllByText("20+ yrs")).toHaveLength(2);
     expect(screen.getByText("Since 2006")).toBeInTheDocument();
     expect(screen.getByText("Since 2017")).toBeInTheDocument();
     expect(screen.getByText("Austin, TX")).toBeInTheDocument();

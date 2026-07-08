@@ -46,7 +46,7 @@ const priests = [
     specialization: "Krishna Yajurveda, Smartha Traditions, Panchadasa Karmas",
     languages: ["Telugu", "Tamil", "English"],
     education: "Krishna Yajur Veda under Sri Maddulapalli Suryanarayana Sharma Ghanapati Garu (Tirupati); Smartha from Sri Sannidhanam Sridhara Sharma Garu",
-    bio: "Pandit Sri Raghurama Sharma is a distinguished Vedic scholar and priest with a rich background in Krishna Yajurveda and Smartha traditions. He has had the privilege of studying Krishna Yajurveda under the guidance of his Veda Guru, Sri Maddulapalli Suryanarayana Sharma Ghanapati Garu (Tirupati), and Smartha under the guidance of Sri Sannidhanam Sridhara Sharma Garu. Prior to joining the Austin Hindu Temple in 2017, Panditji served as a Veda Pandit at Tirumala Tirupati Devasthanam and as a freelance priest at Srinivasa Swami Devasthanam, Nagole, Hyderabad. With over 15 years of expertise in Panchadasa Karmas, Panditji has performed various rituals and cultural activities at the Austin Hindu Temple. Currently, he offers family priestly services across Texas, catering to the spiritual needs of the community. Panditji is fluent in Telugu, Tamil, and English, making him an approachable and versatile spiritual leader. In addition to his priestly duties, Panditji is also passionate about mentoring kids in Purana Stotras, aiming to pass on the rich cultural heritage of Hinduism to the next generation.",
+    bio: "Pandit Sri Raghurama Sharma is a distinguished Vedic scholar and priest with a rich background in Krishna Yajurveda and Smartha traditions. He has had the privilege of studying Krishna Yajurveda under the guidance of his Veda Guru, Sri Maddulapalli Suryanarayana Sharma Ghanapati Garu (Tirupati), and Smartha under the guidance of Sri Sannidhanam Sridhara Sharma Garu. Prior to joining the Austin Hindu Temple in 2017, Panditji served as a Veda Pandit at Tirumala Tirupati Devasthanam and as a freelance priest at Srinivasa Swami Devasthanam, Nagole, Hyderabad. With over 20 years of expertise in Panchadasa Karmas, Panditji has performed various rituals and cultural activities at the Austin Hindu Temple. Currently, he offers family priestly services across Texas, catering to the spiritual needs of the community. Panditji is fluent in Telugu, Tamil, and English, making him an approachable and versatile spiritual leader. In addition to his priestly duties, Panditji is also passionate about mentoring kids in Purana Stotras, aiming to pass on the rich cultural heritage of Hinduism to the next generation.",
     services: ["All Poojas", "Panchadasa Karmas", "Weddings (Vivaham)", "Homams & Yagnas", "Cultural Activities", "Purana Stotras Mentoring"],
     availability: { atTemple: true, outsideTemple: true, online: false },
     phone: "(512) 998-0112",
@@ -54,7 +54,7 @@ const priests = [
     // earlier note had wrongly "corrected" it to 988). tel: link is derived
     // from phone; keep the WhatsApp URL digits in sync.
     whatsapp: "https://wa.me/15129980112",
-    stats: { experience: "15+ yrs", serving: "Since 2017", area: "Texas" },
+    stats: { experience: "20+ yrs", serving: "Since 2017", area: "Texas" },
   },
 ];
 
