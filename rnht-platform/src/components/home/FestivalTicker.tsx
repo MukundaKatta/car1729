@@ -18,6 +18,27 @@ const FESTIVALS: Array<{ date: string; name: string }> = [
   { date: "2026-07-15", name: "Puri Jagannatha Ratha Yatra" },
   { date: "2026-07-24", name: "Devashayana Ekadashi (Toli Ekadashi)" },
   { date: "2026-07-29", name: "Guru Poornima" },
+  // Aug–Dec majors, from the temple's 2026 calendar PDF monthly pages.
+  { date: "2026-08-27", name: "Raksha Bandhan" },
+  { date: "2026-09-04", name: "Krishna Janmashtami" },
+  { date: "2026-09-14", name: "Ganesh Chaturthi" },
+  { date: "2026-09-25", name: "Anant Chaturdasi" },
+  { date: "2026-10-11", name: "Sharad Navaratri begins" },
+  { date: "2026-10-20", name: "Vijaya Dashami (Dussehra)" },
+  { date: "2026-10-25", name: "Sharad Poornima" },
+  { date: "2026-10-28", name: "Karwa Chauth" },
+  { date: "2026-11-06", name: "Dhanteras" },
+  { date: "2026-11-08", name: "Deepavali (Lakshmi Puja)" },
+  { date: "2026-11-09", name: "Govardhan Puja" },
+  { date: "2026-11-10", name: "Bhaiya Dooj" },
+  { date: "2026-11-15", name: "Chhath Puja" },
+  { date: "2026-11-20", name: "Dev Uthana Ekadasi" },
+  { date: "2026-11-23", name: "Dev Deepawali" },
+  { date: "2026-12-13", name: "Vivaha Panchami" },
+  { date: "2026-12-16", name: "Dhanurmasa begins" },
+  { date: "2026-12-20", name: "Vaikuntha Ekadasi" },
+  { date: "2026-12-23", name: "Dattatreya Jayanti" },
+  { date: "2026-12-24", name: "Arudra Darshanam" },
 ];
 
 /** "2026-07-10" -> "Jul 10" (no Date parsing — avoids TZ off-by-one). */
@@ -38,7 +59,9 @@ export function FestivalTicker() {
     const todayCT = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/Chicago",
     }).format(new Date());
-    setUpcoming(FESTIVALS.filter((f) => f.date >= todayCT));
+    // Next 6 only — keeps the marquee pace steady now that the list covers
+    // the whole year; older entries roll off, later ones roll in.
+    setUpcoming(FESTIVALS.filter((f) => f.date >= todayCT).slice(0, 6));
   }, []);
 
   if (!upcoming || upcoming.length === 0) return null;

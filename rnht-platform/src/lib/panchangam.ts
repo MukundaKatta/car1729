@@ -136,6 +136,12 @@ const MASA_RANGES: Array<{ from: string; to: string; label: string }> = [
   { from: "2026-05-17", to: "2026-06-14", label: "Adhika Jyeshtha" },
   { from: "2026-06-15", to: "2026-07-13", label: "Nija Jyeshtha" },
   { from: "2026-07-14", to: "2026-08-13", label: "Ashadha" },
+  { from: "2026-08-14", to: "2026-09-10", label: "Shravana" },
+  { from: "2026-09-11", to: "2026-10-10", label: "Bhadrapada" },
+  { from: "2026-10-11", to: "2026-11-08", label: "Ashwayuja" },
+  { from: "2026-11-09", to: "2026-12-08", label: "Karthika" },
+  // Runs to year end; extend from the temple's 2027 calendar when it arrives.
+  { from: "2026-12-09", to: "2026-12-31", label: "Margasira" },
 ];
 
 const SAMVATSARA_CYCLE = [
