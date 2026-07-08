@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Calendar as CalendarIcon,
-  Clock,
   Download,
   Moon,
   Sun,
@@ -135,11 +134,33 @@ export function HomePanchangamScroll() {
     },
   ];
 
+  // Client 07-08: Tithi tile replaced by "Moudhyami / Astha Days"; order fixed
+  // to Nakshatra, Yoga, Karana, Moudhyami. The Moudhyami (planet-combustion)
+  // windows come from the temple's own 2026 calendar PDF ("GURU MODHYAMI
+  // ASTHA" Jul 12 – Aug 10; Sukra Oct 10 – 29). Shows the active window, else
+  // the next upcoming one.
+  const MOUDHYAMI_WINDOWS = [
+    { from: "2026-07-12", to: "2026-08-10", label: "Guru Moudhyami" },
+    { from: "2026-10-10", to: "2026-10-29", label: "Sukra Moudhyami" },
+  ];
+  const fmtShort = (iso: string) => {
+    const [, m, d] = iso.split("-").map(Number);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[(m ?? 1) - 1]} ${d}`;
+  };
+  const moudhyamiWindow = p.date
+    ? MOUDHYAMI_WINDOWS.find((w) => p.date >= w.from && p.date <= w.to) ||
+      MOUDHYAMI_WINDOWS.find((w) => p.date < w.from)
+    : undefined;
+  const moudhyami = moudhyamiWindow
+    ? `${moudhyamiWindow.label} · ${fmtShort(moudhyamiWindow.from)} – ${fmtShort(moudhyamiWindow.to)}`
+    : "—";
+
   const lunarDetails = [
-    { label: "Tithi", value: `${p.tithi.paksha} ${p.tithi.name}` },
     { label: "Nakshatra", value: p.nakshatra.name },
     { label: "Yoga", value: p.yoga.name },
     { label: "Karana", value: p.karana.name },
+    { label: "Moudhyami / Astha Days", value: moudhyami },
   ];
 
   return (
@@ -254,14 +275,10 @@ export function HomePanchangamScroll() {
               </div>
             </div>
 
+            {/* Timing chips — the "Sacred Timings" heading was removed on the
+                client's request (07-08); the chips themselves stay. */}
             <div className="mt-5">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-temple-gold-light" />
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-temple-gold-light">
-                  Sacred Timings
-                </p>
-              </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {sacredTimings.map((t) => (
                   <div
                     key={t.label}

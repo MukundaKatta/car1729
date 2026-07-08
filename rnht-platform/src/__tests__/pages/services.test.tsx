@@ -61,14 +61,16 @@ import ServicesPage from "@/app/services/page";
 import { sampleServices } from "@/lib/sample-data";
 
 describe("ServicesPage", () => {
-  it("renders the page heading and intro", () => {
+  it("renders the page heading without the retired intro lines", () => {
     render(<ServicesPage />);
     expect(
       screen.getByRole("heading", { name: /Pooja & Spiritual Services/i })
     ).toBeInTheDocument();
+    // Client 07-08: both descriptive sub-heading lines were removed.
     expect(
-      screen.getByText(/Current catalog offerings include shanti pujas/i)
-    ).toBeInTheDocument();
+      screen.queryByText(/Current catalog offerings include shanti pujas/i)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Service areas:/i)).not.toBeInTheDocument();
   });
 
   it("does NOT render the removed At Temple / Outside Temple or price filters", () => {

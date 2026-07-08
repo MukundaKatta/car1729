@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
 import { canonicalPath } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
@@ -16,7 +15,14 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="text-center">
-        <BookOpen className="mx-auto h-10 w-10 text-temple-red" />
+        {/* Temple logo above the heading (client 07-08 — replaced the book icon) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/cropped-RNHT_Logo_512x512_transparent-150x150.png`}
+          alt=""
+          aria-hidden="true"
+          className="mx-auto h-14 w-14 rounded-full ring-2 ring-temple-gold/40"
+        />
         <h1 className="mt-4 section-heading">About Us</h1>
       </div>
 

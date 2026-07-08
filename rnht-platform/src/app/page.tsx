@@ -119,7 +119,7 @@ export default function HomePage() {
           </Link>
 
           <a
-            href="https://wa.me/message/P3YRA2XY3GI7F1"
+            href="https://chat.whatsapp.com/KLh44fIVck13OSEokGIfAa"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex flex-col items-center rounded-[8px] border border-temple-gold/12 bg-white/[0.02] px-3 py-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-temple-gold/40 hover:bg-white/[0.05]"

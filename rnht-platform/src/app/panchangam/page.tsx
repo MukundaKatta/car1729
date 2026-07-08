@@ -138,14 +138,25 @@ export default function PanchangamPage() {
           <div className="absolute inset-0 bg-[#f3e6c8]/40" />
           <div className="relative flex h-full flex-col items-center justify-center px-6 py-12 text-center sm:px-10">
             <span className="text-2xl text-[#8a5a1c]">&#x0950;</span>
-            <div className="mt-3 space-y-2 font-heading text-lg leading-10 text-[#3a2208] sm:text-xl">
-              <p>तिथिर्वारं च नक्षत्रं योगः करणमेव च ।</p>
-              <p>पञ्चाङ्गमिति विख्यातं लोकयां कर्मसाधकः ॥</p>
-              <p>तिथेश्च श्रियमाप्नोति वारादायुर्वर्धनम् ।</p>
-              <p>नक्षत्राद्धरते पापं योगाद्रोगनिवारणम् ॥</p>
-              <p>करणात्कार्यसिद्धिश्च पञ्चाङ्गफलमुत्तमम् ।</p>
-              <p>कालवित् कर्मणां श्रेष्ठं लभेत् शुभम् ॥</p>
+            {/* Panchanga Phala Sloka — replaced per the client's 07-08 image
+                (Jyotisha Shastra verse + its English meaning). */}
+            <div className="mt-3 space-y-1.5 font-heading text-lg leading-9 text-[#3a2208] sm:text-xl">
+              <p>तिथेश्च श्रीकरं प्रोक्तम्</p>
+              <p>वारात् आयुष्य वर्धनम्</p>
+              <p>नक्षत्रात् हरते पापम्</p>
+              <p>योगात् रोग निवारणम्</p>
+              <p>करणात् कार्य सिद्धिस्यातः</p>
+              <p>पञ्चाङ्ग फलम् उत्तमम्</p>
             </div>
+            <p className="mt-4 font-accent text-[11px] font-bold uppercase tracking-[0.28em] text-[#8a5a1c]">
+              Panchanga Phala Sloka &middot; Jyotisha Shastra
+            </p>
+            <p className="mt-3 max-w-md font-accent text-sm italic leading-relaxed text-[#5a3a14]">
+              Know the Sinodic Days for prosperity, Weekdays for longevity,
+              Asterism for cleansing the sins, Luminal union to treat diseases
+              and Active Day for Success. Knowing these five phases of time
+              result in goodness.
+            </p>
           </div>
         </div>
 

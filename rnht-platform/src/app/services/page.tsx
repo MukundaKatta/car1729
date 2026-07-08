@@ -92,15 +92,8 @@ export default function ServicesPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="text-center">
         <h1 className="section-heading">{t("services.title", locale)}</h1>
-        <p className="mt-3 text-gray-600">
-          Current catalog offerings include shanti pujas, sacred parayanams,
-          ancestral rites, divine kalyanams, and elaborate Rudrabhishekam
-          services from Pandit Aditya Sharma.
-        </p>
-        <p className="mt-2 text-xs text-gray-500">
-          Service areas: Kyle, Manor, Austin, Dallas, Houston, Lakeway, Bee Cave,
-          Round Rock, San Antonio, Leander, Dripping Springs, and more.
-        </p>
+        {/* Both descriptive sub-heading lines removed on the client's request
+            (07-08) — the heading stands alone. */}
       </div>
 
       {/* Downloadable services PDFs */}

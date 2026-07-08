@@ -165,7 +165,7 @@ const RAW_GALLERY: Record<string, string[]> = {
     "/services/sundarakanda-path-parayanam/1.jpg"
   ],
   "surya-yantra-namaskara-puja": [
-    "/services/surya-yantra-namaskara-puja/1.jpg",
+    // 1.jpg removed per the client (07-08): "in this service remove first image only".
     "/services/surya-yantra-namaskara-puja/2.jpg",
     "/services/surya-yantra-namaskara-puja/3.jpg",
     "/services/surya-yantra-namaskara-puja/4.jpg",
@@ -210,7 +210,7 @@ const CATEGORY_FALLBACK: Array<[RegExp, string[]]> = [
   [/parayana|parayanam|gita|veda|stotra|sundarakanda|upakarma|upaakarma|devotion/, ["devi-saptashati-parayanam/1.jpg", "sundarakanda-path-parayanam/1.jpg"]],
   [/shraddham|shraddha|samvatsareekam|ancestor|pitru/, ["hiranya-shraddham/1.jpg", "anna-shraddham/1.jpg"]],
   [/jyotish|jyothish|kundali|muhoortham|muhurtham|dharma|astrolog|timing|consultation/, ["surya-yantra-namaskara-puja/2.jpg"]],
-  [/navagraha|graha|shanti|shanthi|vastu|udaka/, ["udaka-shanthi-puja/1.jpg", "surya-yantra-namaskara-puja/1.jpg"]],
+  [/navagraha|graha|shanti|shanthi|vastu|udaka/, ["udaka-shanthi-puja/1.jpg", "surya-yantra-namaskara-puja/3.jpg"]],
   [/puja|pooja|business|opening|archana/, ["ganapathi-puja/1.jpg", "punyahavachanam/1.jpg"]],
 ];
 

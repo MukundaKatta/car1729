@@ -126,12 +126,17 @@ const MASA_BY_MONTH = [
   "Margashirsha",
 ];
 
-// The temple requested the Adhika (leap) month label specifically for the 2026
-// Jyeshtha period. Scope it to that exact year+month — otherwise EVERY June
-// would wrongly read "Adhik Jyeshtha". Keyed "YYYY-M" (1-based month).
-const ADHIKA_MASA_OVERRIDES: Record<string, string> = {
-  "2026-6": "Adhik Jyeshtha",
-};
+// Day-precise amanta masa ranges sourced from the temple's own 2026 calendar
+// PDF (2026-rnht.pdf, "Panchanga by mypanchang.com" for Austin, TX). The 2026
+// leap (Adhika) Jyeshtha shifts every month boundary until Shravana, so the
+// coarse month map below gets mid-May through mid-August wrong (client 07-08:
+// July 8 must read "Nija Jyeshtha", not Ashadha). Checked FIRST; ISO-date
+// string compare. Extend from the temple calendar as later months need it.
+const MASA_RANGES: Array<{ from: string; to: string; label: string }> = [
+  { from: "2026-05-17", to: "2026-06-14", label: "Adhika Jyeshtha" },
+  { from: "2026-06-15", to: "2026-07-13", label: "Nija Jyeshtha" },
+  { from: "2026-07-14", to: "2026-08-13", label: "Ashadha" },
+];
 
 const SAMVATSARA_CYCLE = [
   "Prabhava",
@@ -500,12 +505,11 @@ function segmentRange(sunrise: Date, segment: number, position: number, timeZone
 }
 
 function getMasa(date: Date, timeZone: string) {
-  const { year, month } = getZonedDateParts(date, timeZone);
-  return (
-    ADHIKA_MASA_OVERRIDES[`${year}-${month}`] ||
-    MASA_BY_MONTH[month - 1] ||
-    samplePanchangam.masa
-  );
+  const iso = getZonedDateString(date, timeZone);
+  const range = MASA_RANGES.find((r) => iso >= r.from && iso <= r.to);
+  if (range) return range.label;
+  const { month } = getZonedDateParts(date, timeZone);
+  return MASA_BY_MONTH[month - 1] || samplePanchangam.masa;
 }
 
 function getSamvatsara(date: Date, masa: string, timeZone: string) {

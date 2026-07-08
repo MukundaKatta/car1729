@@ -43,13 +43,15 @@ export function FestivalTicker() {
 
   if (!upcoming || upcoming.length === 0) return null;
 
+  // Client 07-08 styling pass: red background + white text so the strip
+  // stands out, plain readable font, bigger date text.
   const items = upcoming.map((f) => (
-    <span key={f.date + f.name} className="mx-5 inline-flex items-baseline gap-2 whitespace-nowrap">
-      <span className="font-accent text-xs font-bold uppercase tracking-wider text-temple-gold-light">
+    <span key={f.date + f.name} className="mx-6 inline-flex items-baseline gap-2.5 whitespace-nowrap">
+      <span className="text-base font-bold text-white">
         {shortLabel(f.date)}
       </span>
-      <span className="text-sm text-gray-200">{f.name}</span>
-      <span aria-hidden="true" className="ml-3 text-temple-gold/50">
+      <span className="text-base font-medium text-white/95">{f.name}</span>
+      <span aria-hidden="true" className="ml-3 text-white/60">
         &#x2726;
       </span>
     </span>
@@ -58,10 +60,10 @@ export function FestivalTicker() {
   return (
     <section
       aria-label="Upcoming festivals"
-      className="border-b border-temple-gold/15 bg-[#1d040c]"
+      className="border-y border-temple-gold/40 bg-gradient-to-r from-[#8f1028] via-[#b3152f] to-[#8f1028]"
     >
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-        <span className="flex-shrink-0 font-accent text-[11px] font-bold uppercase tracking-[0.22em] text-temple-gold-light">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <span className="flex-shrink-0 text-xs font-bold uppercase tracking-[0.2em] text-white">
           &#x1FA94; Upcoming Festivals
         </span>
         <div className="relative flex-1 overflow-hidden" role="marquee">
