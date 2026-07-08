@@ -34,7 +34,7 @@ const priests = [
     availability: { atTemple: true, outsideTemple: true, online: true },
     phone: "(512) 545-0473",
     whatsapp: "https://wa.me/message/P3YRA2XY3GI7F1",
-    stats: { experience: "20+ yrs", serving: "Since 2013", area: "Austin, TX" },
+    stats: { experience: "20+ yrs", serving: "Since 2006", area: "Austin, TX" },
   },
   {
     id: "priest-2",

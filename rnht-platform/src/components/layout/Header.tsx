@@ -484,11 +484,14 @@ export function Header() {
               className="relative rounded-full ring-2 ring-temple-gold/50 shadow-[0_0_12px_rgba(197,151,62,0.25)] transition-all duration-300 group-hover:scale-105"
             />
           </div>
-          <div className="hidden sm:block">
+          <div className="block">
             {/* Brand wordmark — a <div>, not an <h1>: the logo must NOT be the page's
                 top-level heading (it would make every page's h1 the non-descriptive
-                "Rudra Narayana" and demote/duplicate the real content heading). */}
-            <div className="text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] whitespace-nowrap" style={{
+                "Rudra Narayana" and demote/duplicate the real content heading).
+                Visible at ALL widths (client 07-08: the temple name was invisible on
+                phones in portrait because this block was hidden below sm) — just
+                smaller on narrow screens. */}
+            <div className="text-[16px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] whitespace-nowrap" style={{
               background: "linear-gradient(90deg, #8B6914 0%, #C5973E 20%, #D4A843 50%, #C5973E 80%, #8B6914 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -496,7 +499,7 @@ export function Header() {
             }}>
               Rudra Narayana
             </div>
-            <p className="text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5" style={{
+            <p className="text-[9px] sm:text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5" style={{
               background: "linear-gradient(90deg, #9B7730 0%, #C5973E 30%, #D4A843 50%, #C5973E 70%, #9B7730 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",

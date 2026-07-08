@@ -34,7 +34,7 @@ describe("HomePage", () => {
     render(<HomePage />);
     // Action-tile band (replaced the old stat band + the duplicate CTA row).
     expect(screen.getByText("Book a Pooja")).toBeInTheDocument();
-    expect(screen.getByText("Ask Panditji")).toBeInTheDocument();
+    expect(screen.getByText("Join Temple WhatsApp Group")).toBeInTheDocument();
     expect(screen.getByText("Today's Panchangam")).toBeInTheDocument();
     expect(screen.getByText("Offer a Seva")).toBeInTheDocument();
   });

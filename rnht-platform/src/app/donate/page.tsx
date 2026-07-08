@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Heart,
   CreditCard,
   ShieldCheck,
   CheckCircle,
@@ -64,7 +63,14 @@ function DonateFallback() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="text-center">
-        <Heart className="mx-auto h-10 w-10 text-temple-red" />
+        {/* Temple logo above the heading (client 07-08 — replaced the heart icon) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/cropped-RNHT_Logo_512x512_transparent-150x150.png`}
+          alt=""
+          aria-hidden="true"
+          className="mx-auto h-14 w-14 rounded-full ring-2 ring-temple-gold/40"
+        />
         <h1 className="mt-4 section-heading">Support Our Temple</h1>
         <p className="mt-3 text-gray-600">
           Your contributions help maintain the temple and support community programs.
@@ -672,7 +678,14 @@ function DonateContent() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="text-center">
-        <Heart className="mx-auto h-10 w-10 text-temple-red" />
+        {/* Temple logo above the heading (client 07-08 — replaced the heart icon) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/cropped-RNHT_Logo_512x512_transparent-150x150.png`}
+          alt=""
+          aria-hidden="true"
+          className="mx-auto h-14 w-14 rounded-full ring-2 ring-temple-gold/40"
+        />
         <h1 className="mt-4 section-heading">{t("donate.title", locale)}</h1>
         <p className="mt-3 text-gray-600">{t("donate.subtitle", locale)}</p>
         <p className="mt-2 text-sm font-semibold text-gray-900">

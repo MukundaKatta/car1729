@@ -200,7 +200,7 @@ describe("PriestsPage", () => {
     render(<PriestsPage />);
     expect(screen.getByText("20+ yrs")).toBeInTheDocument();
     expect(screen.getByText("15+ yrs")).toBeInTheDocument();
-    expect(screen.getByText("Since 2013")).toBeInTheDocument();
+    expect(screen.getByText("Since 2006")).toBeInTheDocument();
     expect(screen.getByText("Since 2017")).toBeInTheDocument();
     expect(screen.getByText("Austin, TX")).toBeInTheDocument();
     expect(screen.getByText("Texas")).toBeInTheDocument();
