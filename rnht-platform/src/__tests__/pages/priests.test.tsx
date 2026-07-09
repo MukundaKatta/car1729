@@ -115,8 +115,9 @@ describe("PriestsPage", () => {
 
   it("shows experience for both priests", () => {
     render(<PriestsPage />);
-    expect(screen.getByText(/20\+ years experience/i)).toBeInTheDocument();
-    expect(screen.getByText(/15\+ years experience/i)).toBeInTheDocument();
+    // Both priests now show "20+ years experience" (client 07-08: Raghurama Ji
+    // raised 15 -> 20 to remove the card mismatch he flagged on WhatsApp).
+    expect(screen.getAllByText(/20\+ years experience/i)).toHaveLength(2);
   });
 
   it("shows languages for Aditya Sharma", () => {
@@ -198,10 +199,12 @@ describe("PriestsPage", () => {
 
   it("shows stats for both priests", () => {
     render(<PriestsPage />);
-    // Both priests now show 20+ yrs (client 07-08: Raghurama Ji raised 15 -> 20).
+    // Both priests now show 20+ yrs AND "Since 2006" (client 07-08 via WhatsApp
+    // IT SUPPORT-RNHT: Raghurama Ji's card had a 15+/2017/20+ mismatch — unified
+    // to 20 years; card "Serving" now mirrors Aditya's 20-yr-career "Since 2006",
+    // while each bio keeps its own Austin-temple joining year).
     expect(screen.getAllByText("20+ yrs")).toHaveLength(2);
-    expect(screen.getByText("Since 2006")).toBeInTheDocument();
-    expect(screen.getByText("Since 2017")).toBeInTheDocument();
+    expect(screen.getAllByText("Since 2006")).toHaveLength(2);
     expect(screen.getByText("Austin, TX")).toBeInTheDocument();
     expect(screen.getByText("Texas")).toBeInTheDocument();
   });

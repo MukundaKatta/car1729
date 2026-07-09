@@ -42,7 +42,7 @@ const priests = [
     title: "Senior Priest",
     image: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/priests/raghurama-sharma.jpg`,
     initials: "RS",
-    experience: "15+ years",
+    experience: "20+ years",
     specialization: "Krishna Yajurveda, Smartha Traditions, Panchadasa Karmas",
     languages: ["Telugu", "Tamil", "English"],
     education: "Krishna Yajur Veda under Sri Maddulapalli Suryanarayana Sharma Ghanapati Garu (Tirupati); Smartha from Sri Sannidhanam Sridhara Sharma Garu",
@@ -54,7 +54,7 @@ const priests = [
     // earlier note had wrongly "corrected" it to 988). tel: link is derived
     // from phone; keep the WhatsApp URL digits in sync.
     whatsapp: "https://wa.me/15129980112",
-    stats: { experience: "20+ yrs", serving: "Since 2017", area: "Texas" },
+    stats: { experience: "20+ yrs", serving: "Since 2006", area: "Texas" },
   },
 ];
 
