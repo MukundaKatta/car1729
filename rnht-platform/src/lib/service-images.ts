@@ -3,6 +3,27 @@
 // Regenerate by re-running the optimize script in scratch if the client sends new images.
 
 const RAW_GALLERY: Record<string, string[]> = {
+  // Client-provided per-service images (Jinal via Teams, 2026-07-09) for six
+  // services that previously fell back to a category photo. annaprasana already
+  // had a gallery below; its 1.jpg was refreshed with the client's new image.
+  "veda-parayana": [
+    "/services/veda-parayana/1.jpg"
+  ],
+  "bhagavad-gita-parayana": [
+    "/services/bhagavad-gita-parayana/1.jpg"
+  ],
+  "stotra-classes-for-kids": [
+    "/services/stotra-classes-for-kids/1.jpg"
+  ],
+  "dharma-related-solutions": [
+    "/services/dharma-related-solutions/1.jpg"
+  ],
+  "jyotisham": [
+    "/services/jyotisham/1.jpg"
+  ],
+  "muhoortham": [
+    "/services/muhoortham/1.jpg"
+  ],
   "aksharabhyasam-vidyarambham": [
     "/services/aksharabhyasam-vidyarambham/1.jpg"
   ],
