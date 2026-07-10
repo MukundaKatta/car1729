@@ -986,7 +986,9 @@ function DonateContent() {
                   placeholder="(512) 555-0123 (optional)"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Helps us reach you to confirm a Zelle transfer.
+                  {paymentMethod === "zelle"
+                    ? "Helps us reach you to confirm a Zelle transfer."
+                    : "Optional — helps us reach you about your donation."}
                 </p>
               </div>
               {customFields.map((field) => (

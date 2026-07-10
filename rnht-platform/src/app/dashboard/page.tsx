@@ -11,7 +11,9 @@ import {
   writeEmailAuthCooldownUntil,
 } from "@/lib/email-auth-cooldown";
 import { useAuthStore } from "@/store/auth";
+import type { ActivityItem } from "@/store/auth";
 import { normalizePhone } from "@/lib/phone";
+import { prettyFund } from "@/lib/fund";
 import {
   User,
   Heart,
@@ -550,7 +552,7 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ─── Overview Tab ─── */
 function OverviewTab() {
-  const { user, bookings, donations, activities } = useAuthStore();
+  const { user, bookings, donations } = useAuthStore();
   // Only completed donations count toward the giving total (exclude pending
   // Zelle pledges / abandoned checkouts).
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
@@ -561,6 +563,31 @@ function OverviewTab() {
   // donations only — a pending/failed recurring pledge must not inflate the
   // Overview "Recurring" stat while the Donations tab shows $0.
   const recurringDonations = completedDonations.filter((d) => d.recurring);
+
+  // Recent Activity is DERIVED from the data we actually load (completed
+  // donations + bookings) rather than the separate `activities` table. That
+  // table is only ever written client-side and ephemerally, and real
+  // (server-verified) donations never insert a row into it — so the feed used
+  // to be permanently empty for real donors even though their stats showed a
+  // total. Merge donations + bookings and sort newest-first.
+  const recentActivity: ActivityItem[] = [
+    ...completedDonations.map((d) => ({
+      id: `don-${d.id}`,
+      type: "donation" as const,
+      title: `Donation to ${prettyFund(d.fund)}`,
+      description: `${d.recurring ? "Recurring" : "One-time"} via ${d.method}`,
+      date: d.date,
+      amount: d.amount,
+    })),
+    ...bookings.map((b) => ({
+      id: `bk-${b.id}`,
+      type: "booking" as const,
+      title: `Booked ${b.serviceName}`,
+      description: b.time ? `${b.date} at ${b.time}` : b.date,
+      date: b.createdAt || b.date,
+      amount: b.amount || undefined,
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-8">
@@ -623,12 +650,12 @@ function OverviewTab() {
       <div>
         <h3 className="font-heading text-lg font-bold text-temple-maroon mb-4">Recent Activity</h3>
         <div className="card divide-y divide-gray-100">
-          {activities.length === 0 && (
+          {recentActivity.length === 0 && (
             <p className="p-6 text-center text-sm text-gray-500 font-accent">
               No recent activity yet. Your bookings and donations will appear here.
             </p>
           )}
-          {activities.slice(0, 5).map((a) => (
+          {recentActivity.slice(0, 5).map((a) => (
             <div key={a.id} className="flex items-center gap-4 p-4">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                 a.type === "donation" ? "bg-green-50 text-green-600" :

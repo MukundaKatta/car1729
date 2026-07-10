@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { prettyFund } from "@/lib/fund";
 import type { Donation } from "@/store/auth";
 
 // Temple identity used on the receipt letterhead — matches the client's
@@ -194,7 +195,7 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
     ink(INK);
     doc.text(formatDate(d.date), colDate, y + 13);
     doc.text(d.receiptId || d.id, colReceipt, y + 13);
-    doc.text(fitText(doc, d.fund, colAmount - colType - 70), colType, y + 13);
+    doc.text(fitText(doc, prettyFund(d.fund), colAmount - colType - 70), colType, y + 13);
     doc.text(formatCurrency(d.amount), colAmount, y + 13, { align: "right" });
     total += d.amount;
     y += rowH;
