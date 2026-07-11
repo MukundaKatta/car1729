@@ -185,7 +185,12 @@ async function handleCreate(req: Request): Promise<Response> {
     .eq("slug", fundType)
     .eq("is_active", true)
     .maybeSingle();
-  const inFundLabels = !!fundType && fundType in fundLabels;
+  // hasOwnProperty, NOT `in`: `'toString' in fundLabels` (and other
+  // Object.prototype keys like 'constructor'/'valueOf') is true via the
+  // prototype chain, which would bypass the allowlist and later resolve the
+  // label to a prototype function flowing into Stripe + the receipt.
+  const inFundLabels =
+    !!fundType && Object.prototype.hasOwnProperty.call(fundLabels, fundType);
   if (!fundRow && !inFundLabels) {
     return new Response(
       JSON.stringify({ error: "Unknown donation fund" }),
@@ -194,6 +199,15 @@ async function handleCreate(req: Request): Promise<Response> {
   }
   // Authoritative server-side rounding to whole cents (never trust the client).
   const cleanAmount = Math.round(amount * 100) / 100;
+  // Re-validate the ROUNDED amount: the initial check tests the raw `amount`, so
+  // a sub-cent value like 0.004 passes `amount > 0` but rounds to $0.00 — which
+  // would otherwise insert a $0 Zelle pledge and email a $0 alert to the temple.
+  if (cleanAmount <= 0) {
+    return new Response(
+      JSON.stringify({ error: "Donation amount is too small" }),
+      { status: 400, headers: jsonHeaders },
+    );
+  }
 
   // Prefer the admin-managed name; fall back to the legacy label.
   const label = fundRow?.name ?? fundLabels[fundType] ?? "Donation";
@@ -363,7 +377,7 @@ async function handleVerify(req: Request): Promise<Response> {
   // Atomic flip: only the verify that actually transitions pending -> completed
   // updates a row and sends the receipt. Concurrent/refresh verifies update 0
   // rows, so the donor never receives duplicate receipts (matches paypal-capture).
-  const { data: updated } = await supabase
+  const { data: updated, error: flipError } = await supabase
     .from("donations")
     // Persist the Stripe session id too, so completed donations are linkable to
     // their checkout session for audit/lookup (mirrors the PayPal capture path).
@@ -372,6 +386,16 @@ async function handleVerify(req: Request): Promise<Response> {
     .eq("payment_status", "pending")
     .select("id")
     .maybeSingle();
+  // Surface a DB failure on the completion flip: without this the error was
+  // swallowed, so a transient failure left the donor charged (Stripe captured)
+  // with the row stuck 'pending' and no receipt, invisible in logs.
+  if (flipError) {
+    console.error("[donate:verify] failed to flip donation to completed", {
+      donationId,
+      sessionId,
+      error: flipError.message,
+    });
+  }
   if (updated) {
     await sendDonationReceipt({
       to: data.donor_email,
