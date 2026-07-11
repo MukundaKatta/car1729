@@ -2,9 +2,14 @@ import { describe, it, expect } from "vitest";
 import { prettyFund } from "@/lib/fund";
 
 describe("prettyFund", () => {
-  it("maps known slugs to donate-page display names", () => {
+  it("maps all backend fund-labels slugs to their canonical display names", () => {
+    // Must stay in sync with supabase/functions/_shared/fund-labels.ts.
     expect(prettyFund("general")).toBe("General Temple Donation");
     expect(prettyFund("festival")).toBe("Festival Donation");
+    expect(prettyFund("annadanam")).toBe("Annadanam Donation");
+    expect(prettyFund("building")).toBe("Building Donation");
+    expect(prettyFund("rudra-narayana")).toBe("Sri Rudra Narayana Seva");
+    expect(prettyFund("hanuman")).toBe("Lord Hanuman Seva");
   });
 
   it("is case-insensitive and trims for known slugs", () => {
@@ -13,7 +18,6 @@ describe("prettyFund", () => {
   });
 
   it("Title-Cases unknown slug/free-text funds", () => {
-    expect(prettyFund("annadanam")).toBe("Annadanam");
     expect(prettyFund("go_seva")).toBe("Go Seva");
     expect(prettyFund("special-abhishekam")).toBe("Special Abhishekam");
   });

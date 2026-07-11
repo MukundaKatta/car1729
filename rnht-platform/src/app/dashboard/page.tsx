@@ -787,6 +787,21 @@ function BookingsTab() {
   );
 }
 
+// Bucket a donation into a tax year using the TEMPLE's timezone (US Central),
+// not the viewer's browser timezone. created_at is a UTC timestamp; a gift made
+// at 11:30pm CT on Dec 31 must land in that tax year no matter where the donor
+// later opens the receipt. Using the browser's getFullYear() let the same gift
+// fall into 2025 or 2026 depending on the reader's timezone — wrong for an
+// official 501(c)(3) acknowledgment.
+const TEMPLE_TZ = "America/Chicago";
+function donationTaxYear(dateStr: string): number {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return NaN;
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: TEMPLE_TZ, year: "numeric" }).format(d),
+  );
+}
+
 /* ─── Donations Tab ─── */
 function DonationsTab() {
   const { donations, user } = useAuthStore();
@@ -805,7 +820,7 @@ function DonationsTab() {
   const receiptYears = Array.from(
     new Set(
       completedDonations
-        .map((d) => new Date(d.date).getFullYear())
+        .map((d) => donationTaxYear(d.date))
         .filter((yr) => Number.isFinite(yr)),
     ),
   ).sort((a, b) => b - a);
@@ -817,7 +832,7 @@ function DonationsTab() {
     const yr = Number(activeReceiptYear);
     if (!yr) return;
     const yearDonations = completedDonations.filter(
-      (d) => new Date(d.date).getFullYear() === yr,
+      (d) => donationTaxYear(d.date) === yr,
     );
     if (yearDonations.length === 0) return;
     setGeneratingReceipt(true);
@@ -986,7 +1001,7 @@ function DonationsTab() {
                 {d.recurring ? <RefreshCw className="h-4 w-4" /> : <Heart className="h-4 w-4" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm">{d.fund}</p>
+                <p className="font-semibold text-gray-900 text-sm">{prettyFund(d.fund)}</p>
                 <p className="text-xs text-gray-500">
                   {formatDate(d.date)} · {d.method}
                   {d.recurring && d.frequency ? ` · ${d.frequency}` : ""}

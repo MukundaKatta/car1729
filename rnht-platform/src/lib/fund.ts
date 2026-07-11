@@ -1,11 +1,25 @@
 // Donations store the fund as a lowercase slug (e.g. "general"). Displaying that
 // raw slug reads unpolished — on the 501(c)(3) tax-receipt PDF and in the
-// dashboard activity feed. Map the known slugs to their donate-page display
-// names and Title-Case anything else. Shared by tax-receipt-pdf.ts and the
-// devotee dashboard so the label is consistent everywhere.
+// dashboard activity feed. Map the known slugs to their canonical display names
+// and Title-Case anything else.
+//
+// IMPORTANT: this map MUST mirror supabase/functions/_shared/fund-labels.ts,
+// which is the source of truth the donate edge function + the emailed receipt
+// use. If the two diverge, the downloadable tax-receipt PDF and the emailed
+// receipt show different Donation Type labels for the same gift. Keep in sync.
 const FUND_LABELS: Record<string, string> = {
   general: "General Temple Donation",
+  building: "Building Donation",
+  priest: "Priest Donation",
+  annadanam: "Annadanam Donation",
   festival: "Festival Donation",
+  education: "Education Donation",
+  "rudra-narayana": "Sri Rudra Narayana Seva",
+  ganesha: "Lord Ganesha Seva",
+  lakshmi: "Goddess Lakshmi Seva",
+  hanuman: "Lord Hanuman Seva",
+  shiva: "Lord Shiva Seva",
+  rama: "Lord Rama Seva",
 };
 
 export function prettyFund(fund: string): string {

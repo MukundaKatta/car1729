@@ -1,7 +1,23 @@
 import { jsPDF } from "jspdf";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { prettyFund } from "@/lib/fund";
 import type { Donation } from "@/store/auth";
+
+// Compact, temple-timezone (US Central) date for the receipt table rows.
+// The long weekday+month form ("Wednesday, September 24, 2026") is ~125pt wide
+// and overflowed the 106pt Date column into the Receipt # column; this short
+// form ("Sep 24, 2026") fits, and using the temple tz keeps the row date
+// consistent with the tax-year bucketing on the dashboard.
+function receiptDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "--";
+  return d.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 // Temple identity used on the receipt letterhead — matches the client's
 // donation-template PDF (2026-07-03) verbatim.
@@ -193,7 +209,7 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
     }
     shaded = !shaded;
     ink(INK);
-    doc.text(formatDate(d.date), colDate, y + 13);
+    doc.text(fitText(doc, receiptDate(d.date), colReceipt - colDate - 8), colDate, y + 13);
     doc.text(d.receiptId || d.id, colReceipt, y + 13);
     doc.text(fitText(doc, prettyFund(d.fund), colAmount - colType - 70), colType, y + 13);
     doc.text(formatCurrency(d.amount), colAmount, y + 13, { align: "right" });
