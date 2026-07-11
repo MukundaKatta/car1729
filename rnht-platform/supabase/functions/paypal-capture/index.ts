@@ -125,13 +125,24 @@ Deno.serve(async (req) => {
 
       // Idempotent: only flip pending -> completed. A replay (already completed)
       // updates zero rows and simply returns the existing record below.
-      const { data: updated } = await supabase
+      const { data: updated, error: flipError } = await supabase
         .from("donations")
         .update({ payment_status: "completed", payment_intent_id: orderId })
         .eq("id", donationId)
         .eq("payment_status", "pending")
         .select("id")
         .maybeSingle();
+
+      // Surface a DB failure on the flip. PayPal has ALREADY captured the money
+      // at this point, so a swallowed error here means the donor paid but the
+      // row is stuck 'pending' with no receipt — must be visible for reconcile.
+      if (flipError) {
+        console.error("[paypal-capture] failed to flip donation to completed", {
+          donationId,
+          orderId,
+          error: flipError.message,
+        });
+      }
 
       // Send the receipt only on the actual transition (updated !== null), so a
       // replayed capture doesn't email the donor twice.
