@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageCircle, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { safeHref } from "@/lib/url";
 import type { Priest } from "@/types/database";
 
 /**
@@ -127,9 +128,9 @@ export function ReadyToBookPriests() {
             </div>
 
             <div className="mt-4 flex gap-2">
-              {priest.whatsapp_url && (
+              {safeHref(priest.whatsapp_url) && (
                 <a
-                  href={priest.whatsapp_url}
+                  href={safeHref(priest.whatsapp_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-500"

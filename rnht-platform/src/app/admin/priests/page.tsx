@@ -164,10 +164,18 @@ export default function AdminPriestsPage() {
         (p) => p.is_head && p.id !== form.id,
       );
       demotedHeadId = previousHead?.id ?? null;
-      const { error: demoteErr } = await supabase
+      // Demote OTHER heads only — never the row being edited. Editing the
+      // CURRENT head with the box still checked used to demote it here (and
+      // previousHead excludes form.id, so demotedHeadId was null); if the write
+      // then failed, the row was never re-promoted and the table was stranded
+      // with zero heads. Excluding form.id means the edited head is never
+      // cleared, and the payload write re-affirms is_head from the form.
+      let demoteQuery = supabase
         .from("priests")
         .update({ is_head: false })
         .eq("is_head", true);
+      if (form.id) demoteQuery = demoteQuery.neq("id", form.id);
+      const { error: demoteErr } = await demoteQuery;
       if (demoteErr) {
         setSaving(false);
         setError(demoteErr.message);
