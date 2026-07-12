@@ -592,6 +592,20 @@ function DonationInflowTab() {
           .limit(10000),
       ]);
 
+      // Surface a load failure instead of silently showing $0 / an empty table:
+      // `?? []` masks a query error (e.g. RLS/network), which used to look like
+      // "no donations this year" to the admin.
+      const loadErr =
+        donationsResp.error ||
+        bookingsResp.error ||
+        donationSumResp.error ||
+        bookingSumResp.error;
+      setActionError(
+        loadErr
+          ? `Couldn't load all donation data (${loadErr.message}). Figures may be incomplete — please refresh.`
+          : null,
+      );
+
       const donations = donationsResp.data ?? [];
       const bookings = bookingsResp.data ?? [];
 
@@ -667,13 +681,27 @@ function DonationInflowTab() {
     }
     setActionError(null);
     setMarking(row.id);
-    const { error } = await supabase
+    // Only flip a still-PENDING row, and check a row was actually updated before
+    // emailing the receipt. Without .select() the update reports no error even
+    // when it matched 0 rows (already completed / removed / RLS-filtered), so the
+    // donor could be emailed a receipt for a no-op.
+    const { data: updatedRows, error } = await supabase
       .from("donations")
       .update({ payment_status: "completed" })
-      .eq("id", row.rawId);
+      .eq("id", row.rawId)
+      .eq("payment_status", "pending")
+      .select("id");
     if (error) {
       setMarking(null);
       setActionError(`Couldn't mark as received: ${error.message}`);
+      return;
+    }
+    if (!updatedRows || updatedRows.length === 0) {
+      setMarking(null);
+      setActionError(
+        "This donation couldn't be marked received — it may already be completed or was removed. Refreshing…",
+      );
+      await load();
       return;
     }
     // Best-effort: email the donor their tax-deductible receipt (server-side,

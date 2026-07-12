@@ -115,16 +115,18 @@ export default function AdminPriestsPage() {
     const specializations = toArray(form.specializations);
     const languages = toArray(form.languages);
 
-    if (specializations.length < 1 || specializations.length > 20) {
-      setError("Add between 1 and 20 specializations.");
+    // Specializations/languages are OPTIONAL (up to 20 each). Requiring at least
+    // one blocked adding a priest whose profile doesn't list them yet.
+    if (specializations.length > 20) {
+      setError("Add at most 20 specializations.");
       return;
     }
     if (specializations.some((s) => s.length > 100)) {
       setError("Each specialization must be 100 characters or fewer.");
       return;
     }
-    if (languages.length < 1 || languages.length > 20) {
-      setError("Add between 1 and 20 languages.");
+    if (languages.length > 20) {
+      setError("Add at most 20 languages.");
       return;
     }
     if (languages.some((s) => s.length > 50)) {
