@@ -74,6 +74,13 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   const { donorName, donorEmail, donorAddress, year, donations } = opts;
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
+  // Document metadata — title/subject/author for accessibility + file identity.
+  doc.setProperties({
+    title: `RNHT Donation Acknowledgment ${year}`,
+    subject: `Year-End Charitable Donation Acknowledgment — Tax Year ${year}`,
+    author: TEMPLE.name,
+    creator: TEMPLE.name,
+  });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 54;
@@ -130,20 +137,18 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   ink(INK);
-  doc.text(`Date: December 31, ${year}`, margin, y);
-  y += 16;
-  doc.text("To:", margin, y);
-  y += 16;
-  doc.text(`Devotee Name: ${donorName || "—"}`, margin, y);
-  y += 16;
-  if (donorAddress) {
-    doc.text(`Address: ${donorAddress}`, margin, y);
-    y += 16;
-  }
-  if (donorEmail) {
-    doc.text(`Email: ${donorEmail}`, margin, y);
-    y += 16;
-  }
+  // Wrap each field to the content width — a long donor name/address/email used
+  // to be drawn on a single line and overflowed off the right edge of the page.
+  const writeLine = (text: string) => {
+    const lines = doc.splitTextToSize(text, contentW) as string[];
+    doc.text(lines, margin, y);
+    y += lines.length * 14 + 2;
+  };
+  writeLine(`Date: December 31, ${year}`);
+  writeLine("To:");
+  writeLine(`Devotee Name: ${donorName || "—"}`);
+  if (donorAddress) writeLine(`Address: ${donorAddress}`);
+  if (donorEmail) writeLine(`Email: ${donorEmail}`);
   y += 6;
 
   // ── Subject ──
@@ -157,8 +162,8 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
 
   // ── Salutation + approved body sentence (crossed-out passages omitted) ──
   doc.setFont("helvetica", "normal");
-  doc.text(`Dear ${donorName || "Devotee"},`, margin, y);
-  y += 18;
+  writeLine(`Dear ${donorName || "Devotee"},`);
+  y += 4;
   const body =
     `On behalf of Rudra Narayana Hindu Temple, we sincerely thank you for your ` +
     `generous donations made during the calendar year ${year}.`;
@@ -191,9 +196,13 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   doc.setFontSize(9);
   let total = 0;
   let shaded = false;
-  const sorted = [...donations].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  );
+  // Sort oldest-first, treating an unparseable date as 0 so a bad date can't
+  // make the comparator return NaN (which yields an undefined row order).
+  const ts = (s: string) => {
+    const t = new Date(s).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  };
+  const sorted = [...donations].sort((a, b) => ts(a.date) - ts(b.date));
   for (const d of sorted) {
     // Leave room at the bottom for the total + disclosure + signature block.
     if (y + rowH > pageH - 210) {
@@ -210,11 +219,24 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
     shaded = !shaded;
     ink(INK);
     doc.text(fitText(doc, receiptDate(d.date), colReceipt - colDate - 8), colDate, y + 13);
-    doc.text(d.receiptId || d.id, colReceipt, y + 13);
+    // Clamp the receipt # too: a missing receiptId falls back to a full UUID
+    // (d.id) that otherwise runs into the Donation Type column.
+    doc.text(fitText(doc, d.receiptId || d.id, colType - colReceipt - 8), colReceipt, y + 13);
     doc.text(fitText(doc, prettyFund(d.fund), colAmount - colType - 70), colType, y + 13);
     doc.text(formatCurrency(d.amount), colAmount, y + 13, { align: "right" });
-    total += d.amount;
+    // Sum in whole cents so the printed rows always add up to the printed total
+    // (summing raw floats could drift by a cent vs. the rounded per-row amounts).
+    total += Math.round(d.amount * 100);
     y += rowH;
+  }
+  total = total / 100;
+
+  // If the table ended too low, the total + IRS disclosure + stamp/signature
+  // block (~250pt) would overflow off the bottom of the page. Move it to a
+  // fresh page instead of clipping the signature.
+  if (y > pageH - 280) {
+    doc.addPage();
+    y = margin;
   }
 
   // ── Total ──
