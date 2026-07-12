@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -558,7 +558,17 @@ function OverviewTab() {
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
   const totalBookings = bookings.length;
-  const upcomingBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "pending");
+  // "Upcoming" = an active booking whose date is today or later. Previously any
+  // confirmed/pending booking counted, so past-dated services showed as upcoming
+  // in the stat card and the list. A booking with an unparseable date is kept
+  // visible (not silently hidden).
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const upcomingBookings = bookings.filter((b) => {
+    if (b.status !== "confirmed" && b.status !== "pending") return false;
+    const t = new Date(b.date).getTime();
+    return Number.isNaN(t) || t >= startOfToday.getTime();
+  });
   // Match the Donations tab's "Recurring total", which counts completed
   // donations only — a pending/failed recurring pledge must not inflate the
   // Overview "Recurring" stat while the Donations tab shows $0.
@@ -810,6 +820,7 @@ function DonationsTab() {
   const [selectedFund, setSelectedFund] = useState("General Temple Donation");
   const [receiptYear, setReceiptYear] = useState<number | "">("");
   const [generatingReceipt, setGeneratingReceipt] = useState(false);
+  const [receiptError, setReceiptError] = useState("");
 
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
@@ -835,17 +846,32 @@ function DonationsTab() {
       (d) => donationTaxYear(d.date) === yr,
     );
     if (yearDonations.length === 0) return;
+    // Compose the FULL mailing address — the receipt used to get only
+    // user.address, dropping city/state/ZIP from the official 501(c)(3) letter.
+    const cityStateZip = [
+      user?.city,
+      [user?.state, user?.zip].filter(Boolean).join(" ").trim(),
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const fullAddress =
+      [user?.address, cityStateZip].filter(Boolean).join(", ") || undefined;
+    setReceiptError("");
     setGeneratingReceipt(true);
     try {
       const { generateTaxReceiptPdf } = await import("@/lib/tax-receipt-pdf");
       generateTaxReceiptPdf({
         donorName: user?.name || "",
         donorEmail: user?.email || "",
-        donorAddress: user?.address || undefined,
+        donorAddress: fullAddress,
         year: yr,
         donations: yearDonations,
         generatedAt: new Date(),
       });
+    } catch {
+      // Previously unhandled → an import/jsPDF failure gave the donor no feedback
+      // and produced an unhandled promise rejection.
+      setReceiptError("Sorry, we couldn't generate your receipt just now. Please try again.");
     } finally {
       setGeneratingReceipt(false);
     }
@@ -906,6 +932,9 @@ function DonationsTab() {
           </button>
         </div>
       </div>
+      {receiptError && (
+        <p className="text-sm text-red-600" role="alert">{receiptError}</p>
+      )}
 
       {/* Quick Donate Panel */}
       {showQuickDonate && (
@@ -1058,22 +1087,27 @@ function ProfileTab() {
   const [saveError, setSaveError] = useState("");
   const [saveNotice, setSaveNotice] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        gotra: user.gotra || "",
-        nakshatra: user.nakshatra || "",
-        rashi: user.rashi || "",
-        address: user.address || "",
-        city: user.city || "",
-        state: user.state || "",
-        zip: user.zip || "",
-      });
-    }
+  // Reset the edit form to the current saved profile. Used both when `user`
+  // loads/changes and on Cancel — without the Cancel reset, abandoned edits
+  // lingered in state and re-appeared the next time Edit was opened.
+  const resetForm = useCallback(() => {
+    setForm({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      gotra: user?.gotra || "",
+      nakshatra: user?.nakshatra || "",
+      rashi: user?.rashi || "",
+      address: user?.address || "",
+      city: user?.city || "",
+      state: user?.state || "",
+      zip: user?.zip || "",
+    });
   }, [user]);
+
+  useEffect(() => {
+    if (user) resetForm();
+  }, [user, resetForm]);
 
   const handleSave = async () => {
     setSaveError("");
@@ -1118,7 +1152,7 @@ function ProfileTab() {
               <button onClick={handleSave} className="btn-primary text-sm px-4 py-2">
                 <Save className="mr-1.5 h-4 w-4" /> Save
               </button>
-              <button onClick={() => setEditing(false)} className="btn-outline text-sm px-4 py-2">
+              <button onClick={() => { setEditing(false); resetForm(); setSaveError(""); setSaveNotice(""); }} className="btn-outline text-sm px-4 py-2">
                 Cancel
               </button>
             </>
@@ -1156,6 +1190,7 @@ function ProfileTab() {
             { label: "Address", key: "address" as const, icon: MapPin, inputType: "text" as const },
             { label: "City", key: "city" as const, icon: MapPin, inputType: "text" as const },
             { label: "State", key: "state" as const, icon: MapPin, inputType: "text" as const },
+            { label: "ZIP", key: "zip" as const, icon: MapPin, inputType: "text" as const },
           ].map((field) => (
             <div key={field.key}>
               <label htmlFor={`dash-profile-${field.key}`} className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">

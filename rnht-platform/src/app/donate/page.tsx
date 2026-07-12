@@ -1114,7 +1114,13 @@ function DonateContent() {
                 verifyingPayment ||
                 // Stay disabled after the native payment overlay opens until the
                 // donor returns (reconcile clears it on cancel / shows success).
-                nativePaymentOpened
+                nativePaymentOpened ||
+                // ...and while a native payment is still unreconciled ("still
+                // settling"): the reconcile clears nativePaymentOpened but keeps
+                // nativePaymentPending, and re-enabling Donate here let the donor
+                // submit a SECOND charge. They use "check status" instead, or
+                // reload to start over.
+                nativePaymentPending
               }
             >
               {processing
