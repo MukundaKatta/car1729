@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "@/lib/utils";
 import { prettyFund } from "@/lib/fund";
-import { SIGNATURE_DATA_URL } from "@/lib/receipt-assets";
+import { SIGNATURE_DATA_URL, LOGO_DATA_URL } from "@/lib/receipt-assets";
 import type { Donation } from "@/store/auth";
 
 // Compact, temple-timezone (US Central) date for the receipt table rows.
@@ -39,7 +39,7 @@ const SIGNER = {
 // Placeholder asset slots — when the client sends the official letterhead, stamp,
 // and authorized-signature PNGs, set these to the (bundled or data-URL) image
 // sources and the render code below will draw them in place of the placeholders.
-const LETTERHEAD_IMAGE: string | undefined = undefined; // TODO(client): temple logo/emblem
+const LETTERHEAD_IMAGE: string | undefined = LOGO_DATA_URL; // temple seal (same as the homepage/header logo)
 const STAMP_IMAGE: string | undefined = undefined; // TODO(client): official stamp PNG
 const SIGNATURE_IMAGE: string | undefined = SIGNATURE_DATA_URL; // Venkata Panchagnula (President), client-provided 2026-07-13
 
@@ -96,6 +96,13 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   doc.rect(0, 0, pageW, 104, "F");
   if (LETTERHEAD_IMAGE) {
     try {
+      // The temple seal is designed for a light background; back it with a cream
+      // disc + gold ring so it reads crisply on the maroon letterhead band.
+      fill([250, 245, 235]);
+      doc.circle(margin + 32, 52, 34, "F");
+      stroke(GOLD);
+      doc.setLineWidth(1.2);
+      doc.circle(margin + 32, 52, 34, "S");
       doc.addImage(LETTERHEAD_IMAGE, "PNG", margin, 20, 64, 64);
     } catch {
       /* fall through to placeholder */
