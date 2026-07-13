@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "@/lib/utils";
 import { prettyFund } from "@/lib/fund";
+import { SIGNATURE_DATA_URL } from "@/lib/receipt-assets";
 import type { Donation } from "@/store/auth";
 
 // Compact, temple-timezone (US Central) date for the receipt table rows.
@@ -40,7 +41,7 @@ const SIGNER = {
 // sources and the render code below will draw them in place of the placeholders.
 const LETTERHEAD_IMAGE: string | undefined = undefined; // TODO(client): temple logo/emblem
 const STAMP_IMAGE: string | undefined = undefined; // TODO(client): official stamp PNG
-const SIGNATURE_IMAGE: string | undefined = undefined; // TODO(client): signature PNG
+const SIGNATURE_IMAGE: string | undefined = SIGNATURE_DATA_URL; // Venkata Panchagnula (President), client-provided 2026-07-13
 
 const MAROON: [number, number, number] = [94, 10, 31];
 const GOLD: [number, number, number] = [197, 151, 62];
@@ -295,7 +296,10 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   const sigX = pageW - margin - 210;
   if (SIGNATURE_IMAGE) {
     try {
-      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 45, footY - 6, 120, 44);
+      // 85x48 keeps the signature's real ~1.77 aspect ratio (the old 120x44
+      // would have stretched it), centered over the signature line (sigX+105)
+      // and sitting just above it.
+      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 63, footY - 8, 85, 48);
     } catch {
       /* ignore */
     }
