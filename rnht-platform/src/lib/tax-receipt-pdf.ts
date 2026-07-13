@@ -118,14 +118,14 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   ink([255, 255, 255]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text(TEMPLE.name.toUpperCase(), margin + 72, 40);
+  doc.text(TEMPLE.name.toUpperCase(), margin + 92, 40);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   ink([235, 220, 200]);
-  doc.text(TEMPLE.addressLines.join(", "), margin + 72, 56);
-  doc.text(TEMPLE.ein, margin + 72, 70);
+  doc.text(TEMPLE.addressLines.join(", "), margin + 92, 56);
+  doc.text(TEMPLE.ein, margin + 92, 70);
   ink(GOLD);
-  doc.text(TEMPLE.status, margin + 72, 84);
+  doc.text(TEMPLE.status, margin + 92, 84);
 
   let y = 138;
 
