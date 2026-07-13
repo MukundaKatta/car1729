@@ -38,9 +38,10 @@ const fallbackFunds: Pick<DonationType, "id" | "slug" | "name" | "description" |
   },
 ];
 
-// Temple Zelle contact number — kept in one place so the three places that
-// surface it (success screen, payment panel, Zelle section) stay in sync.
-const ZELLE_PHONE = "rudranarayanahindutemple@gmail.com";
+// Temple Zelle contact — an EMAIL address (not a phone number), kept in one
+// place so the three spots that surface it (success screen, payment panel,
+// Zelle section) stay in sync.
+const ZELLE_CONTACT = "rudranarayanahindutemple@gmail.com";
 
 const donationFundLabels: Record<string, string> = {
   general: "General Temple Donation",
@@ -644,7 +645,7 @@ function DonateContent() {
           {paymentMethod === "zelle" && (
             <p className="mt-2 font-semibold">
               Please send your Zelle payment of {formatCurrency(displayedAmount)}{" "}
-              to {ZELLE_PHONE}
+              to {ZELLE_CONTACT}
             </p>
           )}
         </div>
@@ -1061,7 +1062,7 @@ function DonateContent() {
             {paymentMethod === "zelle" && (
               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 <p>
-                  <strong>Email:</strong> {ZELLE_PHONE}
+                  <strong>Email:</strong> {ZELLE_CONTACT}
                 </p>
                 <p>
                   <strong>Name:</strong> Rudra Narayana Hindu Temple
@@ -1152,7 +1153,7 @@ function DonateContent() {
         </h3>
         <p className="mt-2 text-sm text-gray-600">
           Send donations directly via Zelle to:{" "}
-          <strong className="text-temple-maroon">{ZELLE_PHONE}</strong>
+          <strong className="text-temple-maroon">{ZELLE_CONTACT}</strong>
         </p>
       </div>
     </div>

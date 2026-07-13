@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
 type Booking = {
@@ -237,7 +237,8 @@ export default function AdminBookingsPage() {
                     {booking.devotee}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
-                    {booking.date} at {booking.time}
+                    {formatDate(booking.date)}
+                    {booking.time ? ` at ${booking.time}` : ""}
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                     {formatCurrency(booking.amount)}
