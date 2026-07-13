@@ -282,12 +282,17 @@ function EventFormModal({
     }
     setFormError(null);
     setSaving(true);
+    // Never persist an end_date earlier than start_date: on edit, changing the
+    // start past a previously-stored end_date used to leave end < start.
+    // (ISO YYYY-MM-DD strings compare correctly lexicographically.)
+    const safeEndDate =
+      event?.end_date && event.end_date >= startDate ? event.end_date : startDate;
     const payload = {
       title: trimmedTitle,
       description: description || null,
       event_type: eventType as Event["event_type"],
       start_date: startDate,
-      end_date: event?.end_date ?? startDate,
+      end_date: safeEndDate,
       start_time: startTime || null,
       end_time: endTime || null,
       location: location || null,

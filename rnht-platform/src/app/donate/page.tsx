@@ -510,8 +510,12 @@ function DonateContent() {
       }
       // Stash the donor's phone so the temple can follow up (esp. on Zelle
       // pledges). Rides in custom_fields — the edge fn already persists it.
+      // Don't clobber an admin-defined custom field that happens to use the same
+      // "donor_phone" key (that field's value is already set in the loop above).
       const phone = donorPhone.trim();
-      if (phone) normalizedCustomFields.donor_phone = phone;
+      if (phone && normalizedCustomFields.donor_phone === undefined) {
+        normalizedCustomFields.donor_phone = phone;
+      }
 
       // All methods create a donation record — Zelle is recorded as a pending
       // pledge (the transfer itself happens in the donor's banking app).
@@ -666,6 +670,9 @@ function DonateContent() {
               nativePaymentRef.current = null;
               setCustomAmount("");
               setCustomFieldValues({});
+              // Reset the payment method to the default — after a Zelle pledge
+              // the form used to re-open pre-set to Zelle.
+              setPaymentMethod("stripe");
             }}
           >
             Make Another Donation

@@ -122,8 +122,10 @@ const MASA_BY_MONTH = [
   "Shravana",
   "Bhadrapada",
   "Ashwayuja",
-  "Kartika",
-  "Margashirsha",
+  // Spelled to match the temple-PDF-derived MASA_RANGES table below
+  // ("Karthika"/"Margasira") so the two tables never disagree.
+  "Karthika",
+  "Margasira",
 ];
 
 // Day-precise amanta masa ranges sourced from the temple's own 2026 calendar

@@ -1128,13 +1128,18 @@ function ProfileTab() {
   };
 
   const handleAddMember = () => {
-    if (!newMember.name.trim() || !newMember.relationship.trim()) return;
+    const name = newMember.name.trim();
+    const relationship = newMember.relationship.trim();
+    const gotra = newMember.gotra.trim();
+    if (!name || !relationship) return;
     addFamilyMember({
       // UUID, not a timestamp — avoids same-millisecond id collisions.
       id: "fm-" + crypto.randomUUID(),
-      name: newMember.name,
-      relationship: newMember.relationship,
-      gotra: newMember.gotra || undefined,
+      // Store trimmed values — validation trims but the raw (padded) strings
+      // were being persisted.
+      name,
+      relationship,
+      gotra: gotra || undefined,
     });
     setNewMember({ name: "", relationship: "", gotra: "" });
     setShowAddFamily(false);
@@ -1181,7 +1186,11 @@ function ProfileTab() {
         <div className="grid gap-5 sm:grid-cols-2">
           {[
             { label: "Full Name", key: "name" as const, icon: User, inputType: "text" as const },
-            { label: "Email", key: "email" as const, icon: Mail, inputType: "email" as const },
+            // Email is (with phone) a sign-in identity + the receipt recipient.
+            // Editing it here would only change profiles.email, leaving the auth
+            // identity on the OLD address (and diverging the receipt recipient) —
+            // so it's read-only; changing it must go through the temple.
+            { label: "Email", key: "email" as const, icon: Mail, inputType: "email" as const, readOnly: true },
             // Phone is the sign-in identity for phone-OTP devotees. Editing it
             // here would only change profiles.phone, leaving the auth identity
             // (and thus the OTP login number) on the OLD value — so it's shown
@@ -1210,7 +1219,9 @@ function ProfileTab() {
               )}
               {editing && field.readOnly && (
                 <p className="mt-1 text-xs text-gray-400">
-                  Contact the temple to update your phone number — it is used to sign in.
+                  {field.key === "email"
+                    ? "Contact the temple to update your email — it is tied to your sign-in and receipts."
+                    : "Contact the temple to update your phone number — it is used to sign in."}
                 </p>
               )}
             </div>

@@ -201,6 +201,15 @@ export default function AdminServicesPage() {
 
   async function syncCatalogServices() {
     if (!supabase) return;
+    // Guard: this re-loads the default catalog and can overwrite manual edits to
+    // matching services — it used to run instantly with no confirmation.
+    if (
+      !window.confirm(
+        "Sync Catalog re-loads the default service list and may overwrite manual edits to matching services. Continue?",
+      )
+    ) {
+      return;
+    }
     setError(null);
     setSyncingCatalog(true);
 

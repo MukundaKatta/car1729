@@ -77,6 +77,9 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
     if (!error && data) {
       set({ slides: data.map(rowToSlide), loading: false });
     } else {
+      // Don't fail silently — a swallowed error looked to the admin like "no
+      // slides". Log it so a load failure is at least diagnosable.
+      if (error) console.error("[slideshow] failed to load slides:", error.message);
       set({ loading: false });
     }
   },

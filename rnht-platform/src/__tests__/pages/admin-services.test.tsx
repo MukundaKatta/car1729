@@ -81,6 +81,9 @@ describe("AdminServicesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFrom.mockImplementation((table: string) => makeBuilder(table));
+    // Sync Catalog now asks for confirmation before overwriting; auto-confirm
+    // in tests so the sync/rollback paths run.
+    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("loads and renders services from supabase", async () => {

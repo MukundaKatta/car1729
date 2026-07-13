@@ -68,11 +68,13 @@ function DonationTypesTab() {
   }, []);
 
   function startNew() {
+    setError(null); // clear a stale error banner from a prior failed save
     setForm(emptyTypeForm);
     setShowForm(true);
   }
 
   function startEdit(type: DonationType) {
+    setError(null); // clear a stale error banner from a prior failed save
     setForm({
       id: type.id,
       name: type.name,
@@ -492,6 +494,8 @@ function DonationTypesTab() {
                     <div className="inline-flex gap-2">
                       <button
                         onClick={() => toggleActive(type)}
+                        aria-label={`${type.is_active ? "Hide" : "Show"} ${type.name}`}
+                        title={type.is_active ? "Hide" : "Show"}
                         className="rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-50"
                       >
                         {type.is_active ? (
@@ -502,12 +506,16 @@ function DonationTypesTab() {
                       </button>
                       <button
                         onClick={() => startEdit(type)}
+                        aria-label={`Edit ${type.name}`}
+                        title="Edit"
                         className="rounded-md border border-gray-200 p-2 text-gray-600 hover:bg-gray-50"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => remove(type)}
+                        aria-label={`Delete ${type.name}`}
+                        title="Delete"
                         className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
