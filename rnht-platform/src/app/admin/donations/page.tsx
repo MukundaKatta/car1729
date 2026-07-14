@@ -893,6 +893,7 @@ type FundOption = { slug: string; name: string };
 type RecordForm = {
   donorName: string;
   donorEmail: string;
+  address: string;
   amount: string;
   fundType: string;
   note: string;
@@ -901,6 +902,7 @@ type RecordForm = {
 const emptyRecordForm: RecordForm = {
   donorName: "",
   donorEmail: "",
+  address: "",
   amount: "",
   fundType: STANDARD_FUNDS[0]?.slug ?? "general",
   note: "",
@@ -918,6 +920,7 @@ type ManualDonationPayload = {
   id: string;
   donorName: string;
   donorEmail: string;
+  donorAddress: string;
   amount: number;
   fundType: string;
   note: string;
@@ -1105,6 +1108,7 @@ function RecordDonationTab() {
     setFieldError(null);
     const donorName = form.donorName.trim();
     const donorEmail = form.donorEmail.trim();
+    const address = form.address.trim();
     const amount = Number(form.amount);
     const fundType = form.fundType;
     const note = form.note.trim();
@@ -1127,6 +1131,14 @@ function RecordDonationTab() {
     }
     if (!fundType) {
       setFieldError("Choose a donation type.");
+      return;
+    }
+    // Per the temple CPA: for gifts of $250+ the IRS requires a written
+    // acknowledgment, so capture the donor's full mailing address for those.
+    if (amount >= 250 && !address) {
+      setFieldError(
+        "For donations of $250 or more, the donor's full mailing address is required (for the IRS year-end acknowledgment).",
+      );
       return;
     }
     if (!supabase) {
@@ -1152,6 +1164,7 @@ function RecordDonationTab() {
       const { base64, blob, filename } = generateDonationReceiptPdf({
         donorName,
         donorEmail,
+        donorAddress: address,
         amount,
         fundLabel,
         receiptId,
@@ -1163,6 +1176,7 @@ function RecordDonationTab() {
         id,
         donorName,
         donorEmail,
+        donorAddress: address,
         amount,
         fundType,
         note,
@@ -1286,6 +1300,23 @@ function RecordDonationTab() {
               onChange={(e) => setForm((f) => ({ ...f, donorEmail: e.target.value }))}
               placeholder="donor@example.com"
             />
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="md-address" className="block text-sm font-medium text-gray-700">
+              Mailing Address
+            </label>
+            <textarea
+              id="md-address"
+              rows={2}
+              className="input-field mt-1"
+              value={form.address}
+              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+              placeholder="Street, City, State ZIP"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Full mailing address of the donor. Required for gifts of $250 or more (for the
+              IRS year-end tax acknowledgment).
+            </p>
           </div>
           <div>
             <label htmlFor="md-amount" className="block text-sm font-medium text-gray-700">

@@ -53,6 +53,7 @@ interface ManualDonationBody {
   id?: string;
   donorName?: string;
   donorEmail?: string;
+  donorAddress?: string;
   amount?: number;
   fundType?: string;
   note?: string;
@@ -94,6 +95,8 @@ Deno.serve(async (req) => {
     const id = (body.id ?? "").trim();
     const donorName = (body.donorName ?? "").trim();
     const donorEmail = (body.donorEmail ?? "").trim();
+    const donorAddress =
+      typeof body.donorAddress === "string" ? body.donorAddress.trim().slice(0, 500) : "";
     const fundType = (body.fundType ?? "").trim();
     const note = typeof body.note === "string" ? body.note.trim() : "";
     const amount = Number(body.amount);
@@ -193,6 +196,8 @@ Deno.serve(async (req) => {
         source: "manual_admin",
         recorded_by: adminId,
         receipt_id: receiptId,
+        // Full mailing address for the year-end IRS acknowledgment (CPA request).
+        ...(donorAddress ? { donor_address: donorAddress } : {}),
       },
     });
     if (insErr) {

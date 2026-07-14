@@ -360,6 +360,8 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
 export interface DonationReceiptOptions {
   donorName: string;
   donorEmail: string;
+  /** Donor's full mailing address (for the IRS acknowledgment), when collected. */
+  donorAddress?: string;
   amount: number;
   /** Human-readable donation-type / fund name, e.g. "General Temple Donation". */
   fundLabel: string;
@@ -390,7 +392,7 @@ export interface DonationReceiptArtifacts {
 export function generateDonationReceiptPdf(
   opts: DonationReceiptOptions,
 ): DonationReceiptArtifacts {
-  const { donorName, donorEmail, amount, fundLabel, receiptId, note } = opts;
+  const { donorName, donorEmail, donorAddress, amount, fundLabel, receiptId, note } = opts;
   const date = opts.date ?? new Date();
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
@@ -449,6 +451,17 @@ export function generateDonationReceiptPdf(
     const emailLines = doc.splitTextToSize(donorEmail, contentW) as string[];
     doc.text(emailLines, margin, y);
     y += emailLines.length * 13;
+  }
+  // Full mailing address (per the temple CPA — needed for the IRS acknowledgment).
+  // The admin can type it multi-line; render each entered line.
+  if (donorAddress && donorAddress.trim()) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setInk(doc, GRAY);
+    const addrInput = donorAddress.trim().split(/\r?\n/).filter(Boolean).join(", ");
+    const addrLines = doc.splitTextToSize(addrInput, contentW) as string[];
+    doc.text(addrLines, margin, y);
+    y += addrLines.length * 13;
   }
   y += 16;
 

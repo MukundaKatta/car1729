@@ -45,4 +45,13 @@ describe("generateDonationReceiptPdf", () => {
     const out = generateDonationReceiptPdf({ ...base, donorName: "" });
     expect(out.base64.startsWith("JVBER")).toBe(true);
   });
+
+  it("renders a multi-line mailing address without throwing", () => {
+    const out = generateDonationReceiptPdf({
+      ...base,
+      donorAddress: "123 Temple Rd\nGeorgetown, TX 78628\nUnited States",
+    });
+    expect(out.base64.startsWith("JVBER")).toBe(true);
+    expect(out.blob.size).toBeGreaterThan(1000);
+  });
 });
