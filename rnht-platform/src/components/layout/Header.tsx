@@ -475,7 +475,7 @@ export function Header() {
             to shrink/ellipsize so it can NEVER push the right-side action cluster
             (esp. the hamburger menu) off-screen — the client reported the menu
             was invisible on mobile because the non-shrinking name overflowed. */}
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 lg:flex-shrink-0">
           <div className="relative flex-shrink-0">
             <div className="absolute -inset-1.5 rounded-full opacity-40 group-hover:opacity-80 transition-opacity duration-500" style={{
               background: "radial-gradient(circle, rgba(197,151,62,0.4) 0%, rgba(232,195,74,0.12) 55%, transparent 80%)",
@@ -497,7 +497,7 @@ export function Header() {
                 smaller on narrow screens. `truncate` ellipsizes it only in the rare
                 case a phone is too narrow to fit the whole name alongside the menu,
                 so the menu is never pushed off. */}
-            <div className="text-[15px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] truncate" style={{
+            <div className="text-[15px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] truncate lg:overflow-visible" style={{
               background: "linear-gradient(90deg, #8B6914 0%, #C5973E 20%, #D4A843 50%, #C5973E 80%, #8B6914 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -505,7 +505,7 @@ export function Header() {
             }}>
               Rudra Narayana
             </div>
-            <p className="text-[9px] sm:text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5 truncate" style={{
+            <p className="text-[9px] sm:text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5 truncate lg:overflow-visible" style={{
               background: "linear-gradient(90deg, #9B7730 0%, #C5973E 30%, #D4A843 50%, #C5973E 70%, #9B7730 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
