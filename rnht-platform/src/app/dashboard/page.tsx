@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { yearEndReceiptEligibility } from "@/lib/tax-receipt-eligibility";
 import {
   getEmailAuthCooldownSeconds,
   readEmailAuthCooldownUntil,
@@ -846,6 +847,21 @@ function DonationsTab() {
       (d) => donationTaxYear(d.date) === yr,
     );
     if (yearDonations.length === 0) return;
+
+    // Per the temple CPA (2026-07-14): the written year-end acknowledgment is
+    // issued in January of the following year (tax year complete) and only when
+    // annual giving totals $250 or more. Individual receipts cover any amount.
+    const eligibility = yearEndReceiptEligibility({
+      year: yr,
+      currentYear: donationTaxYear(new Date().toISOString()),
+      yearTotal: yearDonations.reduce((s, d) => s + d.amount, 0),
+      formatCurrency,
+    });
+    if (!eligibility.ok) {
+      setReceiptError(eligibility.message);
+      return;
+    }
+
     // Compose the FULL mailing address — the receipt used to get only
     // user.address, dropping city/state/ZIP from the official 501(c)(3) letter.
     const cityStateZip = [
