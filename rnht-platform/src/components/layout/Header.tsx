@@ -471,7 +471,11 @@ export function Header() {
 
       <nav className="flex items-center justify-between px-4 py-2.5 sm:px-6 lg:px-8">
         {/* ── Left: Logo + Name ── */}
-        <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+        {/* min-w-0 (not flex-shrink-0): on narrow phones the name must be allowed
+            to shrink/ellipsize so it can NEVER push the right-side action cluster
+            (esp. the hamburger menu) off-screen — the client reported the menu
+            was invisible on mobile because the non-shrinking name overflowed. */}
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
           <div className="relative flex-shrink-0">
             <div className="absolute -inset-1.5 rounded-full opacity-40 group-hover:opacity-80 transition-opacity duration-500" style={{
               background: "radial-gradient(circle, rgba(197,151,62,0.4) 0%, rgba(232,195,74,0.12) 55%, transparent 80%)",
@@ -484,14 +488,16 @@ export function Header() {
               className="relative rounded-full ring-2 ring-temple-gold/50 shadow-[0_0_12px_rgba(197,151,62,0.25)] transition-all duration-300 group-hover:scale-105"
             />
           </div>
-          <div className="block">
+          <div className="block min-w-0">
             {/* Brand wordmark — a <div>, not an <h1>: the logo must NOT be the page's
                 top-level heading (it would make every page's h1 the non-descriptive
                 "Rudra Narayana" and demote/duplicate the real content heading).
                 Visible at ALL widths (client 07-08: the temple name was invisible on
                 phones in portrait because this block was hidden below sm) — just
-                smaller on narrow screens. */}
-            <div className="text-[16px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] whitespace-nowrap" style={{
+                smaller on narrow screens. `truncate` ellipsizes it only in the rare
+                case a phone is too narrow to fit the whole name alongside the menu,
+                so the menu is never pushed off. */}
+            <div className="text-[15px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] truncate" style={{
               background: "linear-gradient(90deg, #8B6914 0%, #C5973E 20%, #D4A843 50%, #C5973E 80%, #8B6914 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -499,7 +505,7 @@ export function Header() {
             }}>
               Rudra Narayana
             </div>
-            <p className="text-[9px] sm:text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5" style={{
+            <p className="text-[9px] sm:text-[11px] lg:text-[12px] font-accent font-bold tracking-[0.3em] uppercase leading-none mt-0.5 truncate" style={{
               background: "linear-gradient(90deg, #9B7730 0%, #C5973E 30%, #D4A843 50%, #C5973E 70%, #9B7730 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -558,17 +564,10 @@ export function Header() {
             <Calendar className="h-4 w-4" style={{ color: "#C5973E" }} />
             <span>{t("nav.panchangam", locale)}</span>
           </Link>
-          <Link
-            href="/panchangam"
-            className="sm:hidden flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full"
-            style={{
-              background: "linear-gradient(135deg, rgba(197,151,62,0.12) 0%, rgba(232,195,74,0.18) 100%)",
-              border: "1.5px solid rgba(197,151,62,0.35)",
-            }}
-            aria-label="Panchangam"
-          >
-            <Calendar className="h-4 w-4" style={{ color: "#C5973E" }} />
-          </Link>
+          {/* On phones the standalone Panchangam icon is dropped from the header
+              (it's a prominent button inside the hamburger drawer) so the temple
+              name and the menu button both fit on one row. It reappears as a full
+              button from sm upward, above. */}
 
           {/* Donate */}
           <Link
