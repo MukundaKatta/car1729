@@ -5,12 +5,11 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
 /**
- * Three-panel Ken Burns hero — deity-collage.jpg (2200 × 1049, optimized).
- *
- * object-position values (viewport-independent):
- *   Left  (Shiva lingam)    →  5% center
- *   Mid   (Goddess Lakshmi) → 50% center
- *   Right (Narayana)        → 95% center
+ * Three-panel Ken Burns hero — one pre-cropped, deity-centered image per panel
+ * (deity-shiva / deity-lakshmi / deity-narayana .jpg). Each is cropped so its
+ * deity is centered, then rendered object-cover object-center, so it stays
+ * centered at every viewport (the earlier single wide collage cropped via
+ * object-position % left the side deities off-center on some phones).
  *
  * Animation philosophy — "Sacred Convergence":
  *   • ONE shared keyframe and ONE duration for all panels → frame-perfect sync
@@ -22,12 +21,14 @@ import type { CSSProperties } from "react";
  *   • GPU-only properties (transform, opacity) → silky 60 fps
  */
 
+// Each deity is its OWN image, pre-cropped centered on the deity, so it stays
+// centered at every viewport/aspect ratio (object-center). This replaces the
+// earlier single wide collage cropped via object-position %, which was
+// viewport-dependent and left the side deities off-center on some phones
+// (client 07-14).
 const PANELS = [
   {
-    objectPos: "5% 20%",
-    // Mobile slider is full-width (one panel at a time), so each deity needs a
-    // different crop center than the narrow desktop 3-column layout to sit centered.
-    mobilePos: "9% 50%",
+    src: "/deity-shiva.jpg",
     label: "Shiva lingam adorned with flowers",
     style: {
       "--drift-x-start": "1.4%",
@@ -38,8 +39,7 @@ const PANELS = [
     } as CSSProperties,
   },
   {
-    objectPos: "50% 18%",
-    mobilePos: "50% 50%",
+    src: "/deity-lakshmi.jpg",
     label: "Goddess Lakshmi in full regalia",
     style: {
       "--drift-x-start": "0%",
@@ -50,8 +50,7 @@ const PANELS = [
     } as CSSProperties,
   },
   {
-    objectPos: "95% 30%",
-    mobilePos: "92% 50%",
+    src: "/deity-narayana.jpg",
     label: "Narayana with garlands",
     style: {
       "--drift-x-start": "-1.4%",
@@ -85,11 +84,6 @@ const CSS = `
     animation-name            : sacred-panel;
     will-change               : transform;
   }
-
-  /* Per-deity crop center: --op-m centers each deity in the full-width mobile
-     slider; --op-d keeps the original 3-column framing on sm+. */
-  .hero-kb-img { object-position: var(--op-m); }
-  @media (min-width: 640px) { .hero-kb-img { object-position: var(--op-d); } }
 
   /* ── Top border shimmer ─────────────────────────────────────────────── */
   @keyframes border-shimmer {
@@ -191,13 +185,12 @@ export function HeroSlideshow() {
               {/* Ken Burns layer */}
               <div className="sacred-panel absolute inset-0">
                 <Image
-                  src="/deity-collage.jpg"
+                  src={panel.src}
                   alt={panel.label}
                   fill
-                  className="object-cover hero-kb-img"
-                  style={{ "--op-m": panel.mobilePos, "--op-d": panel.objectPos } as CSSProperties}
-                  sizes="34vw"
-                  quality={95}
+                  className="object-cover object-center"
+                  sizes="(max-width: 639px) 100vw, 34vw"
+                  quality={90}
                   priority={i === 1}
                 />
               </div>
