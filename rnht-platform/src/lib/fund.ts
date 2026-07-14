@@ -7,7 +7,7 @@
 // which is the source of truth the donate edge function + the emailed receipt
 // use. If the two diverge, the downloadable tax-receipt PDF and the emailed
 // receipt show different Donation Type labels for the same gift. Keep in sync.
-const FUND_LABELS: Record<string, string> = {
+export const FUND_LABELS: Record<string, string> = {
   general: "General Temple Donation",
   building: "Building Donation",
   priest: "Priest Donation",
@@ -21,6 +21,21 @@ const FUND_LABELS: Record<string, string> = {
   shiva: "Lord Shiva Seva",
   rama: "Lord Rama Seva",
 };
+
+/**
+ * Standard funds always offered in the admin Manual Donation Receipt form (in
+ * display order), so the donation-type dropdown works even before any
+ * admin-managed donation_types exist. Merged with the active donation_types at
+ * render time; both are accepted by the record-manual-donation edge function's
+ * fund allowlist. "General Temple Donation" and "Festival Donation" lead per the
+ * client's spec.
+ */
+export const STANDARD_FUNDS: { slug: string; name: string }[] = [
+  { slug: "general", name: FUND_LABELS.general },
+  { slug: "festival", name: FUND_LABELS.festival },
+  { slug: "annadanam", name: FUND_LABELS.annadanam },
+  { slug: "building", name: FUND_LABELS.building },
+];
 
 export function prettyFund(fund: string): string {
   const key = (fund || "").trim().toLowerCase();

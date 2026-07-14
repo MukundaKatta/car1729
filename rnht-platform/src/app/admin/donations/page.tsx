@@ -1,14 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { DollarSign, Plus, Edit2, Trash2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  DollarSign,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  Receipt,
+  Download,
+} from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
+import { STANDARD_FUNDS, FUND_LABELS, prettyFund } from "@/lib/fund";
 import { useAuthStore } from "@/store/auth";
 import type { DonationType, DonationTypeCustomField } from "@/types/database";
 
-type Tab = "inflow" | "types";
+type Tab = "inflow" | "record" | "types";
 
 /* ─── Types tab ─── */
 
@@ -875,6 +886,470 @@ function DonationInflowTab() {
   );
 }
 
+/* ─── Record (manual cash/offline donation) tab ─── */
+
+type FundOption = { slug: string; name: string };
+
+type RecordForm = {
+  donorName: string;
+  donorEmail: string;
+  amount: string;
+  fundType: string;
+  note: string;
+};
+
+const emptyRecordForm: RecordForm = {
+  donorName: "",
+  donorEmail: "",
+  amount: "",
+  fundType: STANDARD_FUNDS[0]?.slug ?? "general",
+  note: "",
+};
+
+type RecordResult = {
+  kind: "success" | "partial";
+  title: string;
+  detail: string;
+  downloadUrl: string;
+  filename: string;
+};
+
+type ManualDonationPayload = {
+  id: string;
+  donorName: string;
+  donorEmail: string;
+  amount: number;
+  fundType: string;
+  note: string;
+  receiptId: string;
+  pdfBase64: string;
+  filename: string;
+};
+
+// RFC-ish email check, mirrors the edge function's server-side guard.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Prefer the platform's UUID, fall back to a v4 generator for the rare browser
+// where crypto.randomUUID is unavailable (older WebView / non-secure context).
+function makeUuid(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {
+    /* fall through */
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function RecordDonationTab() {
+  const [funds, setFunds] = useState<FundOption[]>(STANDARD_FUNDS);
+  const [form, setForm] = useState<RecordForm>(emptyRecordForm);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<RecordResult | null>(null);
+  // The single live receipt object URL, tracked in a ref so it's always revoked
+  // on unmount even if a submit is still in flight (result may still be null).
+  const objectUrlRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
+  // A stable donation id for the current gift, so a "Try again" resend reuses
+  // the same id (the edge function treats a duplicate id as an idempotent
+  // success) instead of minting a new id and filing the gift twice. Cleared by
+  // "Record another" (resetForm) so the next gift gets a fresh id.
+  const sessionIdRef = useRef<string | null>(null);
+  // The last built request body, so "Try again" can resend without
+  // regenerating the PDF.
+  const payloadRef = useRef<ManualDonationPayload | null>(null);
+
+  const revokeUrl = useCallback(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }, []);
+
+  // Load admin-managed donation types and merge them with the standard funds.
+  // Known standard slugs keep their canonical FUND_LABELS name (so a legacy
+  // donation_types seed like 'general' → "General Temple Fund" can't put the
+  // dropped "Fund" wording back on the receipt, and the label matches the
+  // year-end acknowledgment, which resolves via prettyFund). Custom admin funds
+  // keep their own name.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("donation_types")
+        .select("slug, name")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (!active || !data) return;
+      const map = new Map<string, string>();
+      for (const f of STANDARD_FUNDS) map.set(f.slug, f.name);
+      for (const dt of data as { slug: string; name: string }[]) {
+        if (dt.slug && dt.name) map.set(dt.slug, FUND_LABELS[dt.slug] ?? dt.name);
+      }
+      setFunds(Array.from(map, ([slug, name]) => ({ slug, name })));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Revoke the live receipt URL and mark unmounted so in-flight submits don't
+  // set state on / leak a URL from an unmounted component.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      revokeUrl();
+    };
+  }, [revokeUrl]);
+
+  function resetForm() {
+    revokeUrl();
+    sessionIdRef.current = null;
+    payloadRef.current = null;
+    setForm(emptyRecordForm);
+    setFieldError(null);
+    setResult(null);
+  }
+
+  // Invokes the edge function with an already-built payload and renders the
+  // outcome. Reused by the initial submit and by "Try again" (same id ⇒
+  // idempotent). Assumes objectUrlRef.current already holds the receipt URL.
+  async function sendPayload(payload: ManualDonationPayload) {
+    const { receiptId, amount, donorEmail, filename } = payload;
+    const downloadUrl = objectUrlRef.current ?? "";
+    let serverError = "";
+    let emailed = false;
+    let saved = false;
+    try {
+      if (!supabase) throw new Error("Not connected.");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        serverError = "Your admin session expired. Please sign in again.";
+      } else {
+        const { data, error } = await supabase.functions.invoke("record-manual-donation", {
+          body: payload,
+          headers: { "x-user-token": session.access_token },
+        });
+        if (error) {
+          // Surface the function's own error message (non-2xx bodies arrive on
+          // error.context as a Response).
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.json === "function") {
+            try {
+              const j = await ctx.json();
+              serverError = j?.error ?? "";
+            } catch {
+              /* ignore parse error */
+            }
+          }
+          if (!serverError) serverError = error.message || "Could not reach the server.";
+        } else {
+          const res = data as { ok?: boolean; emailed?: boolean; error?: string };
+          if (res?.ok) {
+            saved = true;
+            emailed = res.emailed === true;
+          } else {
+            serverError = res?.error ?? "The server did not confirm the save.";
+          }
+        }
+      }
+    } catch (e) {
+      serverError = e instanceof Error ? e.message : "Could not reach the server.";
+    }
+
+    if (!mountedRef.current) return;
+    if (saved) {
+      setResult({
+        kind: "success",
+        title: emailed ? `Receipt emailed to ${donorEmail}` : "Donation saved to history",
+        detail: emailed
+          ? `${formatCurrency(amount)} recorded and the receipt (${receiptId}) was emailed to the donor.`
+          : `${formatCurrency(amount)} recorded (${receiptId}). The receipt couldn't be emailed automatically — download it below and send it to the donor.`,
+        downloadUrl,
+        filename,
+      });
+    } else {
+      setResult({
+        kind: "partial",
+        title: "Receipt generated — not yet saved",
+        detail: `The receipt PDF (${receiptId}) was created and can be downloaded below, but it couldn't be saved to history or emailed automatically${
+          serverError ? `: ${serverError}` : "."
+        } Use "Try again", or download the PDF and send it to the donor manually.`,
+        downloadUrl,
+        filename,
+      });
+    }
+  }
+
+  async function retrySend() {
+    if (!payloadRef.current || submitting) return;
+    setSubmitting(true);
+    try {
+      await sendPayload(payloadRef.current);
+    } finally {
+      if (mountedRef.current) setSubmitting(false);
+    }
+  }
+
+  async function handleGenerate() {
+    setFieldError(null);
+    const donorName = form.donorName.trim();
+    const donorEmail = form.donorEmail.trim();
+    const amount = Number(form.amount);
+    const fundType = form.fundType;
+    const note = form.note.trim();
+
+    if (!donorName) {
+      setFieldError("Donor name is required.");
+      return;
+    }
+    if (!donorEmail || !EMAIL_RE.test(donorEmail)) {
+      setFieldError("Enter a valid donor email address.");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFieldError("Enter a donation amount greater than $0.");
+      return;
+    }
+    if (amount > 100000) {
+      setFieldError("Amount looks too large — please double-check.");
+      return;
+    }
+    if (!fundType) {
+      setFieldError("Choose a donation type.");
+      return;
+    }
+    if (!supabase) {
+      setFieldError("Not connected. Please reload and try again.");
+      return;
+    }
+
+    setSubmitting(true);
+    setResult(null);
+
+    // Reuse the current session's id so an accidental resend doesn't file a
+    // second gift (the edge function is idempotent on a duplicate id).
+    if (!sessionIdRef.current) sessionIdRef.current = makeUuid();
+    const id = sessionIdRef.current;
+    const receiptId = `REC-${id.slice(0, 8)}`;
+    // Use the canonical fund label (matches the year-end acknowledgment and
+    // avoids the dropped "Fund" wording); prettyFund covers custom slugs.
+    const fundLabel = funds.find((f) => f.slug === fundType)?.name ?? prettyFund(fundType);
+
+    try {
+      const { generateDonationReceiptPdf } = await import("@/lib/tax-receipt-pdf");
+      if (!mountedRef.current) return;
+      const { base64, blob, filename } = generateDonationReceiptPdf({
+        donorName,
+        donorEmail,
+        amount,
+        fundLabel,
+        receiptId,
+        note,
+      });
+      revokeUrl();
+      objectUrlRef.current = URL.createObjectURL(blob);
+      payloadRef.current = {
+        id,
+        donorName,
+        donorEmail,
+        amount,
+        fundType,
+        note,
+        receiptId,
+        pdfBase64: base64,
+        filename,
+      };
+      await sendPayload(payloadRef.current);
+    } catch (e) {
+      if (mountedRef.current) {
+        setFieldError(
+          `Couldn't generate the receipt PDF: ${e instanceof Error ? e.message : "unknown error"}`,
+        );
+      }
+    } finally {
+      if (mountedRef.current) setSubmitting(false);
+    }
+  }
+
+  if (result) {
+    const success = result.kind === "success";
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div
+          className={`rounded-2xl border p-6 ${
+            success ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <CheckCircle2
+              className={`mt-0.5 h-6 w-6 shrink-0 ${
+                success ? "text-green-600" : "text-amber-600"
+              }`}
+            />
+            <div>
+              <h3
+                className={`font-heading text-lg font-bold ${
+                  success ? "text-green-900" : "text-amber-900"
+                }`}
+              >
+                {result.title}
+              </h3>
+              <p className={`mt-1 text-sm ${success ? "text-green-800" : "text-amber-800"}`}>
+                {result.detail}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a
+              href={result.downloadUrl}
+              download={result.filename}
+              className="btn-outline flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download receipt PDF
+            </a>
+            {!success && (
+              <button
+                onClick={retrySend}
+                disabled={submitting}
+                className="btn-outline flex items-center gap-2 disabled:opacity-60"
+              >
+                <Receipt className="h-4 w-4" />
+                {submitting ? "Trying…" : "Try again"}
+              </button>
+            )}
+            <button onClick={resetForm} className="btn-primary flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Record another
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="rounded-2xl border border-temple-gold/20 bg-white p-6 shadow-sm">
+        <h2 className="flex items-center gap-2 font-heading text-xl font-bold text-temple-maroon">
+          <Receipt className="h-5 w-5 text-temple-red" />
+          Record Cash / Offline Donation
+        </h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Enter a donation received in person. The temple receipt PDF is generated with the
+          official letterhead and signature, emailed to the donor, and saved to donation
+          history.
+        </p>
+
+        {fieldError && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {fieldError}
+          </div>
+        )}
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label htmlFor="md-name" className="block text-sm font-medium text-gray-700">
+              Donor Name
+            </label>
+            <input
+              id="md-name"
+              type="text"
+              className="input-field mt-1"
+              value={form.donorName}
+              onChange={(e) => setForm((f) => ({ ...f, donorName: e.target.value }))}
+              placeholder="e.g. Ramesh Venkataraman"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="md-email" className="block text-sm font-medium text-gray-700">
+              Donor Email
+            </label>
+            <input
+              id="md-email"
+              type="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="input-field mt-1"
+              value={form.donorEmail}
+              onChange={(e) => setForm((f) => ({ ...f, donorEmail: e.target.value }))}
+              placeholder="donor@example.com"
+            />
+          </div>
+          <div>
+            <label htmlFor="md-amount" className="block text-sm font-medium text-gray-700">
+              Amount (USD)
+            </label>
+            <input
+              id="md-amount"
+              type="number"
+              min="1"
+              step="0.01"
+              inputMode="decimal"
+              className="input-field mt-1"
+              value={form.amount}
+              onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="15.00"
+            />
+          </div>
+          <div>
+            <label htmlFor="md-fund" className="block text-sm font-medium text-gray-700">
+              Donation Type
+            </label>
+            <select
+              id="md-fund"
+              className="input-field mt-1"
+              value={form.fundType}
+              onChange={(e) => setForm((f) => ({ ...f, fundType: e.target.value }))}
+            >
+              {funds.map((f) => (
+                <option key={f.slug} value={f.slug}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="md-note" className="block text-sm font-medium text-gray-700">
+              Note (optional)
+            </label>
+            <textarea
+              id="md-note"
+              rows={2}
+              className="input-field mt-1"
+              value={form.note}
+              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              placeholder="e.g. Cash received at temple on Guru Purnima"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <button
+            onClick={handleGenerate}
+            disabled={submitting}
+            className="btn-primary flex items-center gap-2 disabled:opacity-60"
+          >
+            <Receipt className="h-4 w-4" />
+            {submitting ? "Generating…" : "Generate & Send Receipt"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Page ─── */
 
 export default function AdminDonationsPage() {
@@ -899,6 +1374,16 @@ export default function AdminDonationsPage() {
           Inflow
         </button>
         <button
+          onClick={() => setTab("record")}
+          className={`relative -mb-px px-4 py-2 text-sm font-semibold transition-colors ${
+            tab === "record"
+              ? "border-b-2 border-temple-red text-temple-red"
+              : "text-gray-600 hover:text-temple-maroon"
+          }`}
+        >
+          Record Donation
+        </button>
+        <button
           onClick={() => setTab("types")}
           className={`relative -mb-px px-4 py-2 text-sm font-semibold transition-colors ${
             tab === "types"
@@ -911,7 +1396,13 @@ export default function AdminDonationsPage() {
       </div>
 
       <div className="mt-6">
-        {tab === "inflow" ? <DonationInflowTab /> : <DonationTypesTab />}
+        {tab === "inflow" ? (
+          <DonationInflowTab />
+        ) : tab === "record" ? (
+          <RecordDonationTab />
+        ) : (
+          <DonationTypesTab />
+        )}
       </div>
     </div>
   );

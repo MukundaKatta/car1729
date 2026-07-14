@@ -48,6 +48,108 @@ const GOLD: [number, number, number] = [197, 151, 62];
 const GRAY: [number, number, number] = [90, 90, 90];
 const SHADE: [number, number, number] = [245, 240, 232];
 const INK: [number, number, number] = [40, 40, 40];
+const CREAM: [number, number, number] = [250, 245, 235];
+const CREAM_INK: [number, number, number] = [235, 220, 200];
+
+type RGB = [number, number, number];
+const setFill = (doc: jsPDF, c: RGB) => doc.setFillColor(c[0], c[1], c[2]);
+const setStroke = (doc: jsPDF, c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
+const setInk = (doc: jsPDF, c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
+
+/**
+ * Draws the shared maroon letterhead band (temple seal + name + address + EIN +
+ * IRS status). Used by both the year-end acknowledgment and the single-donation
+ * receipt so the two documents share one identical header.
+ */
+function drawLetterhead(doc: jsPDF, pageW: number, margin: number): void {
+  setFill(doc, MAROON);
+  doc.rect(0, 0, pageW, 104, "F");
+  if (LETTERHEAD_IMAGE) {
+    try {
+      // The temple seal is designed for a light background; back it with a cream
+      // disc + gold ring so it reads crisply on the maroon letterhead band.
+      setFill(doc, CREAM);
+      doc.circle(margin + 32, 52, 34, "F");
+      setStroke(doc, GOLD);
+      doc.setLineWidth(1.2);
+      doc.circle(margin + 32, 52, 34, "S");
+      doc.addImage(LETTERHEAD_IMAGE, "PNG", margin, 20, 64, 64);
+    } catch {
+      /* fall through to placeholder */
+    }
+  } else {
+    setStroke(doc, GOLD);
+    doc.setLineWidth(1);
+    doc.roundedRect(margin, 24, 56, 56, 6, 6, "S");
+    doc.setFontSize(7);
+    setInk(doc, GOLD);
+    doc.text("LOGO", margin + 28, 55, { align: "center" });
+  }
+  setInk(doc, [255, 255, 255]);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(17);
+  doc.text(TEMPLE.name.toUpperCase(), margin + 92, 40);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setInk(doc, CREAM_INK);
+  doc.text(TEMPLE.addressLines.join(", "), margin + 92, 56);
+  doc.text(TEMPLE.ein, margin + 92, 70);
+  setInk(doc, GOLD);
+  doc.text(TEMPLE.status, margin + 92, 84);
+}
+
+/**
+ * Draws the shared footer: the official-stamp block on the left and the
+ * president's authorized-signature block on the right, at vertical position
+ * `footY`. Used by both receipt documents.
+ */
+function drawStampAndSignature(
+  doc: jsPDF,
+  pageW: number,
+  margin: number,
+  footY: number,
+): void {
+  if (STAMP_IMAGE) {
+    try {
+      doc.addImage(STAMP_IMAGE, "PNG", margin, footY, 96, 80);
+    } catch {
+      /* ignore */
+    }
+  } else {
+    setStroke(doc, GRAY);
+    doc.setLineWidth(0.7);
+    doc.setLineDashPattern([3, 3], 0);
+    doc.roundedRect(margin, footY, 120, 80, 6, 6, "S");
+    doc.setLineDashPattern([], 0);
+    setInk(doc, GRAY);
+    doc.setFontSize(7.5);
+    doc.text("Official Temple Stamp", margin + 60, footY + 92, { align: "center" });
+  }
+
+  const sigX = pageW - margin - 210;
+  if (SIGNATURE_IMAGE) {
+    try {
+      // 85x48 keeps the signature's real ~1.77 aspect ratio (the old 120x44
+      // would have stretched it), centered over the signature line (sigX+105)
+      // and sitting just above it.
+      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 63, footY - 8, 85, 48);
+    } catch {
+      /* ignore */
+    }
+  }
+  setStroke(doc, GRAY);
+  doc.setLineWidth(0.7);
+  doc.line(sigX, footY + 42, sigX + 210, footY + 42);
+  setInk(doc, INK);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(SIGNER.name, sigX + 105, footY + 58, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(SIGNER.title, sigX + 105, footY + 72, { align: "center" });
+  setInk(doc, GRAY);
+  doc.text(SIGNER.org, sigX + 105, footY + 85, { align: "center" });
+}
 
 export interface TaxReceiptOptions {
   donorName: string;
@@ -92,40 +194,7 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   const ink = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
 
   // ── Letterhead ──
-  fill(MAROON);
-  doc.rect(0, 0, pageW, 104, "F");
-  if (LETTERHEAD_IMAGE) {
-    try {
-      // The temple seal is designed for a light background; back it with a cream
-      // disc + gold ring so it reads crisply on the maroon letterhead band.
-      fill([250, 245, 235]);
-      doc.circle(margin + 32, 52, 34, "F");
-      stroke(GOLD);
-      doc.setLineWidth(1.2);
-      doc.circle(margin + 32, 52, 34, "S");
-      doc.addImage(LETTERHEAD_IMAGE, "PNG", margin, 20, 64, 64);
-    } catch {
-      /* fall through to placeholder */
-    }
-  } else {
-    stroke(GOLD);
-    doc.setLineWidth(1);
-    doc.roundedRect(margin, 24, 56, 56, 6, 6, "S");
-    doc.setFontSize(7);
-    ink(GOLD);
-    doc.text("LOGO", margin + 28, 55, { align: "center" });
-  }
-  ink([255, 255, 255]);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(17);
-  doc.text(TEMPLE.name.toUpperCase(), margin + 92, 40);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  ink([235, 220, 200]);
-  doc.text(TEMPLE.addressLines.join(", "), margin + 92, 56);
-  doc.text(TEMPLE.ein, margin + 92, 70);
-  ink(GOLD);
-  doc.text(TEMPLE.status, margin + 92, 84);
+  drawLetterhead(doc, pageW, margin);
 
   let y = 138;
 
@@ -283,48 +352,205 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
 
   // ── Stamp (left) + signature block (right, per template) ──
   const footY = Math.max(y, pageH - 150);
-  if (STAMP_IMAGE) {
-    try {
-      doc.addImage(STAMP_IMAGE, "PNG", margin, footY, 96, 80);
-    } catch {
-      /* ignore */
-    }
-  } else {
-    stroke(GRAY);
-    doc.setLineWidth(0.7);
-    doc.setLineDashPattern([3, 3], 0);
-    doc.roundedRect(margin, footY, 120, 80, 6, 6, "S");
-    doc.setLineDashPattern([], 0);
-    ink(GRAY);
-    doc.setFontSize(7.5);
-    doc.text("Official Temple Stamp", margin + 60, footY + 92, { align: "center" });
-  }
-
-  const sigX = pageW - margin - 210;
-  if (SIGNATURE_IMAGE) {
-    try {
-      // 85x48 keeps the signature's real ~1.77 aspect ratio (the old 120x44
-      // would have stretched it), centered over the signature line (sigX+105)
-      // and sitting just above it.
-      doc.addImage(SIGNATURE_IMAGE, "PNG", sigX + 63, footY - 8, 85, 48);
-    } catch {
-      /* ignore */
-    }
-  }
-  stroke(GRAY);
-  doc.setLineWidth(0.7);
-  doc.line(sigX, footY + 42, sigX + 210, footY + 42);
-  ink(INK);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text(SIGNER.name, sigX + 105, footY + 58, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(SIGNER.title, sigX + 105, footY + 72, { align: "center" });
-  ink(GRAY);
-  doc.text(SIGNER.org, sigX + 105, footY + 85, { align: "center" });
+  drawStampAndSignature(doc, pageW, margin, footY);
 
   doc.save(`RNHT-Donation-Acknowledgment-${year}.pdf`);
+}
+
+export interface DonationReceiptOptions {
+  donorName: string;
+  donorEmail: string;
+  amount: number;
+  /** Human-readable donation-type / fund name, e.g. "General Temple Donation". */
+  fundLabel: string;
+  /** Receipt number, e.g. "REC-1a2b3c4d". */
+  receiptId: string;
+  /** Optional admin note printed on the receipt. */
+  note?: string;
+  /** Date the gift was received (defaults to now). */
+  date?: Date;
+}
+
+export interface DonationReceiptArtifacts {
+  /** The PDF as a base64 string (no data-URI prefix) — for emailing as an attachment. */
+  base64: string;
+  /** The PDF as a Blob — for offering a local download copy. */
+  blob: Blob;
+  filename: string;
+}
+
+/**
+ * Builds a single-gift "Official Donation Receipt" for a cash/offline donation
+ * the temple received in person (the admin Manual Donation Receipt flow). It
+ * shares the year-end acknowledgment's letterhead and signature/stamp footer,
+ * but covers one gift, dated the day it was received. Returns the PDF as both a
+ * base64 string (to email as an attachment) and a Blob (to download a copy); it
+ * does NOT auto-download. Client-side only (uses jsPDF + btoa/Blob).
+ */
+export function generateDonationReceiptPdf(
+  opts: DonationReceiptOptions,
+): DonationReceiptArtifacts {
+  const { donorName, donorEmail, amount, fundLabel, receiptId, note } = opts;
+  const date = opts.date ?? new Date();
+
+  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  doc.setProperties({
+    title: `RNHT Donation Receipt ${receiptId}`,
+    subject: `Official Donation Receipt — ${fundLabel}`,
+    author: TEMPLE.name,
+    creator: TEMPLE.name,
+  });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 54;
+  const contentW = pageW - margin * 2;
+
+  // ── Letterhead ──
+  drawLetterhead(doc, pageW, margin);
+
+  let y = 138;
+
+  // ── Title ──
+  setInk(doc, MAROON);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("OFFICIAL DONATION RECEIPT", pageW / 2, y, { align: "center" });
+  setStroke(doc, GOLD);
+  doc.setLineWidth(1);
+  doc.line(margin, y + 8, pageW - margin, y + 8);
+  y += 30;
+
+  // ── Receipt no + date row ──
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setInk(doc, INK);
+  doc.text(`Receipt No: ${receiptId}`, margin, y);
+  doc.text(`Date: ${receiptDate(date.toISOString())}`, pageW - margin, y, {
+    align: "right",
+  });
+  y += 24;
+
+  // ── Donor block ──
+  setInk(doc, GRAY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("RECEIVED WITH GRATITUDE FROM", margin, y);
+  y += 16;
+  setInk(doc, INK);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  const nameLines = doc.splitTextToSize(donorName || "Devotee", contentW) as string[];
+  doc.text(nameLines, margin, y);
+  y += nameLines.length * 16;
+  if (donorEmail) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setInk(doc, GRAY);
+    const emailLines = doc.splitTextToSize(donorEmail, contentW) as string[];
+    doc.text(emailLines, margin, y);
+    y += emailLines.length * 13;
+  }
+  y += 16;
+
+  // ── Amount / donation-type box ──
+  const boxH = 58;
+  setFill(doc, SHADE);
+  doc.rect(margin, y, contentW, boxH, "F");
+  setStroke(doc, GOLD);
+  doc.setLineWidth(0.8);
+  doc.rect(margin, y, contentW, boxH, "S");
+  setInk(doc, GRAY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("DONATION TYPE", margin + 16, y + 22);
+  setInk(doc, INK);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text(fitText(doc, fundLabel, contentW * 0.58), margin + 16, y + 42);
+  setInk(doc, GRAY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("AMOUNT", pageW - margin - 16, y + 22, { align: "right" });
+  setInk(doc, MAROON);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(19);
+  doc.text(formatCurrency(amount), pageW - margin - 16, y + 44, { align: "right" });
+  y += boxH + 22;
+
+  // ── Optional note ──
+  if (note && note.trim()) {
+    setInk(doc, GRAY);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("NOTE", margin, y);
+    y += 14;
+    setInk(doc, INK);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const noteLines = doc.splitTextToSize(note.trim(), contentW) as string[];
+    doc.text(noteLines, margin, y);
+    y += noteLines.length * 13 + 14;
+  }
+
+  // ── Thank-you sentence ──
+  setInk(doc, INK);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const body =
+    `On behalf of Rudra Narayana Hindu Temple, we sincerely thank you for your ` +
+    `generous donation. Your support sustains the temple's worship, annadanam, and ` +
+    `community service.`;
+  const bodyLines = doc.splitTextToSize(body, contentW) as string[];
+  doc.text(bodyLines, margin, y);
+  y += bodyLines.length * 14 + 16;
+
+  // ── IRS Required Disclosure ──
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  setInk(doc, INK);
+  doc.text("IRS Required Disclosure", margin, y);
+  y += 14;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setInk(doc, GRAY);
+  const disclosure1 =
+    "No goods or services were provided in exchange for this contribution, other than " +
+    "intangible religious benefits, in accordance with IRS regulations.";
+  const d1 = doc.splitTextToSize(disclosure1, contentW) as string[];
+  doc.text(d1, margin, y);
+  y += d1.length * 11 + 8;
+  const disclosure2 =
+    "Rudra Narayana Hindu Temple is a registered 501(c)(3) nonprofit organization. This " +
+    "receipt serves as an official acknowledgment for income tax purposes under Section " +
+    "170(f)(8) of the Internal Revenue Code.";
+  const d2 = doc.splitTextToSize(disclosure2, contentW) as string[];
+  doc.text(d2, margin, y);
+  y += d2.length * 11 + 20;
+
+  // ── Stamp + signature ──
+  // A long note could push the content down; keep the footer on the page.
+  if (y > pageH - 170) {
+    doc.addPage();
+    y = margin + 20;
+  }
+  const footY = Math.max(y, pageH - 150);
+  drawStampAndSignature(doc, pageW, margin, footY);
+
+  const filename = `RNHT-Donation-Receipt-${receiptId}.pdf`;
+  const arrayBuffer = doc.output("arraybuffer") as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+  const base64 = arrayBufferToBase64(arrayBuffer);
+  return { base64, blob, filename };
+}
+
+/** Base64-encode an ArrayBuffer in the browser (plain index loop; no spread). */
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 // Truncate text with an ellipsis so a long donation-type name can't overflow

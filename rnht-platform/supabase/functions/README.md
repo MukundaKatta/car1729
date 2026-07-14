@@ -12,6 +12,8 @@ instead.
 |-------------------|---------------------------------------------------------------|
 | `donate`          | `POST` creates a Stripe Checkout session or PayPal order.<br>`GET ?session_id=…` verifies a Stripe session and marks the donation paid. |
 | `paypal-capture`  | `POST {orderId}` captures an approved PayPal order and marks the donation paid. |
+| `send-donation-receipt` | `POST {donationId}` (admin) emails the tax receipt for a donation an admin marked received. |
+| `record-manual-donation` | `POST {id, donorName, donorEmail, amount, fundType, note, receiptId, pdfBase64, filename}` (admin) files a **cash/offline** donation as completed and emails the donor the receipt PDF. Backs the admin "Record Donation" tab. Requires migration `007` (adds `cash`/`offline` to the `payment_method` CHECK) and the `RESEND_API_KEY`/`RECEIPT_FROM` secrets. |
 
 Recurring (subscription) donations and Stripe/PayPal webhook handlers
 are intentionally not ported yet — see the TODO at the bottom.
@@ -56,6 +58,10 @@ by Supabase — don't set them yourself.
 cd rnht-platform
 supabase functions deploy donate
 supabase functions deploy paypal-capture
+supabase functions deploy send-donation-receipt
+supabase functions deploy record-manual-donation
+# record-manual-donation also needs the migration that allows the 'cash' method:
+supabase db push        # applies supabase/migrations/007_manual_donation_payment_method.sql
 ```
 
 Each deploy is its own version; rollback with
