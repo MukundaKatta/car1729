@@ -478,13 +478,15 @@ describe("Header", () => {
 
   // --- Panchangam aria-label for mobile ---
 
-  it("does not render a standalone Panchangam icon button in the header", () => {
-    // The redundant mobile Panchangam icon was removed so the temple name and
-    // the hamburger menu both fit on one row on phones (client 07-14: the menu
-    // was pushed off-screen). Panchangam remains reachable via the drawer (see
-    // "shows the mobile Panchangam link in the mobile menu").
+  it("renders the Panchangam icon button (shown ≥400px) with aria-label + href", () => {
+    // Restored 07-14: shown from 400px up to sm to fill the header so there's no
+    // large gap between the name and the Donate button on wider phones; hidden
+    // below 400px (via `min-[400px]:flex`) so the tightest phones keep the full
+    // temple name. The menu stays visible regardless (name block is min-w-0).
     render(<Header />);
-    expect(screen.queryByLabelText("Panchangam")).not.toBeInTheDocument();
+    const panchangamLabel = screen.getByLabelText("Panchangam");
+    expect(panchangamLabel).toBeInTheDocument();
+    expect(panchangamLabel.closest("a")).toHaveAttribute("href", "/panchangam");
   });
 
   // --- Donate mobile icon-only button ---

@@ -564,10 +564,23 @@ export function Header() {
             <Calendar className="h-4 w-4" style={{ color: "#C5973E" }} />
             <span>{t("nav.panchangam", locale)}</span>
           </Link>
-          {/* On phones the standalone Panchangam icon is dropped from the header
-              (it's a prominent button inside the hamburger drawer) so the temple
-              name and the menu button both fit on one row. It reappears as a full
-              button from sm upward, above. */}
+          {/* Panchangam icon — shown from 400px up to sm (full button takes over at
+              sm). Hidden below 400px so the tightest phones keep the full temple
+              name without truncation; on wider phones it fills the header so there
+              isn't a large empty gap between the name and the Donate button
+              (client 07-14). The menu button stays visible regardless because the
+              name block is min-w-0 / truncate. */}
+          <Link
+            href="/panchangam"
+            className="hidden min-[400px]:flex sm:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-full"
+            style={{
+              background: "linear-gradient(135deg, rgba(197,151,62,0.12) 0%, rgba(232,195,74,0.18) 100%)",
+              border: "1.5px solid rgba(197,151,62,0.35)",
+            }}
+            aria-label="Panchangam"
+          >
+            <Calendar className="h-4 w-4" style={{ color: "#C5973E" }} />
+          </Link>
 
           {/* Donate */}
           <Link
