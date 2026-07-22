@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "@/lib/utils";
 import { prettyFund } from "@/lib/fund";
-import { SIGNATURE_DATA_URL, LOGO_DATA_URL } from "@/lib/receipt-assets";
+import { SIGNATURE_DATA_URL, LOGO_DATA_URL, STAMP_DATA_URL } from "@/lib/receipt-assets";
 import type { Donation } from "@/store/auth";
 
 // Compact, temple-timezone (US Central) date for the receipt table rows.
@@ -40,7 +40,7 @@ const SIGNER = {
 // and authorized-signature PNGs, set these to the (bundled or data-URL) image
 // sources and the render code below will draw them in place of the placeholders.
 const LETTERHEAD_IMAGE: string | undefined = LOGO_DATA_URL; // temple seal (same as the homepage/header logo)
-const STAMP_IMAGE: string | undefined = undefined; // TODO(client): official stamp PNG
+const STAMP_IMAGE: string | undefined = STAMP_DATA_URL; // official stamp, client-provided 2026-07-21
 const SIGNATURE_IMAGE: string | undefined = SIGNATURE_DATA_URL; // Venkata Panchagnula (President), client-provided 2026-07-13
 
 const MAROON: [number, number, number] = [94, 10, 31];
@@ -111,7 +111,10 @@ function drawStampAndSignature(
 ): void {
   if (STAMP_IMAGE) {
     try {
-      doc.addImage(STAMP_IMAGE, "PNG", margin, footY, 96, 80);
+      // The official stamp is circular (408x420 source, aspect ~0.971): draw it
+      // 82x84 so it isn't stretched, roughly centered over the old placeholder
+      // slot. No caption — a real stamp labels itself.
+      doc.addImage(STAMP_IMAGE, "PNG", margin + 19, footY - 2, 82, 84);
     } catch {
       /* ignore */
     }
