@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       // from flipping an unrelated donation to "completed".
       const { data: donation } = await supabase
         .from("donations")
-        .select("amount, fund_type, payment_status, donor_email, donor_name")
+        .select("amount, fund_type, payment_status, donor_email, donor_name, user_id")
         .eq("id", donationId)
         .maybeSingle();
 
@@ -147,6 +147,29 @@ Deno.serve(async (req) => {
       // Send the receipt only on the actual transition (updated !== null), so a
       // replayed capture doesn't email the donor twice.
       if (updated) {
+        // Back-link guest gifts to a matching devotee account by email, same
+        // as the Stripe verify + manual cash paths, so the donation reaches
+        // the donor's dashboard and year-end acknowledgment.
+        if (!donation.user_id && donation.donor_email) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("id")
+            .ilike("email", donation.donor_email)
+            .maybeSingle();
+          if (prof?.id) {
+            const { error: linkError } = await supabase
+              .from("donations")
+              .update({ user_id: prof.id })
+              .eq("id", donationId)
+              .is("user_id", null);
+            if (linkError) {
+              console.error("[paypal-capture] back-link failed", {
+                donationId,
+                error: linkError.message,
+              });
+            }
+          }
+        }
         await sendDonationReceipt({
           to: donation.donor_email,
           donorName: donation.donor_name,

@@ -352,7 +352,7 @@ async function handleVerify(req: Request): Promise<Response> {
 
   const { data, error } = await supabase
     .from("donations")
-    .select("amount, fund_type, donor_email, donor_name, payment_status")
+    .select("amount, fund_type, donor_email, donor_name, payment_status, user_id")
     .eq("id", donationId)
     .single();
 
@@ -397,6 +397,32 @@ async function handleVerify(req: Request): Promise<Response> {
     });
   }
   if (updated) {
+    // Back-link guest gifts to a matching devotee account by email (case-
+    // insensitive), so the donation shows in their dashboard history and
+    // counts toward the year-end acknowledgment — mirrors the manual
+    // cash-receipt path. Signed-in donations already carry user_id from
+    // session creation; guests who donated before signing up simply stay
+    // unlinked until an account with that email exists.
+    if (!data.user_id && data.donor_email) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("email", data.donor_email)
+        .maybeSingle();
+      if (prof?.id) {
+        const { error: linkError } = await supabase
+          .from("donations")
+          .update({ user_id: prof.id })
+          .eq("id", donationId)
+          .is("user_id", null);
+        if (linkError) {
+          console.error("[donate:verify] back-link failed", {
+            donationId,
+            error: linkError.message,
+          });
+        }
+      }
+    }
     await sendDonationReceipt({
       to: data.donor_email,
       donorName: data.donor_name,
