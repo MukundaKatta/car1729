@@ -396,7 +396,26 @@ async function handleVerify(req: Request): Promise<Response> {
       error: flipError.message,
     });
   }
-  if (updated) {
+  // A parallel completer (the deployed Stripe webhook) can mark the donation
+  // completed before this verify runs; the pending->completed flip then
+  // updates 0 rows and — before this claim existed — the receipt email was
+  // silently skipped as a "duplicate". Claim the receipt exactly once via the
+  // payment_intent_id marker (only this verify path writes it): whoever sets
+  // it first sends the email; replays and refreshes find it set and stay
+  // silent.
+  let wonReceipt = Boolean(updated);
+  if (!wonReceipt) {
+    const { data: claimed } = await supabase
+      .from("donations")
+      .update({ payment_intent_id: sessionId })
+      .eq("id", donationId)
+      .eq("payment_status", "completed")
+      .is("payment_intent_id", null)
+      .select("id")
+      .maybeSingle();
+    wonReceipt = Boolean(claimed);
+  }
+  if (wonReceipt) {
     // Back-link guest gifts to a matching devotee account by email (case-
     // insensitive), so the donation shows in their dashboard history and
     // counts toward the year-end acknowledgment — mirrors the manual

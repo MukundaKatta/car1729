@@ -144,9 +144,24 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Send the receipt only on the actual transition (updated !== null), so a
-      // replayed capture doesn't email the donor twice.
-      if (updated) {
+      // Send the receipt only when this capture wins the completion — but a
+      // parallel completer (the deployed PayPal webhook) can flip the row
+      // first, leaving 0 rows updated and the donor with no email. Claim the
+      // receipt exactly once via the payment_intent_id marker (only capture
+      // paths write it); replays find it set and stay silent.
+      let wonReceipt = Boolean(updated);
+      if (!wonReceipt) {
+        const { data: claimed } = await supabase
+          .from("donations")
+          .update({ payment_intent_id: orderId })
+          .eq("id", donationId)
+          .eq("payment_status", "completed")
+          .is("payment_intent_id", null)
+          .select("id")
+          .maybeSingle();
+        wonReceipt = Boolean(claimed);
+      }
+      if (wonReceipt) {
         // Back-link guest gifts to a matching devotee account by email, same
         // as the Stripe verify + manual cash paths, so the donation reaches
         // the donor's dashboard and year-end acknowledgment.
