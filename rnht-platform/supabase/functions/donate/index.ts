@@ -336,7 +336,19 @@ async function handleVerify(req: Request): Promise<Response> {
     });
   }
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  // An unknown/garbage session id makes Stripe throw; without this catch it
+  // surfaced as a 500 "Failed to process donation", so a donor returning with
+  // a stale or mistyped link saw a server error instead of a clean "not
+  // verified" answer (and the generic 500 hid real faults in the logs).
+  let session: Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>>;
+  try {
+    session = await stripe.checkout.sessions.retrieve(sessionId);
+  } catch {
+    return new Response(JSON.stringify({ verified: false }), {
+      status: 400,
+      headers: jsonHeaders,
+    });
+  }
   const donationId = session.metadata?.donation_id;
   if (
     session.metadata?.type !== "donation" ||
