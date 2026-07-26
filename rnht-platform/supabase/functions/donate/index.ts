@@ -174,6 +174,19 @@ async function handleCreate(req: Request): Promise<Response> {
       { status: 400, headers: jsonHeaders },
     );
   }
+  // Allowlist the payment method too. It is written straight to
+  // payment_method, so an unknown value (e.g. "bitcoin") only failed at the DB
+  // CHECK and surfaced as a 500 "Failed to create donation record"; worse, the
+  // admin-only offline methods ("cash"/"offline") pass that CHECK, letting a
+  // direct API call file rows that impersonate in-person gifts. Only the three
+  // public rails are acceptable here — cash/offline belong to the admin
+  // record-manual-donation flow.
+  if (!["stripe", "paypal", "zelle"].includes(paymentMethod)) {
+    return new Response(
+      JSON.stringify({ error: "Unsupported payment method" }),
+      { status: 400, headers: jsonHeaders },
+    );
+  }
   // Allowlist the fund: fund_type is plain TEXT with no DB constraint, so a
   // direct API call could otherwise insert arbitrary fund names. A fund is valid
   // if it is an ACTIVE row in donation_types (the admin-managed source of truth,
