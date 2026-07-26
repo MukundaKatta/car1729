@@ -109,6 +109,23 @@ Deno.serve(async (req) => {
     const fundLabel =
       ft?.name ?? fundLabels[d.fund_type as string] ?? (d.fund_type as string) ?? "Donation";
 
+    // Compete for the same single-sender claim the payment-verify paths use,
+    // so a donation the donor already received a receipt for (or one being
+    // verified concurrently) never gets a second 501(c)(3) receipt.
+    const { data: claimed } = await supabase
+      .from("donations")
+      .update({ tax_receipt_sent: true })
+      .eq("id", donationId)
+      .eq("payment_status", "completed")
+      .eq("tax_receipt_sent", false)
+      .select("id")
+      .maybeSingle();
+    if (!claimed) {
+      return new Response(
+        JSON.stringify({ ok: true, alreadySent: true }),
+        { headers: jsonHeaders },
+      );
+    }
     await sendDonationReceipt({
       to: d.donor_email as string,
       donorName: d.is_anonymous ? null : (d.donor_name as string | null),

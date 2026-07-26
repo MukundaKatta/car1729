@@ -160,14 +160,24 @@ async function isRateLimited(
   max: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  // Supabase sits behind a proxy: the left-most x-forwarded-for entry is the
-  // client. Fall back to a shared bucket when no IP is available, so a caller
-  // that strips the header is throttled alongside the other unknowns rather
-  // than exempted.
-  const ip =
-    (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
+  // Take the RIGHT-most x-forwarded-for entry, not the left-most. Measured on
+  // this platform the proxy replaces the header with the true peer (rotating a
+  // forged value through 15 requests still hit the limit, and an oversized one
+  // is rejected upstream), so both ends agree today — but if the proxy ever
+  // switched to appending, the left-most entry would be attacker-controlled and
+  // every forged value would mint its own bucket. The right-most entry is the
+  // one the trusted hop wrote under either behaviour.
+  //
+  // The key is length-bounded so an oversized header cannot blow the btree
+  // index limit, error the RPC and ride the fail-open path as an off switch.
+  // No IP available => a shared "unknown" bucket: stripping the header gets you
+  // throttled with the other unknowns, never exempted.
+  const xff = (req.headers.get("x-forwarded-for") ?? "").split(",");
+  const ip = (
+    xff[xff.length - 1]?.trim() ||
     req.headers.get("cf-connecting-ip") ||
-    "unknown";
+    "unknown"
+  ).slice(0, 64);
   try {
     const { data, error } = await supabase.rpc("check_rate_limit", {
       p_key: `${bucket}:${ip}`,
@@ -302,7 +312,8 @@ async function handleCreate(req: Request): Promise<Response> {
     .insert({
       user_id: userId,
       donor_name: donorName,
-      donor_email: donorEmail,
+      // Normalized so the guest back-link (and any later lookup) can match.
+      donor_email: donorEmail.trim().toLowerCase(),
       amount: cleanAmount,
       fund_type: fundType,
       payment_method: paymentMethod,
@@ -427,11 +438,27 @@ async function handleVerify(req: Request): Promise<Response> {
   let session: Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>>;
   try {
     session = await stripe.checkout.sessions.retrieve(sessionId);
-  } catch {
-    return new Response(JSON.stringify({ verified: false }), {
-      status: 400,
-      headers: jsonHeaders,
+  } catch (e) {
+    // Only a genuine "no such session" is the donor's problem. A network blip
+    // or auth failure against Stripe must NOT be reported as "not verified" —
+    // that tells someone who really paid that their payment didn't count, and
+    // an unlogged bare catch hid such outages entirely.
+    const status = (e as { statusCode?: number })?.statusCode;
+    const unknownSession = status === 404 || status === 400;
+    console.error("[donate:verify] session retrieve failed", {
+      sessionId,
+      status,
+      unknownSession,
+      error: (e as Error)?.message,
     });
+    return new Response(
+      JSON.stringify(
+        unknownSession
+          ? { verified: false }
+          : { error: "Could not reach the payment provider. Please try again." },
+      ),
+      { status: unknownSession ? 400 : 503, headers: jsonHeaders },
+    );
   }
   const donationId = session.metadata?.donation_id;
   if (
@@ -492,25 +519,34 @@ async function handleVerify(req: Request): Promise<Response> {
       error: flipError.message,
     });
   }
-  // A parallel completer (the deployed Stripe webhook) can mark the donation
-  // completed before this verify runs; the pending->completed flip then
-  // updates 0 rows and — before this claim existed — the receipt email was
-  // silently skipped as a "duplicate". Claim the receipt exactly once via the
-  // payment_intent_id marker (only this verify path writes it): whoever sets
-  // it first sends the email; replays and refreshes find it set and stay
-  // silent.
-  let wonReceipt = Boolean(updated);
-  if (!wonReceipt) {
-    const { data: claimed } = await supabase
-      .from("donations")
-      .update({ payment_intent_id: sessionId })
-      .eq("id", donationId)
-      .eq("payment_status", "completed")
-      .is("payment_intent_id", null)
-      .select("id")
-      .maybeSingle();
-    wonReceipt = Boolean(claimed);
+  // Claim the receipt on the dedicated `tax_receipt_sent` flag rather than on
+  // the completion flip or on payment_intent_id.
+  //
+  // Flip-only was wrong: a parallel completer can mark the row completed first,
+  // leaving this verify with 0 updated rows and the donor with no email.
+  // payment_intent_id was also wrong as the marker — it is NOT exclusive to
+  // this path (the PayPal rail stamps it at ORDER CREATION, so that claim could
+  // never match) and the admin "Mark received" path emails a receipt without
+  // touching it, so a later verify would claim an already-receipted gift and
+  // send a SECOND 501(c)(3) receipt.
+  //
+  // tax_receipt_sent is a single flag every sender competes for, so exactly one
+  // wins per donation no matter which path completes it.
+  const { data: claimed, error: claimError } = await supabase
+    .from("donations")
+    .update({ tax_receipt_sent: true })
+    .eq("id", donationId)
+    .eq("payment_status", "completed")
+    .eq("tax_receipt_sent", false)
+    .select("id")
+    .maybeSingle();
+  if (claimError) {
+    console.error("[donate:verify] receipt claim failed", {
+      donationId,
+      error: claimError.message,
+    });
   }
+  const wonReceipt = Boolean(claimed);
   if (wonReceipt) {
     // Back-link guest gifts to a matching devotee account by email (case-
     // insensitive), so the donation shows in their dashboard history and
@@ -519,11 +555,25 @@ async function handleVerify(req: Request): Promise<Response> {
     // session creation; guests who donated before signing up simply stay
     // unlinked until an account with that email exists.
     if (!data.user_id && data.donor_email) {
-      const { data: prof } = await supabase
+      // Exact match, never ilike: PostgREST forwards the value as a SQL LIKE
+      // pattern, so a donor address containing "_" or "%" (both legal in the
+      // email regex above) matches OTHER profiles — "john_smith@x.com" would
+      // link the gift to "johnXsmith@x.com", exposing a stranger's donation in
+      // that devotee's history and year-end tax total. Compare on a normalized
+      // value, matching what record-manual-donation already does.
+      const { data: prof, error: lookupError } = await supabase
         .from("profiles")
         .select("id")
-        .ilike("email", data.donor_email)
+        .eq("email", data.donor_email.trim().toLowerCase())
         .maybeSingle();
+      if (lookupError) {
+        // Includes PGRST116 (multiple profiles share the address) — previously
+        // discarded, so a collision silently skipped the back-link.
+        console.error("[donate:verify] profile lookup failed", {
+          donationId,
+          error: lookupError.message,
+        });
+      }
       if (prof?.id) {
         const { error: linkError } = await supabase
           .from("donations")

@@ -149,18 +149,26 @@ Deno.serve(async (req) => {
       // first, leaving 0 rows updated and the donor with no email. Claim the
       // receipt exactly once via the payment_intent_id marker (only capture
       // paths write it); replays find it set and stay silent.
-      let wonReceipt = Boolean(updated);
-      if (!wonReceipt) {
-        const { data: claimed } = await supabase
-          .from("donations")
-          .update({ payment_intent_id: orderId })
-          .eq("id", donationId)
-          .eq("payment_status", "completed")
-          .is("payment_intent_id", null)
-          .select("id")
-          .maybeSingle();
-        wonReceipt = Boolean(claimed);
+      // Claim on tax_receipt_sent, not payment_intent_id: this rail stamps
+      // payment_intent_id at ORDER CREATION (donate/index.ts), so the old
+      // `.is(payment_intent_id, null)` claim could never match and was dead
+      // code — and the admin "Mark received" path sends a receipt without
+      // touching it, which would let a later capture send a second one.
+      const { data: claimed, error: claimError } = await supabase
+        .from("donations")
+        .update({ tax_receipt_sent: true })
+        .eq("id", donationId)
+        .eq("payment_status", "completed")
+        .eq("tax_receipt_sent", false)
+        .select("id")
+        .maybeSingle();
+      if (claimError) {
+        console.error("[paypal-capture] receipt claim failed", {
+          donationId,
+          error: claimError.message,
+        });
       }
+      const wonReceipt = Boolean(claimed);
       if (wonReceipt) {
         // Back-link guest gifts to a matching devotee account by email, same
         // as the Stripe verify + manual cash paths, so the donation reaches
@@ -169,7 +177,9 @@ Deno.serve(async (req) => {
           const { data: prof } = await supabase
             .from("profiles")
             .select("id")
-            .ilike("email", donation.donor_email)
+            // Exact match: ilike treats "_"/"%" in the donor address as SQL
+            // wildcards and can link the gift to the wrong devotee.
+            .eq("email", donation.donor_email.trim().toLowerCase())
             .maybeSingle();
           if (prof?.id) {
             const { error: linkError } = await supabase
