@@ -145,6 +145,59 @@ async function createPayPalOrder(args: {
   return { id: order.id as string, approvalUrl: approval.href as string };
 }
 
+/**
+ * Best-effort per-IP throttle for the public create endpoint.
+ *
+ * FAILS OPEN: if the limiter itself errors (RPC missing, DB blip) we let the
+ * donation through and log it. Blocking a real devotee's gift because our
+ * counter table hiccuped is far worse than letting a flood past for a minute.
+ *
+ * Returns true when the caller is over the limit.
+ */
+async function isRateLimited(
+  req: Request,
+  bucket: string,
+  max: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  // Supabase sits behind a proxy: the left-most x-forwarded-for entry is the
+  // client. Fall back to a shared bucket when no IP is available, so a caller
+  // that strips the header is throttled alongside the other unknowns rather
+  // than exempted.
+  const ip =
+    (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    "unknown";
+  try {
+    const { data, error } = await supabase.rpc("check_rate_limit", {
+      p_key: `${bucket}:${ip}`,
+      p_max: max,
+      p_window_seconds: windowSeconds,
+    });
+    if (error) {
+      console.error("[donate:ratelimit] check failed — allowing", error.message);
+      return false;
+    }
+    return data === false;
+  } catch (e) {
+    console.error("[donate:ratelimit] check threw — allowing", e);
+    return false;
+  }
+}
+
+const TOO_MANY = (retryAfterSeconds: number) =>
+  new Response(
+    JSON.stringify({
+      error:
+        "Too many donation attempts from this connection. Please wait a few " +
+        "minutes and try again, or contact the temple if you need help.",
+    }),
+    {
+      status: 429,
+      headers: { ...jsonHeaders, "Retry-After": String(retryAfterSeconds) },
+    },
+  );
+
 async function handleCreate(req: Request): Promise<Response> {
   const body = (await req.json()) as DonateRequest;
   const {
@@ -220,6 +273,24 @@ async function handleCreate(req: Request): Promise<Response> {
       JSON.stringify({ error: "Donation amount is too small" }),
       { status: 400, headers: jsonHeaders },
     );
+  }
+
+  // Throttle only once the request is otherwise valid, so a devotee fumbling
+  // the form doesn't burn their allowance — and so the checks sit in front of
+  // everything expensive or side-effecting below (row insert, Stripe session,
+  // PayPal order, temple alert email).
+  //
+  // The general ceiling is deliberately loose: a family behind one NAT/office
+  // IP may legitimately give several times in a sitting. Zelle is tighter
+  // because every pledge emails the temple, making it the inbox-spam vector.
+  if (await isRateLimited(req, "donate", 8, 600)) {
+    return TOO_MANY(600);
+  }
+  if (
+    paymentMethod === "zelle" &&
+    (await isRateLimited(req, "donate:zelle", 3, 600))
+  ) {
+    return TOO_MANY(600);
   }
 
   // Prefer the admin-managed name; fall back to the legacy label.
