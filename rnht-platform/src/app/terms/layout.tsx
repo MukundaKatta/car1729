@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     description: "Terms of Use governing the Rudra Narayana Hindu Temple website, devotee accounts, donations, and bookings.",
     url: canonicalPath("/terms"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Terms of Use | Rudra Narayana Hindu Temple",

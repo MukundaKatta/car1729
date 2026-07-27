@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "View upcoming festivals, poojas, community events, and classes at Rudra Narayana Hindu Temple.",
     url: canonicalPath("/calendar"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Temple Calendar | Rudra Narayana Hindu Temple",

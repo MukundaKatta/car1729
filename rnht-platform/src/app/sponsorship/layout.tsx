@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "Sponsor temple festivals, deity ornaments, and save with bundled service packages. All sponsorships are tax-deductible.",
     url: canonicalPath("/sponsorship"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Sponsorship & Packages | Rudra Narayana Hindu Temple",

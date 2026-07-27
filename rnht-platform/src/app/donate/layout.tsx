@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "Support Rudra Narayana Hindu Temple with tax-deductible donations. Choose from General, Building, Priest, Annadanam, Festival, or Education funds.",
     url: canonicalPath("/donate"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Donate | Rudra Narayana Hindu Temple",

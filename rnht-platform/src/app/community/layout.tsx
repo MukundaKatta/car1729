@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "Volunteer, participate in Annadanam, and stay connected with Rudra Narayana Hindu Temple community events and announcements.",
     url: canonicalPath("/community"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Community Hub | Rudra Narayana Hindu Temple",

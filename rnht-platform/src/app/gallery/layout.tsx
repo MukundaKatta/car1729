@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "Photos from temple ceremonies, festivals, community events, and darshan at Rudra Narayana Hindu Temple.",
     url: canonicalPath("/gallery"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Gallery | Rudra Narayana Hindu Temple",

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     description: "Meet RNHT's experienced Vedic priests offering poojas, homams, weddings, and ceremonies across Austin and greater Texas.",
     url: canonicalPath("/priests"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Our Priests | Rudra Narayana Hindu Temple",

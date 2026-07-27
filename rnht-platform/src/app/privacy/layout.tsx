@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     description: "How Rudra Narayana Hindu Temple collects, uses, and protects your personal information.",
     url: canonicalPath("/privacy"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Privacy Policy | Rudra Narayana Hindu Temple",

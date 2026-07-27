@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     description: "Learn about Rudra Narayana Hindu Temple — our mission, priests, and authentic Vedic services for the Austin Hindu community.",
     url: canonicalPath("/about"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "About Us | Rudra Narayana Hindu Temple",

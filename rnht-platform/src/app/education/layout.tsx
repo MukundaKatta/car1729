@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     description: "Vedic chanting, Sanskrit, Telugu, yoga, and children's programs at Rudra Narayana Hindu Temple.",
     url: canonicalPath("/education"),
     type: "website",
+    images: [{ url: "/deity-collage.jpg", width: 2200, height: 1049, alt: "Rudra Narayana Hindu Temple" }],
   },
   twitter: {
     title: "Education & Classes | Rudra Narayana Hindu Temple",
