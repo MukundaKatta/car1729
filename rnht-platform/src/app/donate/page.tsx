@@ -1043,13 +1043,15 @@ function DonateContent() {
                 current={paymentMethod}
                 onChange={setPaymentMethod}
               />
-              <PaymentRadio
-                id="paypal"
-                label="PayPal"
-                icon={<span className="text-sm font-bold text-blue-600">P</span>}
-                current={paymentMethod}
-                onChange={setPaymentMethod}
-              />
+              {PAYPAL_ENABLED && (
+                <PaymentRadio
+                  id="paypal"
+                  label="PayPal"
+                  icon={<span className="text-sm font-bold text-blue-600">P</span>}
+                  current={paymentMethod}
+                  onChange={setPaymentMethod}
+                />
+              )}
               <PaymentRadio
                 id="zelle"
                 label="Zelle"
@@ -1159,6 +1161,14 @@ function DonateContent() {
     </div>
   );
 }
+
+// PayPal is only offered when the temple's PayPal credentials are actually
+// configured. Probing prod showed every PayPal attempt fails (the edge
+// function returns "Could not start the PayPal payment") because PAYPAL_CLIENT_ID
+// / PAYPAL_SECRET are unset — so the option was a guaranteed dead end for every
+// donor who picked it. Set NEXT_PUBLIC_PAYPAL_ENABLED=true once the credentials
+// are in place to bring it back; Card and Zelle are unaffected.
+const PAYPAL_ENABLED = process.env.NEXT_PUBLIC_PAYPAL_ENABLED === "true";
 
 function PaymentRadio({
   id,

@@ -191,11 +191,19 @@ describe("DonatePage", () => {
     expect(button).not.toBeDisabled();
   });
 
-  it("renders all three payment-method options", () => {
+  it("renders the working payment-method options", () => {
     render(<DonatePage />);
     expect(screen.getByText("Card / Apple Pay")).toBeInTheDocument();
-    expect(screen.getByText("PayPal")).toBeInTheDocument();
     expect(screen.getByText("Zelle")).toBeInTheDocument();
+  });
+
+  it("hides PayPal unless it is configured", () => {
+    // PayPal is gated on NEXT_PUBLIC_PAYPAL_ENABLED because the credentials are
+    // unset in production: offering it sent every donor who picked it to a
+    // guaranteed failure. Flip the env var back on once PAYPAL_CLIENT_ID /
+    // PAYPAL_SECRET exist and this expectation should be inverted.
+    render(<DonatePage />);
+    expect(screen.queryByText("PayPal")).not.toBeInTheDocument();
   });
 
   it("renders custom fields declared on the selected fund", async () => {
