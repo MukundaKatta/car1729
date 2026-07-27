@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     // Compete for the same single-sender claim the payment-verify paths use,
     // so a donation the donor already received a receipt for (or one being
     // verified concurrently) never gets a second 501(c)(3) receipt.
-    const { data: claimed } = await supabase
+    const { data: claimed } = await admin
       .from("donations")
       .update({ tax_receipt_sent: true })
       .eq("id", donationId)
