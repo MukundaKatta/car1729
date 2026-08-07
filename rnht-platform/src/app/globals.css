@@ -5,6 +5,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Pin text to its declared size: iOS WKWebView (the Capacitor apps) can
+       auto-inflate text in some block layouts, so a string that fits its box in
+       a browser overflows inside the app. This was NOT the cause of the header
+       wordmark truncation (that box was genuinely 7px too narrow — fixed in
+       Header.tsx), but it is worth pinning so the apps always render the layout
+       the CSS actually describes. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-temple-ivory text-gray-900 antialiased;

@@ -494,10 +494,13 @@ export function Header() {
                 "Rudra Narayana" and demote/duplicate the real content heading).
                 Visible at ALL widths (client 07-08: the temple name was invisible on
                 phones in portrait because this block was hidden below sm) — just
-                smaller on narrow screens. `truncate` ellipsizes it only in the rare
-                case a phone is too narrow to fit the whole name alongside the menu,
-                so the menu is never pushed off. */}
-            <div className="text-[15px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] truncate lg:overflow-visible" style={{
+                smaller on narrow screens. MEASURED: at a 402px viewport (iPhone
+                17 Pro, the common size) the name needs 117px but only gets 110 —
+                so `truncate` was firing on real phones and the app header read
+                "Rudra Naray…", the exact complaint the client raised. 13px below
+                430px fits with headroom; `truncate` stays purely as a backstop so
+                the menu can never be pushed off. */}
+            <div className="text-[13px] min-[430px]:text-[15px] sm:text-[20px] lg:text-[24px] font-heading font-black leading-[1.1] tracking-[0.01em] truncate lg:overflow-visible" style={{
               background: "linear-gradient(90deg, #8B6914 0%, #C5973E 20%, #D4A843 50%, #C5973E 80%, #8B6914 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
