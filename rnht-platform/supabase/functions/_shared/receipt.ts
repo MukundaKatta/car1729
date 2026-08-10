@@ -15,7 +15,7 @@ export async function sendDonationReceipt(args: {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from =
     Deno.env.get("RECEIPT_FROM") ??
-    "Rudra Narayana Hindu Temple <receipts@rudranarayanahindutemple.org>";
+    "Rudra Narayana Hindu Temple <receipts@rnht.org>";
 
   if (!apiKey || !args.to) {
     console.log("[receipt] RESEND_API_KEY or recipient missing — skipping email");
@@ -90,7 +90,7 @@ export async function sendDonationReceiptPdf(args: {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from =
     Deno.env.get("RECEIPT_FROM") ??
-    "Rudra Narayana Hindu Temple <receipts@rudranarayanahindutemple.org>";
+    "Rudra Narayana Hindu Temple <receipts@rnht.org>";
 
   if (!apiKey || !args.to || !args.pdfBase64) {
     console.log("[receipt-pdf] RESEND_API_KEY, recipient, or PDF missing — skipping email");

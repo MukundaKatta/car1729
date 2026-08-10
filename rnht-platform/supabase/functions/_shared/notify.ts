@@ -23,7 +23,7 @@ export async function sendPledgeNotification(args: {
   const to = Deno.env.get("TEMPLE_NOTIFY_EMAIL");
   const from =
     Deno.env.get("RECEIPT_FROM") ??
-    "Rudra Narayana Hindu Temple <receipts@rudranarayanahindutemple.org>";
+    "Rudra Narayana Hindu Temple <receipts@rnht.org>";
 
   if (!apiKey || !to) {
     console.log("[notify] RESEND_API_KEY or TEMPLE_NOTIFY_EMAIL missing — skipping pledge alert");
