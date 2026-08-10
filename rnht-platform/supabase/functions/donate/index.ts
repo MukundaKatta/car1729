@@ -160,22 +160,26 @@ async function isRateLimited(
   max: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  // Take the RIGHT-most x-forwarded-for entry, not the left-most. Measured on
-  // this platform the proxy replaces the header with the true peer (rotating a
-  // forged value through 15 requests still hit the limit, and an oversized one
-  // is rejected upstream), so both ends agree today — but if the proxy ever
-  // switched to appending, the left-most entry would be attacker-controlled and
-  // every forged value would mint its own bucket. The right-most entry is the
-  // one the trusted hop wrote under either behaviour.
+  // Key on the TRUE client IP. This platform fronts edge functions with
+  // Cloudflare, which sets `cf-connecting-ip` (and Supabase mirrors it in
+  // `sb-forwarded-for`) to the real peer and OVERWRITES any client-supplied
+  // value, so it cannot be forged. Do NOT use x-forwarded-for here: measured on
+  // this infra its right-most entry is a ROTATING internal AWS egress hop
+  // (13.248.111.x changing per request), so keying on it scattered every
+  // request into its own bucket and the limit never engaged. The left-most XFF
+  // entry is the untrusted client-appended value, usable only as a last resort.
   //
   // The key is length-bounded so an oversized header cannot blow the btree
   // index limit, error the RPC and ride the fail-open path as an off switch.
   // No IP available => a shared "unknown" bucket: stripping the header gets you
   // throttled with the other unknowns, never exempted.
-  const xff = (req.headers.get("x-forwarded-for") ?? "").split(",");
+  const leftmostXff = (req.headers.get("x-forwarded-for") ?? "")
+    .split(",")[0]
+    ?.trim();
   const ip = (
-    xff[xff.length - 1]?.trim() ||
     req.headers.get("cf-connecting-ip") ||
+    req.headers.get("sb-forwarded-for") ||
+    leftmostXff ||
     "unknown"
   ).slice(0, 64);
   try {
@@ -209,7 +213,32 @@ const TOO_MANY = (retryAfterSeconds: number) =>
   );
 
 async function handleCreate(req: Request): Promise<Response> {
-  const body = (await req.json()) as DonateRequest;
+  // A missing/blank/non-JSON body must be a 400, not a 500. Also require the
+  // JSON content-type: it blocks the CSRF "simple request" shape (a cross-site
+  // page can POST text/plain without a preflight, but not application/json) and
+  // rejects garbage early.
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return new Response(
+      JSON.stringify({ error: "Content-Type must be application/json" }),
+      { status: 415, headers: jsonHeaders },
+    );
+  }
+  let body: DonateRequest;
+  try {
+    body = (await req.json()) as DonateRequest;
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: jsonHeaders,
+    });
+  }
+  if (!body || typeof body !== "object") {
+    return new Response(JSON.stringify({ error: "Invalid request body" }), {
+      status: 400,
+      headers: jsonHeaders,
+    });
+  }
   const {
     amount,
     fundType,

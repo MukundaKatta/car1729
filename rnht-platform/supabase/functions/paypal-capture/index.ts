@@ -57,8 +57,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = (await req.json()) as { orderId?: string };
-    const orderId = body.orderId;
+    // A missing/blank/non-JSON body is a client error (400), not a 500.
+    let body: { orderId?: string };
+    try {
+      body = (await req.json()) as { orderId?: string };
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: jsonHeaders,
+      });
+    }
+    const orderId = body?.orderId;
     if (!orderId) {
       return new Response(JSON.stringify({ error: "Missing orderId" }), {
         status: 400,
