@@ -7,7 +7,11 @@ import { usePanditjiWhatsApp } from "@/store/panditji";
 import { safeHref } from "@/lib/url";
 import { pushOverlay } from "@/lib/overlay-stack";
 import { ServiceCarousel } from "./ServiceCarousel";
-import { serviceGallery } from "@/lib/service-images";
+import {
+  serviceGallery,
+  serviceCategoryFallback,
+  categoryEmoji,
+} from "@/lib/service-images";
 
 /**
  * Simplified service detail modal.
@@ -26,7 +30,13 @@ export function ServiceDetailModal({
 }) {
   const whatsappUrl = usePanditjiWhatsApp();
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Match the card's resolution exactly: gallery first, then the category
+  // fallback. Without the fallback, the 14 services that only have a category
+  // image showed a photo on the card but a bare emoji in this modal.
   const galleryImages = serviceGallery(service.slug);
+  const modalImages = galleryImages.length
+    ? galleryImages
+    : serviceCategoryFallback(service.slug);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -83,16 +93,7 @@ export function ServiceDetailModal({
   const whatsappHref = safeWhatsappBase
     ? `${safeWhatsappBase}?text=${whatsappMessage}`
     : undefined;
-  const categoryIcon =
-    service.category_id === "cat-1"
-      ? "🙏"
-      : service.category_id === "cat-2"
-        ? "📿"
-        : service.category_id === "cat-3"
-          ? "🪔"
-          : service.category_id === "cat-4"
-            ? "🪷"
-            : "🔥";
+  const categoryIcon = categoryEmoji(service.category_id);
 
   return (
     <div
@@ -117,8 +118,8 @@ export function ServiceDetailModal({
         {/* Header gallery — full swipeable slideshow of the service's photos. */}
         <ServiceCarousel
           images={
-            galleryImages.length
-              ? galleryImages
+            modalImages.length
+              ? modalImages
               : service.image_url
                 ? [service.image_url]
                 : []

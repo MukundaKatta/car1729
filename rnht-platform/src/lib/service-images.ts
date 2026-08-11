@@ -216,6 +216,23 @@ export function serviceGallery(slug: string | null | undefined): string[] {
 /** Slugs that have at least one client-provided image. */
 export const SERVICE_SLUGS_WITH_IMAGES = Object.keys(RAW_GALLERY);
 
+// Emoji placeholder per service category, shown ONLY when a service resolves to
+// no image at all. Keyed by the live `service_categories.id` UUIDs (single prod
+// tenant). The previous "cat-1".."cat-5" keys never matched the real UUID
+// category_ids, so every placeholder silently fell through to a single default.
+const CATEGORY_EMOJI: Record<string, string> = {
+  "4f8d4c5c-580d-462f-812f-9113a14d9e5e": "🙏", // Puja & Shanti
+  "a56bde43-55f8-4396-8a8f-bb3449befe67": "📿", // Parayanam & Devotion
+  "8bc9db55-24f0-4599-9e93-dcf1e28c3fe6": "🪔", // Shraddham & Ancestor Rites
+  "0a0c2923-9b5e-444b-9d5b-28ef85f97a50": "🪷", // Kalyanam & Weddings
+  "232c4c4d-4814-4ad1-a3cd-5ad58c37b8b5": "🔥", // Rudrabhishekam & Abhishekam
+};
+
+/** Emoji placeholder for a service category (falls back to 🙏). */
+export function categoryEmoji(categoryId?: string | null): string {
+  return (categoryId && CATEGORY_EMOJI[categoryId]) || "🙏";
+}
+
 // Category-appropriate fallback images for services that have no gallery of
 // their own (e.g. the various homams, navagraha poojas, parayanas). Per the
 // client (2026-07-03): "wherever there is a Homam service, use a suitable Homam

@@ -36,7 +36,10 @@ const upcomingHighlights = [
 
 const youtubeChannelUrl =
   "https://www.youtube.com/@rudranarayanahindutemple";
-const whatsappGroupUrl = "https://wa.me/message/P3YRA2XY3GI7F1";
+// The temple's WhatsApp GROUP invite (same as the home page). The old
+// wa.me/message/... link opened a 1:1 chat with the priest, not the broadcast
+// group this "Join the WhatsApp updates" CTA describes.
+const whatsappGroupUrl = "https://chat.whatsapp.com/KLh44fIVck13OSEokGIfAa";
 
 export default function StreamingPage() {
   return (

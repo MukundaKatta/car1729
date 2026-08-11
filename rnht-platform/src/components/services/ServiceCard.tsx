@@ -8,15 +8,11 @@ import { ServiceCarousel } from "./ServiceCarousel";
 import { usePanditjiWhatsApp } from "@/store/panditji";
 import { safeHref } from "@/lib/url";
 import { getRegistrationUrl } from "@/lib/service-registration";
-import { serviceGallery, serviceCategoryFallback } from "@/lib/service-images";
-
-const categoryIcons: Record<string, string> = {
-  "cat-1": "🙏", // Puja & Shanti
-  "cat-2": "📿", // Parayanam & Devotion
-  "cat-3": "🪔", // Shraddham & Ancestor Rites
-  "cat-4": "🪷", // Kalyanam & Weddings
-  "cat-5": "🔥", // Rudrabhishekam & Abhishekam
-};
+import {
+  serviceGallery,
+  serviceCategoryFallback,
+  categoryEmoji,
+} from "@/lib/service-images";
 
 // Torana (canopy) arch that separates the image from the content — traced pixel
 // -for-pixel from the client's Vector.png so it matches their reference exactly.
@@ -48,7 +44,7 @@ function buildWhatsAppHref(baseUrl: string, encodedMessage: string): string {
 export function ServiceCard({ service }: { service: Service }) {
   const [showModal, setShowModal] = useState(false);
   const panditjiWhatsApp = usePanditjiWhatsApp();
-  const icon = categoryIcons[service.category_id] || "🙏";
+  const icon = categoryEmoji(service.category_id);
 
   const whatsappMessage = encodeURIComponent(
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
@@ -135,9 +131,9 @@ export function ServiceCard({ service }: { service: Service }) {
             className="mt-2 block w-full cursor-pointer text-center"
             aria-label={`View details for ${service.name}`}
           >
-            <h3 className="font-heading text-lg font-bold leading-snug text-temple-maroon">
+            <h2 className="font-heading text-lg font-bold leading-snug text-temple-maroon">
               {titleMain}
-            </h3>
+            </h2>
             {titleSub && (
               <p className="mt-0.5 text-[11px] font-medium leading-tight text-temple-maroon/70">
                 {titleSub}

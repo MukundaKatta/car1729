@@ -40,7 +40,12 @@ describe("StreamingPage", () => {
     const link = screen.getByRole("link", {
       name: /join the whatsapp updates/i,
     });
-    expect(link).toHaveAttribute("href", "https://wa.me/message/P3YRA2XY3GI7F1");
+    // The "Join the WhatsApp updates" CTA must point at the temple GROUP invite
+    // (same as the home page), not a 1:1 chat with the priest.
+    expect(link).toHaveAttribute(
+      "href",
+      "https://chat.whatsapp.com/KLh44fIVck13OSEokGIfAa",
+    );
   });
 
   it("shows the regular live darshan schedule", () => {

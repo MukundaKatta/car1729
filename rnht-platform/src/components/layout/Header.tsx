@@ -645,7 +645,7 @@ export function Header() {
                           : "text-gray-700"
                       }`}
                     >
-                      <span className="w-8 text-xs text-gray-400 uppercase">
+                      <span className="w-8 text-xs text-gray-600 uppercase">
                         {code}
                       </span>
                       {name}

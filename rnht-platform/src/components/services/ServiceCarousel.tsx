@@ -117,7 +117,12 @@ export function ServiceCarousel({
             <img
               src={src}
               alt={count > 1 ? `${alt} — photo ${i + 1} of ${count}` : alt}
-              loading={i === 0 ? "eager" : "lazy"}
+              // Lazy-load every card image: the services page renders 56 cards,
+              // so eager-loading each card's first image pulled ~6 MB on first
+              // paint. Native lazy still fetches in-viewport images immediately,
+              // so above-the-fold cards are unaffected while off-screen cards
+              // defer until scrolled near.
+              loading="lazy"
               className="absolute inset-0 h-full w-full object-cover object-top"
             />
           )}
