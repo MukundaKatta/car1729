@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { HeartHandshake, Plus, Edit2, Trash2 } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { safeHref } from "@/lib/url";
 import { useAuthStore } from "@/store/auth";
 import type { VolunteerOpportunity } from "@/types/database";
 
@@ -349,15 +350,21 @@ export default function AdminVolunteersPage() {
               {item.description && (
                 <p className="mt-3 text-sm text-gray-600 line-clamp-3">{item.description}</p>
               )}
-              {item.whatsapp_group_url && (
+              {item.whatsapp_group_url &&
+                (safeHref(item.whatsapp_group_url) ? (
                 <a
-                  href={item.whatsapp_group_url}
+                  href={safeHref(item.whatsapp_group_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 inline-block text-xs text-green-600 hover:underline"
                 >
                   Join Group
                 </a>
+                ) : (
+                  <span className="mt-3 inline-block break-all text-xs text-red-500">
+                    Invalid link
+                  </span>
+                )
               )}
             </div>
           ))

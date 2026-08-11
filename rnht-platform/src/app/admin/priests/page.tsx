@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Users, Plus, Edit2, Trash2, Star } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { safeHref } from "@/lib/url";
 import { useAuthStore } from "@/store/auth";
 import type { Priest } from "@/types/database";
 
@@ -498,16 +499,21 @@ export default function AdminPriestsPage() {
               {priest.bio && (
                 <p className="mt-3 text-sm text-gray-600 line-clamp-3">{priest.bio}</p>
               )}
-              {priest.whatsapp_url && (
-                <a
-                  href={priest.whatsapp_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-block text-xs text-green-600 hover:underline"
-                >
-                  {priest.whatsapp_url}
-                </a>
-              )}
+              {priest.whatsapp_url &&
+                (safeHref(priest.whatsapp_url) ? (
+                  <a
+                    href={safeHref(priest.whatsapp_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-xs text-green-600 hover:underline"
+                  >
+                    {priest.whatsapp_url}
+                  </a>
+                ) : (
+                  <span className="mt-3 inline-block break-all text-xs text-red-500">
+                    {priest.whatsapp_url} (invalid link)
+                  </span>
+                ))}
             </div>
           ))
         )}

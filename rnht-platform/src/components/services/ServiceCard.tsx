@@ -6,6 +6,7 @@ import type { Service } from "@/types/database";
 import { ServiceDetailModal } from "./ServiceDetailModal";
 import { ServiceCarousel } from "./ServiceCarousel";
 import { usePanditjiWhatsApp } from "@/store/panditji";
+import { safeHref } from "@/lib/url";
 import { getRegistrationUrl } from "@/lib/service-registration";
 import { serviceGallery, serviceCategoryFallback } from "@/lib/service-images";
 
@@ -52,7 +53,14 @@ export function ServiceCard({ service }: { service: Service }) {
   const whatsappMessage = encodeURIComponent(
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
   );
-  const whatsappHref = buildWhatsAppHref(panditjiWhatsApp, whatsappMessage);
+  // panditjiWhatsApp is admin-controlled (panditji_routing). Validate its scheme
+  // before it becomes an href so a stored `javascript:`/`data:` value can't
+  // execute in a visitor's browser (stored XSS). safeHref returns undefined for
+  // a disallowed scheme -> render no WhatsApp link.
+  const safeWhatsappBase = safeHref(panditjiWhatsApp);
+  const whatsappHref = safeWhatsappBase
+    ? buildWhatsAppHref(safeWhatsappBase, whatsappMessage)
+    : undefined;
   const registerUrl = getRegistrationUrl(service.slug);
 
   // Client-provided gallery (0..10 images). Fall back to the single DB
@@ -154,16 +162,18 @@ export function ServiceCard({ service }: { service: Service }) {
               </a>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
-                aria-label={`Message about ${service.name} on WhatsApp`}
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
+              {whatsappHref && (
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                  aria-label={`Message about ${service.name} on WhatsApp`}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
+              )}
               <a
                 href="tel:+15125450473"
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-temple-gold/40 bg-white px-3 py-2 text-sm font-semibold text-temple-maroon transition-colors hover:bg-temple-gold/10"

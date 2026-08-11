@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { X, MessageCircle, Phone } from "lucide-react";
 import type { Service } from "@/types/database";
 import { usePanditjiWhatsApp } from "@/store/panditji";
+import { safeHref } from "@/lib/url";
 import { pushOverlay } from "@/lib/overlay-stack";
 import { ServiceCarousel } from "./ServiceCarousel";
 import { serviceGallery } from "@/lib/service-images";
@@ -74,7 +75,14 @@ export function ServiceDetailModal({
   const whatsappMessage = encodeURIComponent(
     `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
   );
-  const whatsappHref = `${whatsappUrl}?text=${whatsappMessage}`;
+  // whatsappUrl is admin-controlled (panditji_routing). Validate its scheme
+  // before it becomes an href so a stored `javascript:`/`data:` value can't
+  // execute in a visitor's browser (stored XSS). safeHref returns undefined for
+  // a disallowed scheme -> render no link.
+  const safeWhatsappBase = safeHref(whatsappUrl);
+  const whatsappHref = safeWhatsappBase
+    ? `${safeWhatsappBase}?text=${whatsappMessage}`
+    : undefined;
   const categoryIcon =
     service.category_id === "cat-1"
       ? "🙏"
@@ -150,15 +158,17 @@ export function ServiceDetailModal({
               with the head priest.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp Panditji
-              </a>
+              {whatsappHref && (
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp Panditji
+                </a>
+              )}
               <a
                 href="tel:+15125450473"
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"

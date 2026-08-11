@@ -286,9 +286,8 @@ async function handleCreate(req: Request): Promise<Response> {
   // (legacy/standard funds, e.g. deity sevas). Reject anything in neither.
   const { data: fundRow } = await supabase
     .from("donation_types")
-    .select("name")
+    .select("name, is_active")
     .eq("slug", fundType)
-    .eq("is_active", true)
     .maybeSingle();
   // hasOwnProperty, NOT `in`: `'toString' in fundLabels` (and other
   // Object.prototype keys like 'constructor'/'valueOf') is true via the
@@ -296,7 +295,14 @@ async function handleCreate(req: Request): Promise<Response> {
   // label to a prototype function flowing into Stripe + the receipt.
   const inFundLabels =
     !!fundType && Object.prototype.hasOwnProperty.call(fundLabels, fundType);
-  if (!fundRow && !inFundLabels) {
+  // A fund is collectible if it is an ACTIVE donation_types row, OR it has no
+  // donation_types row at all but is a legacy hardcoded fund. An INACTIVE
+  // donation_types row is an explicit admin decision to stop collection and
+  // OVERRIDES the legacy fallback — otherwise deactivating a fund that shares a
+  // slug with fundLabels (priest/building/annadanam/education) would silently
+  // keep collecting via a direct API call.
+  const fundAccepted = fundRow ? fundRow.is_active === true : inFundLabels;
+  if (!fundAccepted) {
     return new Response(
       JSON.stringify({ error: "Unknown donation fund" }),
       { status: 400, headers: jsonHeaders },
