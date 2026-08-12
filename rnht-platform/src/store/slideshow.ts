@@ -102,8 +102,17 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
   updateSlide: async (id, updates) => {
     if (!supabase) return false;
     const row = slideToRow(updates);
-    const { error } = await supabase.from("slides").update(row).eq("id", id);
-    if (error) return false;
+    // .select() + affected-row check: a write matching 0 rows (stale id, slide
+    // deleted in another tab, is_admin lost mid-session) returns no error but
+    // changes nothing — without this it would report phantom success and the
+    // optimistic UI would drift from the DB. Mirrors the hardened
+    // bookings.updateBookingStatus / donations.markReceived paths.
+    const { data, error } = await supabase
+      .from("slides")
+      .update(row)
+      .eq("id", id)
+      .select("id");
+    if (error || !data || data.length === 0) return false;
     set((state) => ({
       slides: state.slides.map((s) => (s.id === id ? { ...s, ...updates } : s)),
     }));
@@ -112,8 +121,12 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
 
   removeSlide: async (id) => {
     if (!supabase) return false;
-    const { error } = await supabase.from("slides").delete().eq("id", id);
-    if (error) return false;
+    const { data, error } = await supabase
+      .from("slides")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error || !data || data.length === 0) return false;
     set((state) => ({ slides: state.slides.filter((s) => s.id !== id) }));
     return true;
   },
@@ -126,11 +139,12 @@ export const useSlideshowStore = create<SlideshowStore>()((set) => ({
     // these in parallel could leave a mix of old/new sort_order if one write
     // fails mid-flight; sequential awaits keep the rollback unambiguous.
     for (let i = 0; i < slides.length; i++) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("slides")
         .update({ sort_order: i })
-        .eq("id", slides[i].id);
-      if (error) {
+        .eq("id", slides[i].id)
+        .select("id");
+      if (error || !data || data.length === 0) {
         // Roll back the local order so the UI doesn't drift out of sync with
         // the database, and report failure to the caller.
         set({ slides: previous });

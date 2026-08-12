@@ -43,7 +43,15 @@ vi.mock("@/lib/supabase", () => ({
               eqArgs[0] === "id" && failIds.includes(eqArgs[1])
                 ? new Error("Update failed")
                 : (mockUpdate as any)._error ?? null;
-            return { error };
+            // The store now chains .select("id") to verify affected-row count;
+            // resolve to one row on success, null on error.
+            return {
+              select: (_cols?: string) =>
+                Promise.resolve({
+                  data: error ? null : [{ id: eqArgs[1] }],
+                  error,
+                }),
+            };
           },
         };
       },
@@ -52,7 +60,14 @@ vi.mock("@/lib/supabase", () => ({
         return {
           eq: (...eqArgs: any[]) => {
             mockEq(...eqArgs);
-            return { error: (mockDelete as any)._error ?? null };
+            const error = (mockDelete as any)._error ?? null;
+            return {
+              select: (_cols?: string) =>
+                Promise.resolve({
+                  data: error ? null : [{ id: eqArgs[1] }],
+                  error,
+                }),
+            };
           },
         };
       },

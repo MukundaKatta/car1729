@@ -64,6 +64,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Bookings are retained for the temple's records but carry full devotee PII
+    // (name, email, phone, gotra, family members). The FK only sets user_id to
+    // NULL on delete, which de-links but does NOT anonymize — leaving the PII
+    // behind and contradicting the deletion promise. Strip it here so no
+    // personal data survives the account. (Same retain-but-anonymize approach as
+    // donations; the booking's service_id/date/amount stay for records.)
+    const { error: bookingErr } = await admin
+      .from("bookings")
+      .update({
+        user_id: null,
+        devotee_name: "Deleted user",
+        devotee_email: "deleted@rnht.invalid",
+        devotee_phone: null,
+        gotra: null,
+        nakshatra: null,
+        rashi: null,
+        special_instructions: null,
+        family_members: null,
+      })
+      .eq("user_id", userId);
+    if (bookingErr) {
+      console.error("delete-account booking anonymize error:", bookingErr);
+      return new Response(JSON.stringify({ error: "Failed to delete account" }), {
+        status: 500,
+        headers: jsonHeaders,
+      });
+    }
+
     // Delete the auth user (cascades profile + user-owned rows via FK).
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);
     if (delErr) {

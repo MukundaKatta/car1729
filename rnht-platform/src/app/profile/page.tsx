@@ -706,7 +706,7 @@ function ProfileContent() {
                 {saveSuccess && (
                   <p className="mt-3 text-sm text-green-600">
                     {emailPending
-                      ? "Profile saved. Check your inbox to confirm the new email — your current email stays active for sign-in until you confirm."
+                      ? "Profile saved. Your new email now receives receipts and updates. It becomes your sign-in email only after you confirm it — check your inbox; until then your current email still works for sign-in."
                       : "Profile saved successfully!"}
                   </p>
                 )}
@@ -949,6 +949,7 @@ function ProfileContent() {
                   </option>
                 ))}
               </select>
+              <p className="mt-4 text-xs text-gray-600">Saved on this device.</p>
             </div>
             <div className="card p-5">
               <h3 className="font-heading text-lg font-bold text-gray-900 flex items-center gap-2">

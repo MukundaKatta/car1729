@@ -528,7 +528,7 @@ export function Header() {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative rounded-lg px-4 py-2.5 text-[15px] font-semibold text-gray-700 transition-all duration-200 hover:bg-temple-gold/10 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
+                className="relative whitespace-nowrap rounded-lg px-4 py-2.5 text-[15px] font-semibold text-gray-700 transition-all duration-200 hover:bg-temple-gold/10 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2"
               >
                 {item.name}
               </a>
@@ -537,7 +537,7 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
-                className={`relative rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2 ${
+                className={`relative whitespace-nowrap rounded-lg px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 hover:text-temple-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-temple-red focus-visible:ring-offset-2 ${
                   isActive(item.href)
                     ? "text-temple-maroon"
                     : "text-gray-700 hover:bg-temple-gold/10"

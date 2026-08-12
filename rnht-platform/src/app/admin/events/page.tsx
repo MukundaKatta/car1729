@@ -237,8 +237,11 @@ function EventFormModal({
   const [startDate, setStartDate] = useState(event?.start_date ?? "");
   const [startTime, setStartTime] = useState(event?.start_time ?? "");
   const [endTime, setEndTime] = useState(event?.end_time ?? "");
+  // Default the location to the main hall only when CREATING an event. When
+  // editing, preserve the stored value — including an intentionally-empty one —
+  // so editing any other field doesn't silently re-assign the main hall.
   const [location, setLocation] = useState(
-    event?.location ?? "RNHT Main Temple Hall"
+    event ? (event.location ?? "") : "RNHT Main Temple Hall"
   );
   const [rsvpEnabled, setRsvpEnabled] = useState(event?.rsvp_enabled ?? true);
   const [saving, setSaving] = useState(false);
