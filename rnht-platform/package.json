@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@bidyashish/panchang": "^1.0.10",
-    "@stripe/stripe-js": "^2.4.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@supabase/supabase-js": "^2.39.0",
     "astronomy-engine": "^2.1.19",
     "class-variance-authority": "^0.7.0",
