@@ -1,0 +1,74 @@
+name: Year-End Tax Receipts
+
+# Emails each donor a single consolidated "Year-End Charitable Donation
+# Acknowledgment" PDF for the calendar year that just closed (donors >= $250).
+# Idempotent via public.year_end_receipts — safe to re-run.
+#
+# Required repo secrets:
+#   NEXT_PUBLIC_SUPABASE_URL     (already set for CI) — reused as SUPABASE_URL
+#   SUPABASE_SERVICE_ROLE_KEY    — service-role key (DB read + ledger write)
+#   RESEND_API_KEY               — email delivery
+#   RECEIPT_FROM                 — verified sender, e.g.
+#                                  "Rudra Narayana Hindu Temple <receipts@rnht.org>"
+#
+# NOTE: real delivery needs the rnht.org sender domain verified in Resend;
+# until then sends only reach the account owner (sandbox).
+
+on:
+  schedule:
+    # 15:00 UTC on Jan 5 (~9am US Central) — runs for the previous calendar year.
+    # GitHub disables scheduled workflows after 60 days of repo inactivity; the
+    # repo is active, but confirm each December that this is still enabled.
+    - cron: "0 15 5 1 *"
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Tax year (blank = previous calendar year)"
+        required: false
+        default: ""
+      send:
+        description: "Actually send emails (unchecked = dry run)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: year-end-receipts
+  cancel-in-progress: false
+
+jobs:
+  send:
+    name: Send consolidated year-end receipts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rnht-platform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: rnht-platform/package-lock.json
+
+      - run: npm ci
+
+      - name: Send year-end receipts
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RECEIPT_FROM: ${{ secrets.RECEIPT_FROM }}
+          YEAR_INPUT: ${{ github.event.inputs.year }}
+          SEND_INPUT: ${{ github.event.inputs.send }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          ARGS=""
+          if [ -n "$YEAR_INPUT" ]; then ARGS="$ARGS --year=$YEAR_INPUT"; fi
+          # The scheduled January run always sends for real; a manual dispatch is
+          # a DRY RUN unless the operator explicitly ticks "send".
+          if [ "$EVENT_NAME" = "schedule" ] || [ "$SEND_INPUT" = "true" ]; then
+            ARGS="$ARGS --send"
+          fi
+          echo "Running: tsx scripts/send-year-end-receipts.ts$ARGS"
+          npx tsx scripts/send-year-end-receipts.ts $ARGS
