@@ -176,7 +176,7 @@ export interface TaxReceiptOptions {
  * template's crossed-out passages are intentionally omitted. Client-side only
  * (jsPDF); stamp/signature render as placeholders until the PNGs arrive.
  */
-export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
+function buildTaxAcknowledgmentDoc(opts: TaxReceiptOptions): jsPDF {
   const { donorName, donorEmail, donorAddress, year, donations } = opts;
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
@@ -357,7 +357,33 @@ export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   const footY = Math.max(y, pageH - 150);
   drawStampAndSignature(doc, pageW, margin, footY);
 
-  doc.save(`RNHT-Donation-Acknowledgment-${year}.pdf`);
+  return doc;
+}
+
+/**
+ * Downloads the year-end acknowledgment in the browser (on-demand admin/devotee
+ * use). Client-side only.
+ */
+export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
+  buildTaxAcknowledgmentDoc(opts).save(
+    `RNHT-Donation-Acknowledgment-${opts.year}.pdf`,
+  );
+}
+
+/**
+ * Builds the year-end acknowledgment and returns it as emailable artifacts
+ * (base64 to attach + a Blob for a local copy). Does NOT download — used by the
+ * year-end batch send. Runs in any jsPDF-capable runtime (browser or Node).
+ */
+export function buildYearEndReceiptArtifacts(
+  opts: TaxReceiptOptions,
+): DonationReceiptArtifacts {
+  const doc = buildTaxAcknowledgmentDoc(opts);
+  const filename = `RNHT-Donation-Acknowledgment-${opts.year}.pdf`;
+  const arrayBuffer = doc.output("arraybuffer") as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+  const base64 = arrayBufferToBase64(arrayBuffer);
+  return { base64, blob, filename };
 }
 
 export interface DonationReceiptOptions {
