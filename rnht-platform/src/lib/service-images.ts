@@ -6,6 +6,11 @@ const RAW_GALLERY: Record<string, string[]> = {
   // Client-provided per-service images (Jinal via Teams, 2026-07-09) for six
   // services that previously fell back to a category photo. annaprasana already
   // had a gallery below; its 1.jpg was refreshed with the client's new image.
+  // Upakarma (Avani Avittam) — client-provided image (Pt. Aditya Sharma via
+  // WhatsApp, 2026-08-25) replacing the category-fallback photo he flagged.
+  "upakarma": [
+    "/services/upakarma/1.jpg"
+  ],
   "veda-parayana": [
     "/services/veda-parayana/1.jpg"
   ],
