@@ -35,7 +35,7 @@ update public.donations d
   from (
     select lower(btrim(email)) as norm, (min(id::text))::uuid as id
       from public.profiles
-     where email is not null
+     where email is not null and btrim(email) <> ''
      group by lower(btrim(email))
     having count(*) = 1
   ) p
