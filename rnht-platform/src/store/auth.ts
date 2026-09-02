@@ -385,7 +385,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           date: d.created_at,
           method: d.payment_method,
           recurring: d.is_recurring,
-          receiptId: `REC-${d.id.slice(0, 8)}`,
+          receiptId: `REC-${String(d.id).slice(0, 8).toUpperCase()}`,
           taxDeductible: true,
           status: d.payment_status,
         })),

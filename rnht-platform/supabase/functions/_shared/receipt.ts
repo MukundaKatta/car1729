@@ -6,11 +6,23 @@
 //   RESEND_API_KEY   — Resend API key
 //   RECEIPT_FROM     — verified sender, e.g. "RNHT Temple <receipts@your-domain.org>"
 
+/** "REC-" + the first 8 hex digits of the donation id, uppercased — the same
+ *  number the dashboard, the admin PDF receipt and the year-end letter show. */
+export function receiptNumberFor(donationId: string): string {
+  return "REC-" + String(donationId).replace(/-/g, "").slice(0, 8).toUpperCase();
+}
+
+const TEMPLE_EIN = "93-2940113";
+
 export async function sendDonationReceipt(args: {
   to: string;
   donorName?: string | null;
   amount: number;
   fundLabel: string;
+  /** Receipt number to print (see receiptNumberFor). Optional for older callers. */
+  receiptNumber?: string | null;
+  /** When the gift was received; defaults to now. */
+  date?: string | Date | null;
 }): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from =
@@ -29,22 +41,34 @@ export async function sendDonationReceipt(args: {
   const usd = `$${Number(args.amount).toFixed(2)}`;
   const rawName = args.donorName?.trim() || "Devotee";
   const name = esc(rawName);
+  const when = args.date ? new Date(args.date) : new Date();
+  const dateStr = (Number.isNaN(when.getTime()) ? new Date() : when).toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const rec = args.receiptNumber?.trim() || "";
   const html = `
     <div style="font-family:Arial,sans-serif;color:#333;max-width:560px;margin:0 auto">
       <h2 style="color:#7a1f2b">Thank you for your generosity, ${name} 🙏</h2>
       <p>We gratefully acknowledge your donation of <strong>${usd}</strong>
          to the <strong>${args.fundLabel}</strong>.</p>
+      <p style="font-size:13px;color:#555">${rec ? `Receipt No: <strong>${esc(rec)}</strong> &middot; ` : ""}Date: ${dateStr}</p>
       <p>Rudra Narayana Hindu Temple is a registered 501(c)(3) nonprofit
-         organization; your donation is tax-deductible to the extent allowed by
-         law. Please retain this email as your receipt.</p>
-      <p style="color:#888;font-size:12px">Rudra Narayana Hindu Temple · Austin, TX</p>
+         organization (EIN ${TEMPLE_EIN}); your donation is tax-deductible to the
+         extent allowed by law. No goods or services were provided in exchange
+         for this contribution. Please retain this email as your receipt.</p>
+      <p style="color:#888;font-size:12px">Rudra Narayana Hindu Temple · 2025 Rushing Ranch Path, Georgetown, TX 78628</p>
     </div>`;
   const text =
     `Thank you for your generosity, ${rawName}.\n\n` +
-    `We gratefully acknowledge your donation of ${usd} to the ${args.fundLabel}.\n\n` +
-    `RNHT is a registered 501(c)(3) nonprofit; your donation is tax-deductible ` +
-    `to the extent allowed by law. Please retain this email as your receipt.\n\n` +
-    `Rudra Narayana Hindu Temple, Austin, TX`;
+    `We gratefully acknowledge your donation of ${usd} to the ${args.fundLabel}.\n` +
+    `${rec ? `Receipt No: ${rec} | ` : ""}Date: ${dateStr}\n\n` +
+    `RNHT is a registered 501(c)(3) nonprofit (EIN ${TEMPLE_EIN}); your donation is ` +
+    `tax-deductible to the extent allowed by law. No goods or services were provided ` +
+    `in exchange for this contribution. Please retain this email as your receipt.\n\n` +
+    `Rudra Narayana Hindu Temple, 2025 Rushing Ranch Path, Georgetown, TX 78628`;
 
   try {
     const res = await fetch("https://api.resend.com/emails", {

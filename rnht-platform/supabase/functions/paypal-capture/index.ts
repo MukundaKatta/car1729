@@ -15,7 +15,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
 import { fundLabels } from "../_shared/fund-labels.ts";
-import { sendDonationReceipt } from "../_shared/receipt.ts";
+import { sendDonationReceipt, receiptNumberFor } from "../_shared/receipt.ts";
 
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ?? "";
 const PAYPAL_SECRET = Deno.env.get("PAYPAL_SECRET") ?? "";
@@ -209,6 +209,7 @@ Deno.serve(async (req) => {
           donorName: donation.donor_name,
           amount: expected,
           fundLabel: fundLabels[donation.fund_type] ?? "Temple Fund",
+          receiptNumber: receiptNumberFor(donation.id),
         });
       }
 

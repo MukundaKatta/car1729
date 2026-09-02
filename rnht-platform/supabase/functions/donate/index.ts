@@ -27,7 +27,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
 import { fundLabels } from "../_shared/fund-labels.ts";
-import { sendDonationReceipt } from "../_shared/receipt.ts";
+import { sendDonationReceipt, receiptNumberFor } from "../_shared/receipt.ts";
 import { sendPledgeNotification } from "../_shared/notify.ts";
 
 const STRIPE_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
@@ -628,6 +628,7 @@ async function handleVerify(req: Request): Promise<Response> {
       donorName: data.donor_name,
       amount: Number(data.amount),
       fundLabel,
+      receiptNumber: receiptNumberFor(donationId),
     });
   }
 

@@ -1,7 +1,7 @@
 // Human-readable names for each donation fund slug.
-// Legacy fund labels (the admin-managed donation_types table takes precedence;
-// porting from). Both the Edge Function and the verification step reach
-// for this map, so update both in one place.
+// Legacy fund labels: the admin-managed donation_types table takes precedence
+// and this map is the fallback. Every edge function that names a fund on a
+// receipt reaches for it, so update it in one place.
 export const fundLabels: Record<string, string> = {
   general: "General Temple Donation",
   building: "Building Donation",

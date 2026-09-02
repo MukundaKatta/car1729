@@ -1210,7 +1210,7 @@ function RecordDonationTab() {
     // second gift (the edge function is idempotent on a duplicate id).
     if (!sessionIdRef.current) sessionIdRef.current = makeUuid();
     const id = sessionIdRef.current;
-    const receiptId = `REC-${id.slice(0, 8)}`;
+    const receiptId = `REC-${id.slice(0, 8).toUpperCase()}`;
     // Use the canonical fund label (matches the year-end acknowledgment and
     // avoids the dropped "Fund" wording); prettyFund covers custom slugs.
     const fundLabel = funds.find((f) => f.slug === fundType)?.name ?? prettyFund(fundType);

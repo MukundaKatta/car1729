@@ -16,7 +16,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders, jsonHeaders } from "../_shared/cors.ts";
 import { fundLabels } from "../_shared/fund-labels.ts";
-import { sendDonationReceipt } from "../_shared/receipt.ts";
+import { sendDonationReceipt, receiptNumberFor } from "../_shared/receipt.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
       donorName: d.is_anonymous ? null : (d.donor_name as string | null),
       amount: Number(d.amount ?? 0),
       fundLabel,
+      receiptNumber: receiptNumberFor(donationId),
     });
 
     return new Response(JSON.stringify({ ok: true }), { headers: jsonHeaders });

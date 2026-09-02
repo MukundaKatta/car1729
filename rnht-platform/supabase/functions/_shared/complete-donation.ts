@@ -39,7 +39,7 @@
 
 // deno-lint-ignore-file no-explicit-any
 import { fundLabels } from "./fund-labels.ts";
-import { sendDonationReceipt } from "./receipt.ts";
+import { sendDonationReceipt, receiptNumberFor } from "./receipt.ts";
 import { checkoutMismatch } from "./stripe-webhook-events.ts";
 
 export interface CompleteStripeDonationArgs {
@@ -208,6 +208,7 @@ export async function claimAndSendReceipt(
     donorName: row.donor_name,
     amount: Number(row.amount),
     fundLabel,
+    receiptNumber: receiptNumberFor(donationId),
   });
   return { ok: true, receiptSent: true };
 }

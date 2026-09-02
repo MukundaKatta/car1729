@@ -905,7 +905,7 @@ describe("useAuthStore", () => {
       expect(state.donations[0].amount).toBe(500);
       expect(state.donations[0].method).toBe("stripe");
       expect(state.donations[0].recurring).toBe(true);
-      expect(state.donations[0].receiptId).toBe("REC-don-abcd");
+      expect(state.donations[0].receiptId).toBe("REC-DON-ABCD");
       expect(state.donations[0].taxDeductible).toBe(true);
 
       // Activities
