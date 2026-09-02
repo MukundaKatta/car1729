@@ -168,10 +168,12 @@ Deno.serve(async (req) => {
     // errors, we fall back to an unlinked gift (still recorded + receipted).
     let linkedUserId: string | null = null;
     try {
+      // profiles.email is stored lowercased (migration 009 trigger); match on
+      // the normalized form so "Ramesh@Gmail.com" still links (gap I).
       const { data: prof } = await admin
         .from("profiles")
         .select("id")
-        .eq("email", donorEmail)
+        .eq("email", donorEmail.trim().toLowerCase())
         .maybeSingle();
       if (prof?.id) linkedUserId = prof.id as string;
     } catch (e) {
@@ -192,6 +194,9 @@ Deno.serve(async (req) => {
       is_recurring: false,
       message: note || null,
       is_anonymous: false,
+      // The emailed/downloaded PDF IS this gift's receipt: mark it issued so a
+      // later send-donation-receipt call can't mail a second, plain receipt (gap M).
+      tax_receipt_sent: true,
       custom_fields: {
         source: "manual_admin",
         recorded_by: adminId,
