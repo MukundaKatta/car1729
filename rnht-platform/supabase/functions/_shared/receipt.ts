@@ -14,6 +14,32 @@ export function receiptNumberFor(donationId: string): string {
 
 const TEMPLE_EIN = "93-2940113";
 
+/** Outcome of an email send attempt. `reason` is a short, admin-readable
+ *  explanation when `sent` is false (e.g. the provider's own error message). */
+export type SendResult = { sent: true } | { sent: false; reason: string };
+
+// Turn a non-2xx Resend response into a one-line reason an admin can act on.
+// Resend answers with JSON like {"statusCode":403,"message":"..."}; fall back
+// to the raw (trimmed) body when it isn't JSON.
+function describeSendFailure(status: number, body: string): string {
+  try {
+    const j = JSON.parse(body);
+    if (j && typeof j.message === "string" && j.message.trim()) {
+      return `email provider replied ${status}: ${j.message.trim()}`;
+    }
+  } catch {
+    /* not JSON */
+  }
+  const trimmed = body.replace(/\s+/g, " ").trim().slice(0, 200);
+  return `email provider replied ${status}${trimmed ? `: ${trimmed}` : ""}`;
+}
+
+/**
+ * Never throws. Resolves `{ sent: true }` only when Resend accepted the email;
+ * otherwise `{ sent: false, reason }`. The payment-completion callers ignore
+ * the result (a receipt problem must never fail a donation); the admin resend
+ * path surfaces `reason` so a silently rejected send is visible.
+ */
 export async function sendDonationReceipt(args: {
   to: string;
   donorName?: string | null;
@@ -23,7 +49,7 @@ export async function sendDonationReceipt(args: {
   receiptNumber?: string | null;
   /** When the gift was received; defaults to now. */
   date?: string | Date | null;
-}): Promise<void> {
+}): Promise<SendResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from =
     Deno.env.get("RECEIPT_FROM") ??
@@ -31,7 +57,12 @@ export async function sendDonationReceipt(args: {
 
   if (!apiKey || !args.to) {
     console.log("[receipt] RESEND_API_KEY or recipient missing — skipping email");
-    return;
+    return {
+      sent: false,
+      reason: !args.to
+        ? "no recipient email address"
+        : "email sending is not configured (RESEND_API_KEY is missing)",
+    };
   }
 
   const esc = (s: string) =>
@@ -86,10 +117,17 @@ export async function sendDonationReceipt(args: {
       }),
     });
     if (!res.ok) {
-      console.error("[receipt] send failed:", res.status, await res.text());
+      const detail = await res.text();
+      console.error("[receipt] send failed:", res.status, detail);
+      return { sent: false, reason: describeSendFailure(res.status, detail) };
     }
+    return { sent: true };
   } catch (e) {
     console.error("[receipt] send error:", e);
+    return {
+      sent: false,
+      reason: `could not reach the email provider (${e instanceof Error ? e.message : String(e)})`,
+    };
   }
 }
 

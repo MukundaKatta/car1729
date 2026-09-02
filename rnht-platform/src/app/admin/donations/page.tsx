@@ -570,6 +570,9 @@ function DonationInflowTab() {
   const [serviceTotal, setServiceTotal] = useState(0);
   const [marking, setMarking] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // Per-row busy id + outcome of the last "Resend receipt" click.
+  const [resending, setResending] = useState<string | null>(null);
+  const [resendNotice, setResendNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = useCallback(async () => {
       if (!supabase) {
@@ -751,6 +754,76 @@ function DonationInflowTab() {
     await load();
   }
 
+  // Re-email the donor their receipt for a COMPLETED donation. The edge
+  // function's `force: true` skips the single-send claim on tax_receipt_sent
+  // (which was set even when the email provider rejected the original send),
+  // but still refuses anything not completed. Reports the real outcome — a
+  // silently rejected send is exactly what this exists to catch.
+  async function resendReceipt(row: InflowRow) {
+    if (!supabase || row.source !== "donation" || row.status !== "completed") return;
+    if (!row.email) {
+      setResendNotice({
+        ok: false,
+        text: `No email on file for ${row.donor}, so there's nowhere to send the receipt.`,
+      });
+      return;
+    }
+    if (
+      !window.confirm(
+        `Email the ${formatCurrency(row.amount)} receipt to ${row.email} again?`
+      )
+    ) {
+      return;
+    }
+    setResendNotice(null);
+    setResending(row.id);
+    let failure = "";
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        failure = "Your admin session expired. Please sign in again.";
+      } else {
+        const { data, error } = await supabase.functions.invoke("send-donation-receipt", {
+          body: { donationId: row.rawId, force: true },
+          headers: { "x-user-token": session.access_token },
+        });
+        if (error) {
+          // Non-2xx bodies arrive on error.context as a Response; surface the
+          // function's own message (e.g. the email provider's rejection).
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.json === "function") {
+            try {
+              const j = await ctx.json();
+              failure = j?.error ?? "";
+            } catch {
+              /* ignore parse error */
+            }
+          }
+          if (!failure) failure = error.message || "Could not reach the server.";
+        } else {
+          const res = data as { ok?: boolean; resent?: boolean; skipped?: string; error?: string };
+          if (res?.ok && res.resent) {
+            failure = "";
+          } else if (res?.skipped) {
+            failure = `Skipped: ${res.skipped}.`;
+          } else {
+            failure = res?.error ?? "The server did not confirm the send.";
+          }
+        }
+      }
+    } catch (e) {
+      failure = e instanceof Error ? e.message : "Could not reach the server.";
+    }
+    setResending(null);
+    setResendNotice(
+      failure
+        ? { ok: false, text: `Receipt for ${row.donor} was NOT resent: ${failure}` }
+        : { ok: true, text: `Receipt for ${formatCurrency(row.amount)} resent to ${row.email}.` },
+    );
+  }
+
   return (
     <div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -774,6 +847,18 @@ function DonationInflowTab() {
       {actionError && (
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {actionError}
+        </div>
+      )}
+      {resendNotice && (
+        <div
+          role="status"
+          className={`mt-3 rounded-lg border px-4 py-3 text-sm ${
+            resendNotice.ok
+              ? "border-green-200 bg-green-50 text-green-800"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {resendNotice.text}
         </div>
       )}
       <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200">
@@ -892,6 +977,17 @@ function DonationInflowTab() {
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         {marking === row.id ? "Marking…" : "Mark received"}
+                      </button>
+                    )}
+                    {row.source === "donation" && row.status === "completed" && (
+                      <button
+                        onClick={() => resendReceipt(row)}
+                        disabled={resending === row.id}
+                        title="Email the donor their tax receipt again"
+                        className="mt-1 flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                        {resending === row.id ? "Sending…" : "Resend receipt"}
                       </button>
                     )}
                     {row.source === "donation" && row.status === "pending" && row.method !== "zelle" && (

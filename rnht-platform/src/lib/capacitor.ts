@@ -23,6 +23,16 @@ export function isNative(): boolean {
 }
 
 /**
+ * Which shell the page is running in: "ios" / "android" inside the native
+ * Capacitor apps, "web" in a browser. Lets features the WebViews can't do
+ * (e.g. file downloads) pick a per-platform fallback.
+ */
+export function nativePlatform(): "ios" | "android" | "web" {
+  const p = Capacitor.getPlatform();
+  return p === "ios" || p === "android" ? p : "web";
+}
+
+/**
  * Initialize Android back button handler.
  * Call this once in the root layout.
  */

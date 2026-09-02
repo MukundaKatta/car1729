@@ -12,7 +12,7 @@ instead.
 |-------------------|---------------------------------------------------------------|
 | `donate`          | `POST` creates a Stripe Checkout session or PayPal order.<br>`GET ?session_id=…` verifies a Stripe session and marks the donation paid. |
 | `paypal-capture`  | `POST {orderId}` captures an approved PayPal order and marks the donation paid. |
-| `send-donation-receipt` | `POST {donationId}` (admin) emails the tax receipt for a donation an admin marked received. |
+| `send-donation-receipt` | `POST {donationId, force?}` (admin) emails the tax receipt for a donation an admin marked received. `force: true` re-sends it for an already-receipted **completed** donation (admin "Resend receipt" button) and reports the email provider's real result. |
 | `record-manual-donation` | `POST {id, donorName, donorEmail, amount, fundType, note, receiptId, pdfBase64, filename}` (admin) files a **cash/offline** donation as completed and emails the donor the receipt PDF. Backs the admin "Record Donation" tab. Requires migration `007` (adds `cash`/`offline` to the `payment_method` CHECK) and the `RESEND_API_KEY`/`RECEIPT_FROM` secrets. |
 | `stripe-webhook` | `POST` (Stripe only, signature-verified) completes a Checkout donation the donor never came back to verify, and marks a donation **refunded** on Stripe refunds / chargebacks. See [stripe-webhook](#stripe-webhook) below. Requires migration `014` and the `STRIPE_WEBHOOK_SECRET` secret. |
 

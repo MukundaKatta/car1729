@@ -12,9 +12,11 @@ import {
   writeEmailAuthCooldownUntil,
 } from "@/lib/email-auth-cooldown";
 import { useAuthStore } from "@/store/auth";
-import type { ActivityItem } from "@/store/auth";
+import type { ActivityItem, Donation, UserProfile } from "@/store/auth";
 import { normalizePhone } from "@/lib/phone";
 import { prettyFund } from "@/lib/fund";
+import { nativePlatform } from "@/lib/capacitor";
+import { pushOverlay } from "@/lib/overlay-stack";
 import {
   User,
   Heart,
@@ -38,6 +40,7 @@ import {
   MessageCircle,
   DollarSign,
   TrendingUp,
+  Download,
 } from "lucide-react";
 
 type Tab = "overview" | "bookings" | "donations" | "profile";
@@ -817,6 +820,91 @@ function donationTaxYear(dateStr: string): number {
   );
 }
 
+// Compose the donor's FULL mailing address for a receipt — the receipt used to
+// get only user.address, dropping city/state/ZIP from the official 501(c)(3)
+// letter. Shared by the year-end acknowledgment and the per-gift receipt.
+function mailingAddressOf(user: UserProfile | null): string | undefined {
+  const cityStateZip = [
+    user?.city,
+    [user?.state, user?.zip].filter(Boolean).join(" ").trim(),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return [user?.address, cityStateZip].filter(Boolean).join(", ") || undefined;
+}
+
+// Hand a generated PDF Blob to the browser as a download (the same anchor-click
+// mechanism jsPDF's doc.save() uses). The object URL is released after the
+// download has had a moment to start.
+//
+// WEB ONLY. Inside the Capacitor apps this click is a silent no-op: neither
+// WebView has a download handler (Capacitor registers no Android
+// DownloadListener / iOS download delegate) and Capacitor hands window.open to
+// the OS, which can't take a blob: URL. handleDownloadReceipt therefore routes
+// the native apps through receiptDelivery() instead of calling this.
+function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// How a generated receipt PDF reaches the donor on this platform:
+//  - "download"    web: a real file download (saveBlob).
+//  - "preview"     iOS app: WKWebView can't download but renders PDFs natively,
+//                  so the receipt opens in an in-app viewer (ReceiptPreviewOverlay).
+//  - "unsupported" Android app: the WebView can neither download nor render a
+//                  PDF, and the Filesystem/Share plugins aren't installed, so
+//                  the donor is told where to get it instead of a dead button.
+type ReceiptDelivery = "download" | "preview" | "unsupported";
+function receiptDelivery(): ReceiptDelivery {
+  const p = nativePlatform();
+  return p === "web" ? "download" : p === "ios" ? "preview" : "unsupported";
+}
+
+/* In-app PDF viewer for the native iOS app (see receiptDelivery). */
+function ReceiptPreviewOverlay({
+  url,
+  receiptId,
+  onClose,
+}: {
+  url: string;
+  receiptId: string;
+  onClose: () => void;
+}) {
+  // Registered with the app's overlay stack like its other modals, so a back
+  // gesture/button closes the viewer first; pushOverlay returns the cleanup.
+  useEffect(() => pushOverlay(onClose), [onClose]);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-black/95"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Receipt ${receiptId}`}
+    >
+      <div className="flex items-center justify-between gap-3 bg-temple-maroon px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] text-white">
+        <p className="truncate text-sm font-semibold">Receipt {receiptId}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-md border border-white/40 px-3 py-1 text-sm font-semibold hover:bg-white/10"
+        >
+          Close
+        </button>
+      </div>
+      <iframe src={url} title={`Receipt ${receiptId}`} className="min-h-0 w-full flex-1 bg-white" />
+      <p className="bg-temple-maroon px-4 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] text-center text-[11px] text-white/80">
+        To save a PDF copy, sign in at rnht.org in a web browser and download it there.
+      </p>
+    </div>
+  );
+}
+
 /* ─── Donations Tab ─── */
 function DonationsTab() {
   const { donations, user } = useAuthStore();
@@ -826,6 +914,19 @@ function DonationsTab() {
   const [receiptYear, setReceiptYear] = useState<number | "">("");
   const [generatingReceipt, setGeneratingReceipt] = useState(false);
   const [receiptError, setReceiptError] = useState("");
+  // id of the donation whose per-gift receipt PDF is being built (one at a time).
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
+  // Receipt PDF open in the native iOS in-app viewer (see receiptDelivery).
+  const [receiptPreview, setReceiptPreview] = useState<{ url: string; receiptId: string } | null>(null);
+  // Release the previewed PDF's object URL once the viewer closes (or changes).
+  useEffect(() => {
+    if (!receiptPreview) return;
+    const { url } = receiptPreview;
+    return () => URL.revokeObjectURL(url);
+  }, [receiptPreview]);
+  const closeReceiptPreview = useCallback(() => setReceiptPreview(null), []);
+  const delivery = receiptDelivery();
+  const receiptActionLabel = delivery === "preview" ? "View receipt" : "Download receipt";
 
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
   const totalDonated = completedDonations.reduce((s, d) => s + d.amount, 0);
@@ -866,16 +967,6 @@ function DonationsTab() {
       return;
     }
 
-    // Compose the FULL mailing address — the receipt used to get only
-    // user.address, dropping city/state/ZIP from the official 501(c)(3) letter.
-    const cityStateZip = [
-      user?.city,
-      [user?.state, user?.zip].filter(Boolean).join(" ").trim(),
-    ]
-      .filter(Boolean)
-      .join(", ");
-    const fullAddress =
-      [user?.address, cityStateZip].filter(Boolean).join(", ") || undefined;
     setReceiptError("");
     setGeneratingReceipt(true);
     try {
@@ -883,7 +974,7 @@ function DonationsTab() {
       generateTaxReceiptPdf({
         donorName: user?.name || "",
         donorEmail: user?.email || "",
-        donorAddress: fullAddress,
+        donorAddress: mailingAddressOf(user),
         year: yr,
         donations: yearDonations,
         generatedAt: new Date(),
@@ -894,6 +985,49 @@ function DonationsTab() {
       setReceiptError("Sorry, we couldn't generate your receipt just now. Please try again.");
     } finally {
       setGeneratingReceipt(false);
+    }
+  };
+
+  // Build + download the official per-gift receipt PDF for ONE completed
+  // donation (client report 2026-09-02: the per-gift receipt only ever existed
+  // as the completion email, which the donor may never have received). Same
+  // generator the admin Manual Donation Receipt uses, so the two documents are
+  // identical; same dynamic import so jsPDF stays out of the main bundle.
+  const handleDownloadReceipt = async (d: Donation) => {
+    if (downloadingReceiptId) return;
+    setReceiptError("");
+    if (delivery === "unsupported") {
+      // Say so up front rather than building a PDF that can't go anywhere.
+      setReceiptError(
+        `Receipt downloads aren't available in the Android app yet. Sign in at rnht.org in a web browser to download ${d.receiptId}, or contact the temple to have it emailed again.`,
+      );
+      return;
+    }
+    setDownloadingReceiptId(d.id);
+    try {
+      const { generateDonationReceiptPdf } = await import("@/lib/tax-receipt-pdf");
+      const receivedAt = new Date(d.date);
+      const { blob, filename } = generateDonationReceiptPdf({
+        donorName: user?.name || "",
+        donorEmail: user?.email || "",
+        donorAddress: mailingAddressOf(user),
+        amount: d.amount,
+        fundLabel: prettyFund(d.fund),
+        receiptId: d.receiptId,
+        // The receipt is dated when the gift was received, never "today".
+        date: Number.isNaN(receivedAt.getTime()) ? undefined : receivedAt,
+      });
+      if (delivery === "preview") {
+        setReceiptPreview({ url: URL.createObjectURL(blob), receiptId: d.receiptId });
+      } else {
+        saveBlob(blob, filename);
+      }
+    } catch {
+      setReceiptError(
+        `Sorry, we couldn't generate the receipt for ${d.receiptId} just now. Please try again.`,
+      );
+    } finally {
+      setDownloadingReceiptId(null);
     }
   };
 
@@ -1064,7 +1198,23 @@ function DonationsTab() {
               <div className="text-right shrink-0">
                 <p className="font-heading font-bold text-temple-maroon">{formatCurrency(d.amount)}</p>
                 {isCompleted ? (
-                  <p className="text-xs text-gray-400">{d.receiptId}</p>
+                  <>
+                    <p className="text-xs text-gray-400">{d.receiptId}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceipt(d)}
+                      disabled={downloadingReceiptId !== null}
+                      aria-label={`${receiptActionLabel} ${d.receiptId}`}
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-temple-maroon hover:underline disabled:opacity-60 disabled:no-underline"
+                    >
+                      {delivery === "preview" ? (
+                        <Receipt className="h-3.5 w-3.5" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" />
+                      )}
+                      {downloadingReceiptId === d.id ? "Preparing…" : receiptActionLabel}
+                    </button>
+                  </>
                 ) : isRefunded ? (
                   <p className="text-xs font-accent text-red-600">Refunded</p>
                 ) : isFailed ? (
@@ -1087,8 +1237,16 @@ function DonationsTab() {
       </div>
 
       <p className="text-center text-xs text-gray-400 font-accent">
-        All donations to RNHT are tax-deductible under 501(c)(3). Contact us for a copy of your tax receipt.
+        All donations to RNHT are tax-deductible under 501(c)(3). Need a copy sent again? Contact the temple.
       </p>
+
+      {receiptPreview && (
+        <ReceiptPreviewOverlay
+          url={receiptPreview.url}
+          receiptId={receiptPreview.receiptId}
+          onClose={closeReceiptPreview}
+        />
+      )}
     </div>
   );
 }

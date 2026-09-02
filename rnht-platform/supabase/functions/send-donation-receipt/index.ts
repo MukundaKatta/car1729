@@ -6,6 +6,17 @@
 // pledge to completed. Stripe/PayPal completions already send their receipt in
 // the donate / paypal-capture functions; this covers the manual Zelle path.
 //
+// Body: { donationId: string, force?: boolean }
+//   - default: single-winner claim on donations.tax_receipt_sent — a gift that
+//     already has a receipt (or is being receipted concurrently) is skipped
+//     with { ok: true, alreadySent: true }.
+//   - force: true  — admin "Resend receipt". Re-emails the receipt even when
+//     tax_receipt_sent is already true (e.g. the original send was rejected by
+//     the email provider while the flag was still set). Still refuses any
+//     donation that is not payment_status = 'completed'. Responds
+//     { ok: true, resent: true } when the provider accepted the email, or 502
+//     with the provider's reason when it didn't.
+//
 // The caller must be an admin (their session token is passed in x-user-token
 // and checked against profiles.is_admin) so this can't be used to spam
 // receipts to arbitrary addresses.
@@ -25,18 +36,19 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
 });
 
-async function callerIsAdmin(req: Request): Promise<boolean> {
+/** The calling admin's user id, or null when the caller is not an admin. */
+async function callerAdminId(req: Request): Promise<string | null> {
   const token = req.headers.get("x-user-token") ?? "";
-  if (!token) return false;
+  if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
   const userId = data?.user?.id;
-  if (error || !userId) return false;
+  if (error || !userId) return null;
   const { data: prof } = await admin
     .from("profiles")
     .select("is_admin")
     .eq("id", userId)
     .maybeSingle();
-  return prof?.is_admin === true;
+  return prof?.is_admin === true ? userId : null;
 }
 
 Deno.serve(async (req) => {
@@ -51,14 +63,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!(await callerIsAdmin(req))) {
+    const adminId = await callerAdminId(req);
+    if (!adminId) {
       return new Response(JSON.stringify({ error: "Not authorized" }), {
         status: 403,
         headers: jsonHeaders,
       });
     }
 
-    let body: { donationId?: string };
+    let body: { donationId?: string; force?: boolean };
     try {
       body = await req.json();
     } catch {
@@ -74,10 +87,12 @@ Deno.serve(async (req) => {
         headers: jsonHeaders,
       });
     }
+    // Strict boolean: only a literal `true` resends (never a truthy string).
+    const force = body?.force === true;
 
     const { data: d, error } = await admin
       .from("donations")
-      .select("donor_email, donor_name, amount, fund_type, payment_status, is_anonymous")
+      .select("donor_email, donor_name, amount, fund_type, payment_status, is_anonymous, created_at")
       .eq("id", donationId)
       .maybeSingle();
     if (error || !d) {
@@ -87,7 +102,8 @@ Deno.serve(async (req) => {
       });
     }
     // Only receipt a gift that has actually been recorded as received — guards
-    // against emailing a "receipt" for a pledge that's still pending.
+    // against emailing a "receipt" for a pledge that's still pending. Applies
+    // to force too: a resend can never receipt a non-completed row.
     if (d.payment_status !== "completed") {
       return new Response(JSON.stringify({ error: "Donation is not completed" }), {
         status: 409,
@@ -112,26 +128,67 @@ Deno.serve(async (req) => {
     // Compete for the same single-sender claim the payment-verify paths use,
     // so a donation the donor already received a receipt for (or one being
     // verified concurrently) never gets a second 501(c)(3) receipt.
-    const { data: claimed } = await admin
+    //
+    // With force the tax_receipt_sent=false condition is dropped, but the
+    // update is still guarded on payment_status='completed' (re-checked
+    // atomically here, not just in the read above) and still sets the flag.
+    const claim = admin
       .from("donations")
       .update({ tax_receipt_sent: true })
       .eq("id", donationId)
-      .eq("payment_status", "completed")
-      .eq("tax_receipt_sent", false)
+      .eq("payment_status", "completed");
+    const { data: claimed } = await (force ? claim : claim.eq("tax_receipt_sent", false))
       .select("id")
       .maybeSingle();
     if (!claimed) {
+      if (force) {
+        // The row stopped being completed (or vanished) between the read and
+        // the guarded update — never resend for it.
+        return new Response(JSON.stringify({ error: "Donation is not completed" }), {
+          status: 409,
+          headers: jsonHeaders,
+        });
+      }
       return new Response(
         JSON.stringify({ ok: true, alreadySent: true }),
         { headers: jsonHeaders },
       );
     }
+
+    if (force) {
+      console.log(
+        `[receipt] audit: admin ${adminId} force-resend requested for receipt ${receiptNumberFor(donationId)} ` +
+          `for donation ${donationId}`,
+      );
+      // A resend of an older gift must carry the gift's own date, not today's.
+      const result = await sendDonationReceipt({
+        to: d.donor_email as string,
+        donorName: d.is_anonymous ? null : (d.donor_name as string | null),
+        amount: Number(d.amount ?? 0),
+        fundLabel,
+        receiptNumber: receiptNumberFor(donationId),
+        date: (d.created_at as string | null) ?? null,
+      });
+      if (!result.sent) {
+        console.error(
+          `[receipt] audit: admin ${adminId} force-resend for donation ${donationId} failed: ${result.reason}`,
+        );
+        return new Response(
+          JSON.stringify({ error: `Receipt was not sent: ${result.reason}` }),
+          { status: 502, headers: jsonHeaders },
+        );
+      }
+      console.log(`[receipt] audit: admin ${adminId} force-resent receipt ${receiptNumberFor(donationId)} for donation ${donationId}`);
+      return new Response(JSON.stringify({ ok: true, resent: true }), { headers: jsonHeaders });
+    }
+
     await sendDonationReceipt({
       to: d.donor_email as string,
       donorName: d.is_anonymous ? null : (d.donor_name as string | null),
       amount: Number(d.amount ?? 0),
       fundLabel,
       receiptNumber: receiptNumberFor(donationId),
+          date: (d.created_at as string | null) ?? null,
     });
 
     return new Response(JSON.stringify({ ok: true }), { headers: jsonHeaders });
