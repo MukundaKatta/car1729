@@ -1,0 +1,71 @@
+name: Android Beta (App Distribution)
+
+# Builds the Android debug APK from the current main and distributes it to the
+# beta testers through Firebase App Distribution using the same service
+# account CI uses for Hosting. Run it from the Actions tab after bumping
+# android/app/build.gradle versionCode. The APK is also kept as an artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes shown to testers"
+        required: false
+        default: "New RNHT beta build"
+
+jobs:
+  build-and-distribute:
+    name: Build APK + distribute
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rnht-platform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: rnht-platform/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+
+      - name: Build mobile web bundle and sync into android/
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: https://rnht.org
+        run: npm run build:mobile
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: rnht-platform/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Distribute to beta testers
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          NOTES: ${{ github.event.inputs.release_notes }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase-tools@latest appdistribution:distribute \
+            android/app/build/outputs/apk/debug/app-debug.apk \
+            --app 1:323074034442:android:c840a720b1ee776baf88f3 \
+            --testers "bharatkumar1604@gmail.com,jinal.b@4spheresolutions.com,jinalbhalodiya2001@gmail.com,mukunda.vjcs6@gmail.com,neenakoganti2020@gmail.com" \
+            --release-notes "$NOTES"
+          rm -f "$RUNNER_TEMP/sa.json"

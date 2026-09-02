@@ -17,8 +17,12 @@ if [ -f .env.local ]; then set -a; . ./.env.local; set +a; fi
 : "${NEXT_PUBLIC_SUPABASE_URL:?must be set (add it to .env.local — see .env.local.example — or export it). Refusing to build an env-less native bundle.}"
 : "${NEXT_PUBLIC_SUPABASE_ANON_KEY:?must be set (add it to .env.local or export it). Refusing to build an env-less native bundle.}"
 
-mv src/app/api /tmp/rnht-api-aside
-trap 'mv /tmp/rnht-api-aside src/app/api' EXIT
+# src/app/api was removed (the site is a static export; server logic lives in
+# Supabase edge functions). Keep the move-aside only if it ever reappears.
+if [ -d src/app/api ]; then
+  mv src/app/api /tmp/rnht-api-aside
+  trap 'mv /tmp/rnht-api-aside src/app/api' EXIT
+fi
 rm -rf .next out
 STATIC_EXPORT=1 NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL:-https://rnht-platform.web.app}" ./node_modules/.bin/next build
 rm -rf out/slideshow out/downloads/2026-rnht.pdf
