@@ -60,6 +60,8 @@ interface ManualDonationBody {
   receiptId?: string;
   pdfBase64?: string;
   filename?: string;
+  /** ISO instant the gift was received; becomes created_at (tax-year attribution). */
+  receivedAt?: string;
 }
 
 Deno.serve(async (req) => {
@@ -100,6 +102,23 @@ Deno.serve(async (req) => {
     const fundType = (body.fundType ?? "").trim();
     const note = typeof body.note === "string" ? body.note.trim() : "";
     const amount = Number(body.amount);
+    // Date received (gap H): optional for older clients; when present it must be
+    // a real instant, not in the future, not before 2020. It is stamped into
+    // created_at so the dashboard, admin YTD and the year-end batch all file the
+    // gift in the tax year the temple actually received it.
+    let receivedAt: string | null = null;
+    if (typeof body.receivedAt === "string" && body.receivedAt.trim()) {
+      const t = new Date(body.receivedAt).getTime();
+      const nowPlusDay = Date.now() + 24 * 60 * 60 * 1000;
+      const floor = Date.UTC(2020, 0, 1);
+      if (!Number.isFinite(t) || t > nowPlusDay || t < floor) {
+        return new Response(JSON.stringify({ error: "Invalid date received" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      receivedAt = new Date(t).toISOString();
+    }
 
     // The client supplies the row id so the receipt number (REC-<id8>) printed
     // on the already-generated PDF matches the stored donation. Require a valid
@@ -197,10 +216,12 @@ Deno.serve(async (req) => {
       // The emailed/downloaded PDF IS this gift's receipt: mark it issued so a
       // later send-donation-receipt call can't mail a second, plain receipt (gap M).
       tax_receipt_sent: true,
+      ...(receivedAt ? { created_at: receivedAt } : {}),
       custom_fields: {
         source: "manual_admin",
         recorded_by: adminId,
         receipt_id: receiptId,
+        ...(receivedAt ? { received_on: receivedAt.slice(0, 10) } : {}),
         // Full mailing address for the year-end IRS acknowledgment (CPA request).
         ...(donorAddress ? { donor_address: donorAddress } : {}),
       },

@@ -910,6 +910,8 @@ type RecordForm = {
   amount: string;
   fundType: string;
   note: string;
+  /** Date the temple received the gift (YYYY-MM-DD, temple local). */
+  receivedOn: string;
 };
 
 const emptyRecordForm: RecordForm = {
@@ -919,6 +921,7 @@ const emptyRecordForm: RecordForm = {
   amount: "",
   fundType: STANDARD_FUNDS[0]?.slug ?? "general",
   note: "",
+  receivedOn: todayInTempleTz(),
 };
 
 type RecordResult = {
@@ -940,7 +943,24 @@ type ManualDonationPayload = {
   receiptId: string;
   pdfBase64: string;
   filename: string;
+  /** ISO instant the gift was received (drives created_at / tax year). */
+  receivedAt: string;
 };
+
+/** Today's date in the temple timezone as YYYY-MM-DD (en-CA formats ISO-style). */
+function todayInTempleTz(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(new Date());
+}
+
+/**
+ * The instant a gift received on `ymd` (temple-local calendar day) is filed at:
+ * noon Central. Mid-day keeps the row inside that calendar day in every
+ * timezone the app reads it in (dashboard, admin YTD, year-end batch), so a
+ * December check keyed in on Jan 3 still lands in December's tax year (gap H).
+ */
+function receivedAtIso(ymd: string): string {
+  return new Date(`${ymd}T12:00:00-06:00`).toISOString();
+}
 
 // RFC-ish email check, mirrors the edge function's server-side guard.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1125,7 +1145,20 @@ function RecordDonationTab() {
     const amount = Number(form.amount);
     const fundType = form.fundType;
     const note = form.note.trim();
+    const receivedOn = form.receivedOn.trim();
 
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(receivedOn) || Number.isNaN(new Date(`${receivedOn}T12:00:00Z`).getTime())) {
+      setFieldError("Enter the date the donation was received.");
+      return;
+    }
+    if (receivedOn > todayInTempleTz()) {
+      setFieldError("Date received can't be in the future.");
+      return;
+    }
+    if (receivedOn < "2020-01-01") {
+      setFieldError("Date received looks too far back — please double-check.");
+      return;
+    }
     if (!donorName) {
       setFieldError("Donor name is required.");
       return;
@@ -1174,6 +1207,7 @@ function RecordDonationTab() {
     try {
       const { generateDonationReceiptPdf } = await import("@/lib/tax-receipt-pdf");
       if (!mountedRef.current) return;
+      const receivedAt = receivedAtIso(receivedOn);
       const { base64, blob, filename } = generateDonationReceiptPdf({
         donorName,
         donorEmail,
@@ -1182,6 +1216,7 @@ function RecordDonationTab() {
         fundLabel,
         receiptId,
         note,
+        date: new Date(receivedAt),
       });
       revokeUrl();
       objectUrlRef.current = URL.createObjectURL(blob);
@@ -1196,6 +1231,7 @@ function RecordDonationTab() {
         receiptId,
         pdfBase64: base64,
         filename,
+        receivedAt,
       };
       await sendPayload(payloadRef.current);
     } catch (e) {
@@ -1329,6 +1365,24 @@ function RecordDonationTab() {
             <p className="mt-1 text-xs text-gray-500">
               Full mailing address of the donor. Required for gifts of $250 or more (for the
               IRS year-end tax acknowledgment).
+            </p>
+          </div>
+          <div>
+            <label htmlFor="md-received" className="block text-sm font-medium text-gray-700">
+              Date received
+            </label>
+            <input
+              id="md-received"
+              type="date"
+              className="input-field mt-1"
+              value={form.receivedOn}
+              max={todayInTempleTz()}
+              min="2020-01-01"
+              onChange={(e) => setForm((f) => ({ ...f, receivedOn: e.target.value }))}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              The day the temple received the gift. It decides which tax year the donation
+              counts toward (for example a December check entered in January).
             </p>
           </div>
           <div>
