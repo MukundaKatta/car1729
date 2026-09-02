@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { currentTempleYear, templeYearWindow } from "@/lib/year-end-batch";
 import {
   DollarSign,
   Plus,
@@ -558,6 +559,8 @@ type InflowRow = {
   fund_or_service: string;
   amount: number;
   status: string;
+  /** donations.payment_method (stripe | paypal | zelle | cash | offline); "" for services. */
+  method: string;
 };
 
 function DonationInflowTab() {
@@ -573,16 +576,16 @@ function DonationInflowTab() {
         setLoading(false);
         return;
       }
-      // created_at is TIMESTAMPTZ (UTC). Compute the "this year" window on a
-      // consistent UTC basis so the label and the .gte filter agree and a gift
-      // near Jan 1 isn't bucketed into the wrong year by a local-vs-UTC skew.
-      const year = new Date().getUTCFullYear();
-      const yearStart = new Date(Date.UTC(year, 0, 1)).toISOString();
+      // "This year" = the temple's tax year (America/Chicago calendar year),
+      // the same window the year-end receipt batch and the donor dashboard use,
+      // so a gift near Jan 1 lands in the same year everywhere (gap O).
+      const year = currentTempleYear();
+      const { startUtc: yearStart } = templeYearWindow(year);
 
       const [donationsResp, bookingsResp, donationSumResp, bookingSumResp] = await Promise.all([
         supabase
           .from("donations")
-          .select("id, donor_name, donor_email, amount, fund_type, payment_status, created_at, custom_fields")
+          .select("id, donor_name, donor_email, amount, fund_type, payment_status, payment_method, created_at, custom_fields")
           .gte("created_at", yearStart)
           .order("created_at", { ascending: false })
           .limit(100),
@@ -647,6 +650,7 @@ function DonationInflowTab() {
           fund_or_service: (d.fund_type as string) ?? "General",
           amount: Number(d.amount ?? 0),
           status: (d.payment_status as string) ?? "pending",
+          method: (d.payment_method as string) ?? "",
         };
       });
 
@@ -664,6 +668,7 @@ function DonationInflowTab() {
           fund_or_service: svc ?? "Service",
           amount: Number(b.total_amount ?? 0),
           status: (b.payment_status as string) ?? "pending",
+          method: "",
         };
       });
 
@@ -690,7 +695,10 @@ function DonationInflowTab() {
   // policy (migration 006); flips payment_status to completed so it counts
   // toward the year's total and stops showing as an open pledge.
   async function markReceived(row: InflowRow) {
-    if (!supabase || row.source !== "donation") return;
+    // Only Zelle pledges are completed by hand (money moves outside the app).
+    // Card/PayPal rows complete only via the payment provider's verified
+    // return, so an abandoned checkout can never be receipted by mistake (gap G).
+    if (!supabase || row.source !== "donation" || row.method !== "zelle") return;
     if (
       !window.confirm(
         `Mark ${formatCurrency(row.amount)} from ${row.donor} as received? This records the pledge as completed.`
@@ -865,7 +873,7 @@ function DonationInflowTab() {
                     >
                       {row.status}
                     </span>
-                    {row.source === "donation" && row.status === "pending" && (
+                    {row.source === "donation" && row.status === "pending" && row.method === "zelle" && (
                       <button
                         onClick={() => markReceived(row)}
                         disabled={marking === row.id}
@@ -874,6 +882,11 @@ function DonationInflowTab() {
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         {marking === row.id ? "Marking…" : "Mark received"}
                       </button>
+                    )}
+                    {row.source === "donation" && row.status === "pending" && row.method !== "zelle" && (
+                      <span className="mt-1 block text-[11px] text-gray-500" title="The donor did not finish the hosted checkout, so no money was taken. It completes on its own if they return; it cannot be marked received by hand.">
+                        unfinished {row.method || "online"} checkout
+                      </span>
                     )}
                   </td>
                 </tr>

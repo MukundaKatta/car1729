@@ -894,9 +894,9 @@ function ProfileContent() {
                   <p className="text-3xl font-bold text-green-700">{formatCurrency(totalDonated)}</p>
                   <p className="mt-1 text-xs text-gray-500">Tax-deductible under 501(c)(3)</p>
                 </div>
-                <button className="btn-outline flex items-center gap-2 text-sm" onClick={() => alert("Feature coming soon!")}>
-                  <Download className="h-4 w-4" /> Tax Summary
-                </button>
+                <Link href="/dashboard?tab=donations" className="btn-outline flex items-center gap-2 text-sm">
+                  <Download className="h-4 w-4" /> Year-end tax receipts
+                </Link>
               </div>
             </div>
             {donations.length === 0 && (
@@ -922,7 +922,6 @@ function ProfileContent() {
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" /> {formatDate(d.date)}
-                  <button className="ml-auto text-xs text-temple-red hover:underline" onClick={() => alert("Feature coming soon!")}>Download Receipt</button>
                 </div>
               </div>
             ))}

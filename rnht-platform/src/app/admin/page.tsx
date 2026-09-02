@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { currentTempleYear, templeYearWindow } from "@/lib/year-end-batch";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
@@ -53,8 +54,10 @@ export default function AdminDashboard() {
       }
       setLoadError(null);
       try {
-      const year = new Date().getFullYear();
-      const yearStart = `${year}-01-01`;
+      // Temple tax year (America/Chicago), same window as the year-end batch,
+      // the donor dashboard and Admin > Donations (gap O).
+      const year = currentTempleYear();
+      const { startUtc: yearStart } = templeYearWindow(year);
 
       const [bookingsTotal, donationsYtd, serviceRevenueYtd, activeServices, recentBookings] =
         await Promise.all([

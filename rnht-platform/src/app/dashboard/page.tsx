@@ -626,7 +626,11 @@ function OverviewTab() {
           { label: "Total Donated", value: formatCurrency(totalDonated), icon: DollarSign, color: "text-green-600 bg-green-50" },
           { label: "Services Booked", value: totalBookings, icon: CalendarCheck, color: "text-blue-600 bg-blue-50" },
           { label: "Upcoming", value: upcomingBookings.length, icon: Clock, color: "text-amber-600 bg-amber-50" },
-          { label: "Recurring", value: recurringDonations.length, icon: RefreshCw, color: "text-purple-600 bg-purple-50" },
+          // Recurring giving isn't offered yet (every gift is one-time); only
+          // show the stat when the devotee actually has recurring gifts (gap P).
+          ...(recurringDonations.length
+            ? [{ label: "Recurring", value: recurringDonations.length, icon: RefreshCw, color: "text-purple-600 bg-purple-50" }]
+            : []),
         ].map((stat) => (
           <div key={stat.label} className="card p-5">
             <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.color}`}>
@@ -1012,11 +1016,13 @@ function DonationsTab() {
           <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(totalDonated)}</p>
           <p className="text-sm text-gray-500 font-accent">Total Donated</p>
         </div>
-        <div className="card p-5 text-center">
-          <RefreshCw className="mx-auto h-6 w-6 text-purple-600" />
-          <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(recurringTotal)}</p>
-          <p className="text-sm text-gray-500 font-accent">Recurring total</p>
-        </div>
+        {recurringDonations.length > 0 && (
+          <div className="card p-5 text-center">
+            <RefreshCw className="mx-auto h-6 w-6 text-purple-600" />
+            <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{formatCurrency(recurringTotal)}</p>
+            <p className="text-sm text-gray-500 font-accent">Recurring total</p>
+          </div>
+        )}
         <div className="card p-5 text-center">
           <Receipt className="mx-auto h-6 w-6 text-blue-600" />
           <p className="mt-2 font-heading text-2xl font-bold text-temple-maroon">{completedDonations.length}</p>
