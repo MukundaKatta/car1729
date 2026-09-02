@@ -82,7 +82,7 @@ async function main() {
   const { startUtc, endUtc } = templeYearWindow(year);
   const { data: rows, error: donErr } = await supabase
     .from("donations")
-    .select("id,user_id,donor_name,donor_email,amount,fund_type,payment_method,is_recurring,created_at")
+    .select("id,user_id,donor_name,donor_email,amount,fund_type,payment_method,is_recurring,created_at,custom_fields")
     .eq("payment_status", "completed")
     .gte("created_at", startUtc)
     .lt("created_at", endUtc);
@@ -154,16 +154,22 @@ async function main() {
       });
       if (res.error) throw new Error(res.error.message ?? String(res.error));
       // Record AFTER a successful send (send-first, so a delivery failure never
-      // marks a donor "done" and silently skips them next run). ON CONFLICT
-      // guards the same-run UNIQUE(email, year); the tiny crash-after-send window
-      // could re-send once next January — harmless for a tax acknowledgment.
-      const { error: insErr } = await supabase.from("year_end_receipts").insert({
-        donor_email: g.email,
-        tax_year: year,
-        donation_count: g.donations.length,
-        total_amount: g.total,
-        message_id: res.data?.id ?? null,
-      });
+      // marks a donor "done" and silently skips them next run). Upsert on the
+      // UNIQUE(donor_email, tax_year) key so a --force re-send UPDATES the row
+      // (fresh message_id + sent_at) instead of erroring after the email went
+      // out; the tiny crash-after-send window could re-send once next January,
+      // harmless for a tax acknowledgment.
+      const { error: insErr } = await supabase.from("year_end_receipts").upsert(
+        {
+          donor_email: g.email,
+          tax_year: year,
+          donation_count: g.donations.length,
+          total_amount: g.total,
+          message_id: res.data?.id ?? null,
+          sent_at: new Date().toISOString(),
+        },
+        { onConflict: "donor_email,tax_year" },
+      );
       if (insErr) console.error(`   ⚠️ sent to ${g.email} but ledger insert failed: ${insErr.message}`);
       console.log(`${line}  ✓ sent (${res.data?.id ?? "no-id"})`);
       sent++;

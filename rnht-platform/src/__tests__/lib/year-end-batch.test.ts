@@ -50,6 +50,24 @@ describe("groupDonationsByDonor", () => {
     expect(g.address).toBe("1 Main St, Georgetown, TX, 78628");
   });
 
+  it("falls back to the admin-captured custom_fields.donor_address when the profile has none (gap J)", () => {
+    const rows: DbDonation[] = [
+      { id: "a1", user_id: null, donor_name: "Cash Donor", donor_email: "cash@x.org", amount: 100, fund_type: "general",
+        created_at: "2026-02-01T00:00:00Z", custom_fields: { source: "manual_admin", donor_address: "  12 Temple Rd,\n Austin, TX 78701 " } },
+      { id: "a2", user_id: null, donor_name: "Cash Donor", donor_email: "cash@x.org", amount: 200, fund_type: "general",
+        created_at: "2026-01-01T00:00:00Z", custom_fields: { source: "manual_admin" } },
+    ];
+    const [g] = groupDonationsByDonor(rows);
+    expect(g.address).toBe("12 Temple Rd, Austin, TX 78701");
+    // the profile address still wins when present
+    const profiles = new Map([["cash@x.org", { address: "1 Main", city: "Round Rock", state: "TX", zip: "78664" }]]);
+    const [g2] = groupDonationsByDonor(rows, profiles);
+    expect(g2.address).toBe("1 Main, Round Rock, TX, 78664");
+    // object-shaped address is also accepted
+    const [g3] = groupDonationsByDonor([{ ...rows[1], custom_fields: { donor_address: { address: "5 Oak", city: "Austin", state: "TX", zip: "78702" } } }]);
+    expect(g3.address).toBe("5 Oak, Austin, TX, 78702");
+  });
+
   it("never groups gifts with a blank email together", () => {
     const rows = [d({ id: "a", donor_email: "" }), d({ id: "b", donor_email: "  " })];
     expect(groupDonationsByDonor(rows)).toHaveLength(0);

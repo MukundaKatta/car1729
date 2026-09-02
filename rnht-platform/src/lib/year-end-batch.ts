@@ -77,6 +77,8 @@ export type DbDonation = {
   payment_method?: string | null;
   is_recurring?: boolean | null;
   created_at: string;
+  /** Free-form JSON; admin "Record Donation" stores `donor_address` here. */
+  custom_fields?: Record<string, unknown> | null;
 };
 
 /** A donor's mailing address, when known (from their profile). */
@@ -93,7 +95,8 @@ export type DonorGroup = {
   email: string;
   /** Best display name: freshest profile name, else freshest donation name. */
   name: string;
-  /** One-line mailing address, when resolvable from the profile. */
+  /** One-line mailing address: the profile's, else the admin-captured
+   *  `custom_fields.donor_address` on the donor's freshest gift. */
   address?: string;
   donations: DbDonation[];
   total: number;
@@ -109,6 +112,28 @@ function oneLineAddress(p?: DonorProfile): string | undefined {
     .map((s) => (s ?? "").trim())
     .filter(Boolean);
   return parts.length ? parts.join(", ") : undefined;
+}
+
+/**
+ * Address the admin typed into "Record Donation" (stored on the row as
+ * `custom_fields.donor_address`), taken from the freshest gift that has one.
+ * Accepts a plain string or an {address, city, state, zip} object.
+ */
+function donationAddress(ds: DbDonation[]): string | undefined {
+  for (let i = 0; i < ds.length; i++) {
+    const cf = ds[i].custom_fields;
+    const raw = cf && typeof cf === "object" ? (cf as Record<string, unknown>).donor_address : undefined;
+    if (typeof raw === "string") {
+      const line = raw.replace(/\s+/g, " ").trim();
+      if (line) return line;
+    } else if (raw && typeof raw === "object") {
+      const o = raw as Record<string, unknown>;
+      const str = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : null);
+      const line = oneLineAddress({ address: str("address"), city: str("city"), state: str("state"), zip: str("zip") });
+      if (line) return line;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -142,7 +167,7 @@ export function groupDonationsByDonor(
       (profile?.name && profile.name.trim()) ||
       (ds[0].donor_name && ds[0].donor_name.trim()) ||
       "Devotee";
-    groups.push({ email, name, address: oneLineAddress(profile), donations: ds, total });
+    groups.push({ email, name, address: oneLineAddress(profile) ?? donationAddress(ds), donations: ds, total });
   });
   // Deterministic output order (by email) for stable logs/tests.
   groups.sort((a, b) => (a.email < b.email ? -1 : 1));
