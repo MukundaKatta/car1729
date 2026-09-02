@@ -851,7 +851,7 @@ function saveBlob(blob: Blob, filename: string): void {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 40_000);
 }
 
 // How a generated receipt PDF reaches the donor on this platform:
