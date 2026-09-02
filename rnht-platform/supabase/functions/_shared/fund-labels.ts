@@ -1,5 +1,5 @@
 // Human-readable names for each donation fund slug.
-// Kept in sync with src/app/api/donate/route.ts (the Next.js version we're
+// Legacy fund labels (the admin-managed donation_types table takes precedence;
 // porting from). Both the Edge Function and the verification step reach
 // for this map, so update both in one place.
 export const fundLabels: Record<string, string> = {
