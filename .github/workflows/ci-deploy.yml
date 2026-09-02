@@ -53,9 +53,6 @@ jobs:
 
       - run: npm ci
 
-      - name: Remove API routes for static build
-        run: rm -rf src/app/api
-
       - name: Build
         env:
           STATIC_EXPORT: "1"
@@ -101,9 +98,6 @@ jobs:
           cache-dependency-path: rnht-platform/package-lock.json
 
       - run: npm ci
-
-      - name: Remove API routes for static build
-        run: rm -rf src/app/api
 
       - name: Build
         env:

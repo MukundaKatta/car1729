@@ -4,6 +4,8 @@ Automated once-a-year batch that emails every donor a single consolidated
 **Year-End Charitable Donation Acknowledgment** PDF for the calendar year that
 just closed. Built 2026-08-31.
 
+> **STATUS 2026-09-02: setup COMPLETE and verified.** Migration 011 applied, all GitHub secrets set, rnht.org verified in Resend, dry-run green (run 33559899322). The client confirmed the rule: donors whose total for the whole tax year is $250 or more. First automatic run: January 5, 2027, for 2026 donations. Nothing below is still pending; keep it as the reference for re-setup.
+
 ## What it does
 
 - Groups each calendar year's **completed** donations **by normalized email**, so
