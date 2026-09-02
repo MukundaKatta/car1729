@@ -979,7 +979,7 @@ function DonationInflowTab() {
                         {marking === row.id ? "Marking…" : "Mark received"}
                       </button>
                     )}
-                    {row.source === "donation" && row.status === "completed" && (
+                    {row.source === "donation" && row.status === "completed" && row.method !== "cash" && row.method !== "offline" && (
                       <button
                         onClick={() => resendReceipt(row)}
                         disabled={resending === row.id}
