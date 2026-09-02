@@ -276,7 +276,7 @@ export type Database = {
           amount: number;
           fund_type: string;
           payment_method: "stripe" | "paypal" | "zelle";
-          payment_status: "pending" | "completed" | "failed";
+          payment_status: "pending" | "completed" | "failed" | "refunded";
           is_recurring: boolean;
           message: string | null;
           is_anonymous: boolean;
@@ -289,7 +289,7 @@ export type Database = {
           amount: number;
           fund_type: string;
           payment_method: "stripe" | "paypal" | "zelle";
-          payment_status: "pending" | "completed" | "failed";
+          payment_status: "pending" | "completed" | "failed" | "refunded";
           is_recurring: boolean;
           message?: string | null;
           is_anonymous: boolean;
@@ -301,7 +301,7 @@ export type Database = {
           amount: number;
           fund_type: string;
           payment_method: "stripe" | "paypal" | "zelle";
-          payment_status: "pending" | "completed" | "failed";
+          payment_status: "pending" | "completed" | "failed" | "refunded";
           is_recurring: boolean;
           message: string | null;
           is_anonymous: boolean;

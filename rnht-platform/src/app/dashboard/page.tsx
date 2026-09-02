@@ -1041,8 +1041,11 @@ function DonationsTab() {
             // gifts (e.g. a Zelle pledge awaiting bank confirmation) show a
             // status instead of a receipt ID that isn't valid yet. Failed /
             // cancelled gifts must be labelled as such, not silently shown as
-            // "Pending" (which read as "still processing").
+            // "Pending" (which read as "still processing"). A refunded gift
+            // (Stripe refund / chargeback via the stripe-webhook function) is
+            // no longer tax-deductible: no receipt id, and never "Pending".
             const isCompleted = d.status === "completed" || d.status === undefined;
+            const isRefunded = d.status === "refunded";
             const isFailed = d.status === "failed" || d.status === "cancelled";
             return (
             <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-temple-ivory/50 transition-colors">
@@ -1062,6 +1065,8 @@ function DonationsTab() {
                 <p className="font-heading font-bold text-temple-maroon">{formatCurrency(d.amount)}</p>
                 {isCompleted ? (
                   <p className="text-xs text-gray-400">{d.receiptId}</p>
+                ) : isRefunded ? (
+                  <p className="text-xs font-accent text-red-600">Refunded</p>
                 ) : isFailed ? (
                   <p className="text-xs font-accent text-red-600">
                     {d.status === "cancelled" ? "Cancelled" : "Failed"}

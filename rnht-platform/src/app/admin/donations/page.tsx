@@ -868,8 +868,19 @@ function DonationInflowTab() {
                       className={`inline-flex rounded-full px-2 py-0.5 text-xs ${
                         row.status === "completed" || row.status === "paid"
                           ? "bg-green-100 text-green-800"
-                          : "bg-amber-100 text-amber-800"
+                          : row.status === "refunded"
+                            // Money went back to the donor (Stripe refund or
+                            // chargeback, set by the stripe-webhook function).
+                            // Excluded from the totals above; must never read
+                            // as a pending pledge, so no Mark received either.
+                            ? "bg-red-100 text-red-800"
+                            : "bg-amber-100 text-amber-800"
                       }`}
+                      title={
+                        row.status === "refunded"
+                          ? "Refunded or disputed on Stripe. Not counted in totals or receipts."
+                          : undefined
+                      }
                     >
                       {row.status}
                     </span>
