@@ -1,4 +1,4 @@
-export const SITE_URL = "https://rnht-platform.web.app";
+export const SITE_URL = "https://rnht.org";
 
 export const siteMetadataBase = new URL(SITE_URL);
 

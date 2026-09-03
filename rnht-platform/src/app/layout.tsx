@@ -10,7 +10,8 @@ import { StartupValidationNotice } from "@/components/system/StartupValidationNo
 import { StoreRehydrator } from "@/components/system/StoreRehydrator";
 import { CapacitorInit } from "@/components/CapacitorInit";
 import { VisitTracker } from "@/components/VisitTracker";
-import { siteMetadataBase } from "@/lib/site-metadata";
+import { CanonicalHost } from "@/components/system/CanonicalHost";
+import { SITE_URL, siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
 // Self-hosted (bundled) so the headings render in a readable, warm rounded sans
@@ -97,7 +98,7 @@ const jsonLd = {
   alternateName: "RNHT",
   description:
     "Traditional Hindu temple serving the Austin, Texas area with Vedic poojas, homams, weddings, and spiritual services.",
-  url: "https://rnht-platform.web.app",
+  url: SITE_URL,
   telephone: "+15125450473",
   address: {
     "@type": "PostalAddress",
@@ -159,6 +160,7 @@ export default function RootLayout({
         <StartupValidationNotice />
         <StoreRehydrator />
         <VisitTracker />
+        <CanonicalHost />
         <Header />
         <FallingPetals />
         <main id="main-content" className="flex-1">{children}</main>

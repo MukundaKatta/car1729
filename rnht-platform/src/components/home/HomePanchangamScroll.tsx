@@ -73,7 +73,7 @@ export function HomePanchangamScroll() {
   // Absolute URL so the PDF also works inside the native apps, where the
   // 12 MB file is stripped from the bundled assets (build-mobile.sh) and
   // opens via the in-app browser instead.
-  const calendarPdfHref = `https://rnht-platform.web.app/downloads/${calendarYear}-rnht.pdf`;
+  const calendarPdfHref = `/downloads/${calendarYear}-rnht.pdf`;
   const calendarPreviewHref = `/downloads/preview/${calendarYear}-rnht-preview.jpg`;
   const formattedDate = formatHeaderDate(p.date, location.timeZone);
   const dateParts = getDisplayDateParts(p.date, location.timeZone);
