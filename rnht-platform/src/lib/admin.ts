@@ -24,14 +24,17 @@ export async function isAdmin(userId: string | undefined | null): Promise<boolea
 
 /**
  * Client hook: subscribes to the current auth session and returns
- * { isAdmin, loading } based on the profiles.is_admin flag.
+ * { isAdmin, signedIn, loading } based on the session and the profiles.is_admin
+ * flag. signedIn lets the admin layout send a signed-OUT visitor to /login
+ * (with a return path) instead of silently bouncing them to the homepage.
  *
  * Used by admin page components to render a loading state while the
  * middleware hasn't kicked in yet (e.g. during client-side navigation).
  */
 export function useIsAdmin() {
-  const [state, setState] = useState<{ isAdmin: boolean; loading: boolean }>({
+  const [state, setState] = useState<{ isAdmin: boolean; signedIn: boolean; loading: boolean }>({
     isAdmin: false,
+    signedIn: false,
     loading: true,
   });
 
@@ -39,19 +42,19 @@ export function useIsAdmin() {
     let cancelled = false;
     async function check() {
       if (!supabase) {
-        if (!cancelled) setState({ isAdmin: false, loading: false });
+        if (!cancelled) setState({ isAdmin: false, signedIn: false, loading: false });
         return;
       }
       try {
         const { data: sess } = await supabase.auth.getSession();
         const uid = sess.session?.user.id;
         const admin = await isAdmin(uid);
-        if (!cancelled) setState({ isAdmin: admin, loading: false });
+        if (!cancelled) setState({ isAdmin: admin, signedIn: Boolean(uid), loading: false });
       } catch {
         // A failed session lookup must not throw an unhandled rejection — treat
         // it as "not an admin" and stop loading (the admin layout still guards
         // server-side / on its own check).
-        if (!cancelled) setState({ isAdmin: false, loading: false });
+        if (!cancelled) setState({ isAdmin: false, signedIn: false, loading: false });
       }
     }
     check();

@@ -32,13 +32,15 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAdmin, loading } = useIsAdmin();
+  const { isAdmin, signedIn, loading } = useIsAdmin();
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
-      router.replace("/");
-    }
-  }, [loading, isAdmin, router]);
+    if (loading || isAdmin) return;
+    // Signed out: go sign in and come straight back here. Signed in but not an
+    // admin: home. (Silently bouncing everyone to "/" made the admin think the
+    // page was broken.)
+    router.replace(signedIn ? "/" : "/login?next=%2Fadmin");
+  }, [loading, isAdmin, signedIn, router]);
 
   if (loading) {
     return (
@@ -56,9 +58,13 @@ export default function AdminLayout({
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <p className="font-heading text-xl text-temple-maroon">Access denied</p>
+          <p className="font-heading text-xl text-temple-maroon">
+            {signedIn ? "Access denied" : "Please sign in"}
+          </p>
           <p className="mt-2 text-gray-600">
-            This area is reserved for temple administrators.
+            {signedIn
+              ? "This area is reserved for temple administrators."
+              : "Sign in with your temple admin account to open the dashboard."}
           </p>
         </div>
       </div>

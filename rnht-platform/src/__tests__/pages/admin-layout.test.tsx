@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/admin",
 }));
 
-const adminState = { isAdmin: false, loading: false };
+const adminState = { isAdmin: false, signedIn: true, loading: false };
 
 vi.mock("@/lib/admin", () => ({
   useIsAdmin: () => adminState,
@@ -27,6 +27,7 @@ describe("AdminLayout", () => {
   beforeEach(() => {
     replace.mockClear();
     adminState.isAdmin = false;
+    adminState.signedIn = true;
     adminState.loading = false;
   });
 
@@ -70,5 +71,16 @@ describe("AdminLayout", () => {
     expect(screen.getByRole("link", { name: /News & Updates/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Donations/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Priests/i })).toBeInTheDocument();
+  });
+  it("sends a signed-out visitor to the login page with a return path", async () => {
+    adminState.loading = false;
+    adminState.isAdmin = false;
+    adminState.signedIn = false;
+    render(<AdminLayout><div>secret</div></AdminLayout>);
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith("/login?next=%2Fadmin");
+    });
+    expect(screen.getByText(/Please sign in/i)).toBeInTheDocument();
+    expect(screen.queryByText("secret")).not.toBeInTheDocument();
   });
 });

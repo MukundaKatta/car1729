@@ -102,11 +102,16 @@ function LoginContent() {
   // the auth store flips isAuthenticated:true, so without the step guard this
   // effect would navigate straight to /dashboard and the success screen (with
   // its "Book a Pooja" CTA) would never render. Let the user click through.
+  // ?next=/admin (set by the admin gate) brings the admin straight back after
+  // signing in. Only same-site paths are honoured, never absolute URLs.
+  const nextParam = searchParams.get("next");
+  const nextPath =
+    nextParam && /^\/(?!\/)[^\s]*$/.test(nextParam) && !nextParam.includes(":") ? nextParam : "/dashboard";
   useEffect(() => {
     if (isAuthenticated && step !== "success") {
-      router.replace("/dashboard");
+      router.replace(nextPath);
     }
-  }, [isAuthenticated, step, router]);
+  }, [isAuthenticated, step, router, nextPath]);
 
   useEffect(() => {
     if (step !== "email_sent" || !supabase) return;
