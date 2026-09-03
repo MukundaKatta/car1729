@@ -785,9 +785,10 @@ describe("useAuthStore", () => {
 
       await useAuthStore.getState().updateProfile(allUpdates);
 
+      // profiles.email is never written from the client (migration 016 guard):
+      // it follows the auth identity after Supabase confirms the new address.
       expect(builder.update).toHaveBeenCalledWith({
         name: "New Name",
-        email: "new@email.com",
         phone: "0000000000",
         gotra: "G",
         nakshatra: "N",
@@ -797,6 +798,27 @@ describe("useAuthStore", () => {
         state: "TX",
         zip: "75001",
       });
+    });
+
+    it("never writes profiles.email: the change goes through auth confirmation only", async () => {
+      setAuthenticatedState();
+      const builder = createQueryBuilder();
+      queryBuilders["profiles"] = builder;
+      mockUpdateUser.mockResolvedValue({ data: {}, error: null });
+
+      const result = await useAuthStore
+        .getState()
+        .updateProfile({ email: "  Victim@Example.com ", name: "Attacker" });
+
+      // Supabase Auth is asked to change the identity (it emails a confirmation)…
+      expect(mockUpdateUser).toHaveBeenCalledWith({ email: "Victim@Example.com" });
+      expect(result).toEqual({ emailChangePending: true });
+      // …but the profiles row and local state keep the confirmed address, so a
+      // typed-in address can never claim someone else's guest giving history.
+      expect(builder.update).toHaveBeenCalledWith({ name: "Attacker" });
+      const payload = builder.update.mock.calls[0][0] as Record<string, unknown>;
+      expect(payload).not.toHaveProperty("email");
+      expect(useAuthStore.getState().user!.email).toBe("test@temple.org");
     });
   });
 

@@ -453,7 +453,10 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       .from("profiles")
       .update({
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(newEmail !== undefined && { email: newEmail }),
+        // profiles.email is NEVER written from the client: it follows the auth
+        // identity once Supabase confirms the new address (migration 016 syncs
+        // it and rejects direct writes). Writing it early let anyone claim a
+        // guest donor's giving history by typing their address.
         ...(updates.phone !== undefined && { phone: updates.phone }),
         ...(updates.gotra !== undefined && { gotra: updates.gotra }),
         ...(updates.nakshatra !== undefined && {
@@ -469,11 +472,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
 
     if (error) return { error: error.message };
 
-    // Mirror exactly what was written to the DB: the trimmed email (newEmail),
-    // not the raw updates.email, so local state never diverges from the row.
+    // Mirror exactly what was written to the DB. The email is deliberately NOT
+    // mirrored: it stays the confirmed auth address until Supabase completes
+    // the change (the caller shows the pending-confirmation notice).
     set((state) => ({
       user: state.user
-        ? { ...state.user, ...updates, ...(newEmail !== undefined && { email: newEmail }) }
+        ? { ...state.user, ...updates, email: state.user.email }
         : null,
     }));
     return emailChangePending ? { emailChangePending: true } : {};
