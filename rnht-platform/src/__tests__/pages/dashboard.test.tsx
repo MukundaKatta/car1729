@@ -3,6 +3,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 let searchParamsState = new URLSearchParams();
 
+vi.mock("@/lib/admin", () => ({
+  useIsAdmin: () => ({ isAdmin: false, signedIn: true, loading: false }),
+}));
+
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>

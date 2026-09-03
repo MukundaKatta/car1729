@@ -16,6 +16,7 @@ import type { ActivityItem, Donation, UserProfile } from "@/store/auth";
 import { normalizePhone } from "@/lib/phone";
 import { prettyFund } from "@/lib/fund";
 import { nativePlatform } from "@/lib/capacitor";
+import { useIsAdmin } from "@/lib/admin";
 import { pushOverlay } from "@/lib/overlay-stack";
 import {
   User,
@@ -557,6 +558,7 @@ function StatusBadge({ status }: { status: string }) {
 /* ─── Overview Tab ─── */
 function OverviewTab() {
   const { user, bookings, donations } = useAuthStore();
+  const { isAdmin } = useIsAdmin();
   // Only completed donations count toward the giving total (exclude pending
   // Zelle pledges / abandoned checkouts).
   const completedDonations = donations.filter((d) => d.status === "completed" || d.status === undefined);
@@ -626,6 +628,18 @@ function OverviewTab() {
             Make a Donation
           </Link>
         </div>
+
+      {/* Temple admins: the visitor count, donations and bookings live on /admin,
+          not here. Say so, or the admin lands on this page and thinks it is missing. */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-temple-gold/40 bg-temple-gold/10 px-4 py-3 text-sm font-medium text-temple-maroon hover:bg-temple-gold/20"
+        >
+          <span>You are a temple administrator. Visitors, donations and bookings are on the Admin dashboard.</span>
+          <span className="shrink-0 font-semibold">Open Admin dashboard →</span>
+        </Link>
+      )}
       </div>
 
       {/* Stats Grid */}
