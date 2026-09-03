@@ -109,6 +109,9 @@ vi.mock("@/components/effects/BackgroundMusic", () => ({
 vi.mock("@/components/effects/WhatsAppButton", () => ({
   WhatsAppButton: () => null,
 }));
+vi.mock("@/components/VisitTracker", () => ({
+  VisitTracker: () => <div data-testid="visit-tracker" />,
+}));
 
 // Mock globals.css import
 vi.mock("./globals.css", () => ({}));
@@ -146,6 +149,15 @@ describe("RootLayout", () => {
       </RootLayout>
     );
     expect(screen.getByTestId("footer")).toBeInTheDocument();
+  });
+
+  it("mounts the visit tracker exactly once", () => {
+    render(
+      <RootLayout>
+        <div>Test</div>
+      </RootLayout>
+    );
+    expect(screen.getAllByTestId("visit-tracker")).toHaveLength(1);
   });
 
   it("wraps children in an html element with lang attribute", () => {

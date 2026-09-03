@@ -9,6 +9,7 @@ import { WhatsAppButton } from "@/components/effects/WhatsAppButton";
 import { StartupValidationNotice } from "@/components/system/StartupValidationNotice";
 import { StoreRehydrator } from "@/components/system/StoreRehydrator";
 import { CapacitorInit } from "@/components/CapacitorInit";
+import { VisitTracker } from "@/components/VisitTracker";
 import { siteMetadataBase } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -157,6 +158,7 @@ export default function RootLayout({
         <CapacitorInit />
         <StartupValidationNotice />
         <StoreRehydrator />
+        <VisitTracker />
         <Header />
         <FallingPetals />
         <main id="main-content" className="flex-1">{children}</main>

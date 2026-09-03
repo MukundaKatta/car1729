@@ -13,6 +13,7 @@ import {
   Newspaper,
   HeartHandshake,
   Users as UsersIcon,
+  Eye,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -23,6 +24,53 @@ type Stats = {
   serviceRevenueYtd: number;
   activeServices: number;
 };
+
+type VisitStats = {
+  today: number;
+  last7Days: number;
+  last30Days: number;
+  allTime: number;
+  unique30Days: number;
+  app30Days: number;
+};
+
+// Visitor counter (migration 015_site_visits). "missing" means the visit_stats
+// RPC does not exist yet (migration not applied); "failed" is any other error.
+// Neither blocks the four main stats nor sets loadError.
+type VisitorsResult = { status: "ok" | "missing" | "failed"; stats: VisitStats | null };
+
+async function loadVisitStats(client: NonNullable<typeof supabase>): Promise<VisitorsResult> {
+  try {
+    const { data, error } = await client.rpc("visit_stats");
+    if (error) {
+      // PostgREST: PGRST202 = function not in the schema cache; 42883 = undefined function.
+      const missing =
+        error.code === "PGRST202" ||
+        error.code === "42883" ||
+        /could not find the function|does not exist/i.test(String(error.message ?? ""));
+      return { status: missing ? "missing" : "failed", stats: null };
+    }
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null | undefined;
+    if (!row) return { status: "failed", stats: null };
+    const n = (v: unknown) => Number(v ?? 0);
+    return {
+      status: "ok",
+      stats: {
+        today: n(row.today),
+        last7Days: n(row.last_7_days),
+        last30Days: n(row.last_30_days),
+        allTime: n(row.all_time),
+        unique30Days: n(row.unique_30_days),
+        app30Days: n(row.app_30_days),
+      },
+    };
+  } catch (e) {
+    console.debug("visit_stats failed:", e);
+    return { status: "failed", stats: null };
+  }
+}
+
+const plural = (n: number, noun: string) => `${n.toLocaleString()} ${noun}${n === 1 ? "" : "s"}`;
 
 type RecentBooking = {
   id: string;
@@ -45,6 +93,7 @@ export default function AdminDashboard() {
   const [recent, setRecent] = useState<RecentBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [visitors, setVisitors] = useState<VisitorsResult | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -59,7 +108,7 @@ export default function AdminDashboard() {
       const year = currentTempleYear();
       const { startUtc: yearStart } = templeYearWindow(year);
 
-      const [bookingsTotal, donationsYtd, serviceRevenueYtd, activeServices, recentBookings] =
+      const [bookingsTotal, donationsYtd, serviceRevenueYtd, activeServices, recentBookings, visitStats] =
         await Promise.all([
           supabase.from("bookings").select("id", { count: "exact", head: true }),
           supabase
@@ -78,6 +127,9 @@ export default function AdminDashboard() {
             .select("id, devotee_name, booking_date, total_amount, status, services(name)")
             .order("created_at", { ascending: false })
             .limit(5),
+          // Never rejects and never sets loadError: the visitor counter is
+          // optional (migration 015 may not be applied yet).
+          loadVisitStats(supabase),
         ]);
 
       // A Supabase query can fail-but-resolve (e.g. an RLS denial) returning
@@ -107,6 +159,7 @@ export default function AdminDashboard() {
         serviceRevenueYtd: serviceSum,
         activeServices: activeServices.count ?? 0,
       });
+      setVisitors(visitStats);
 
       const recentRows = (recentBookings.data ?? []).map((r) => {
         // Supabase types the joined relation loosely; defensively narrow.
@@ -165,6 +218,14 @@ export default function AdminDashboard() {
       ]
     : [];
 
+  const vs = visitors?.stats ?? null;
+  const visitorCells = [
+    { label: "Today", value: vs ? vs.today.toLocaleString() : "n/a" },
+    { label: "Last 7 days", value: vs ? vs.last7Days.toLocaleString() : "n/a" },
+    { label: "Last 30 days", value: vs ? vs.last30Days.toLocaleString() : "n/a" },
+    { label: "All time", value: vs ? vs.allTime.toLocaleString() : "n/a" },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -205,6 +266,41 @@ export default function AdminDashboard() {
               </div>
             ))}
       </div>
+
+      {/* Visitors (visit_stats RPC, migration 015). Optional: a failure never hides the stats above. */}
+      {loading ? (
+        <div className="card mt-4 h-28 animate-pulse p-5" />
+      ) : (
+        <div className="card mt-4 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-gray-500">Visitors</p>
+              {visitors?.status === "missing" ? (
+                <p className="mt-1 text-sm text-gray-600">Visitor counter not set up yet</p>
+              ) : (
+                <>
+                  <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+                    {visitorCells.map((cell) => (
+                      <div key={cell.label}>
+                        <dt className="text-xs text-gray-500">{cell.label}</dt>
+                        <dd className="mt-1 text-2xl font-bold text-gray-900">{cell.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="mt-3 text-xs text-gray-500">
+                    {vs
+                      ? `${plural(vs.unique30Days, "unique visitor")} and ${plural(vs.app30Days, "app open")} in the last 30 days`
+                      : "Visitor stats could not be loaded."}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="rounded-lg bg-teal-50 p-3 text-teal-600">
+              <Eye className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Links */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

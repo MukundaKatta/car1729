@@ -53,6 +53,13 @@ export default function PrivacyPage() {
           No tracking or targeting cookies are used by our website.
         </p>
         <p>
+          Our website and app keep a simple, anonymous visitor count: a random
+          identifier stored on your device, the page visited and whether you
+          used the website or the app. No IP address, name, email or account
+          information is recorded, and the numbers are shown only to temple
+          administrators as aggregate totals.
+        </p>
+        <p>
           We may collect data that personally identifies you. This data is
           collected only when you voluntarily provide it to us. We do not sell
           this data to any 3rd party.

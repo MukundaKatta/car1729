@@ -309,7 +309,26 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      // Visitor counter (migration 015_site_visits). Both are SECURITY DEFINER:
+      // record_visit is callable by anon/authenticated and returns nothing;
+      // visit_stats is admin-only and returns a single aggregate row.
+      record_visit: {
+        Args: { p_visitor: string; p_path: string; p_platform?: "web" | "app" };
+        Returns: undefined;
+      };
+      visit_stats: {
+        Args: Record<string, never>;
+        Returns: {
+          today: number;
+          last_7_days: number;
+          last_30_days: number;
+          all_time: number;
+          unique_30_days: number;
+          app_30_days: number;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
