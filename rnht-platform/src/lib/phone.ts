@@ -12,7 +12,9 @@
  *     11-digit "1NXXNXXXXXX" inputs, which belong in the "+" path).
  */
 export function normalizePhone(input: string): string | null {
-  const trimmed = input.trim();
+  // Strip invisible bidi/format marks (iOS Contacts wraps numbers in U+202A…U+202C,
+  // some keyboards prefix U+200E) so a pasted number is not rejected as invalid.
+  const trimmed = input.replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "").trim();
   if (!trimmed) return null;
   const hasPlus = trimmed.startsWith("+");
   const digits = trimmed.replace(/\D/g, "");

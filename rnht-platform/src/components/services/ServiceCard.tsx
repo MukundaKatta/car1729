@@ -63,11 +63,13 @@ export function ServiceCard({ service }: { service: Service }) {
   // image_url, then to a category-appropriate photo reused from another service
   // of the same type (homam→homam, kalyanam→kalyanam, etc.), then finally to the
   // category-icon placeholder (ServiceCarousel renders that when the list is empty).
+  // An admin-uploaded image_url wins over the bundled gallery: otherwise the
+  // upload was silently ignored for the 43 slugs that ship with gallery photos.
   const gallery = serviceGallery(service.slug);
-  const images = gallery.length
-    ? gallery
-    : service.image_url
-      ? [service.image_url]
+  const images = service.image_url
+    ? [service.image_url, ...gallery.filter((g) => g !== service.image_url)]
+    : gallery.length
+      ? gallery
       : serviceCategoryFallback(service.slug);
 
   // Split a trailing "(...)" into a smaller subtitle, matching the reference

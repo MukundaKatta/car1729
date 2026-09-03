@@ -20,11 +20,15 @@ import type { Service, ServiceCategory } from "@/types/database";
 
 function slugify(input: string): string {
   return input
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // strip accents: Śrī -> sri
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/\s+/g, "-")
-    .slice(0, 80);
+    .replace(/[\s-]+/g, "-") // collapse runs so 'a - b' is 'a-b', not 'a---b'
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/g, "");
 }
 
 type FormState = {
@@ -76,6 +80,10 @@ export default function AdminServicesPage() {
       supabase.from("services").select("*").order("sort_order").order("name"),
       supabase.from("service_categories").select("*").order("sort_order"),
     ]);
+    // A failed load used to render 'No services yet' (inviting a duplicate
+    // catalog); surface it instead.
+    const loadErr = servicesResp.error ?? categoriesResp.error;
+    if (loadErr) setError(`Could not load services: ${loadErr.message}`);
     setServices((servicesResp.data ?? []) as Service[]);
     setCategories((categoriesResp.data ?? []) as ServiceCategory[]);
     setLoading(false);
@@ -280,7 +288,7 @@ export default function AdminServicesPage() {
 
     const { data: existingServices } = await supabase
       .from("services")
-      .select("id, slug, image_url");
+      .select("id, slug, image_url, is_active, sort_order");
 
     const existingServiceBySlug = new Map(
       (existingServices ?? []).map((service) => [service.slug, service])
@@ -311,8 +319,10 @@ export default function AdminServicesPage() {
           suggested_donation: service.suggested_donation,
           duration_minutes: service.duration_minutes,
           location_type: service.location_type,
-          is_active: service.is_active,
-          sort_order: service.sort_order,
+          // Never undo the admin's own choices on re-sync: a deactivated or
+          // re-ordered service keeps its state; only NEW rows take the sample's.
+          is_active: existing ? existing.is_active : service.is_active,
+          sort_order: existing ? existing.sort_order : service.sort_order,
         };
       })
       .filter(Boolean);

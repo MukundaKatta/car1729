@@ -283,6 +283,11 @@ export default function AdminBookingsPage() {
                 &times;
               </button>
             </div>
+            {error && (
+              <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </p>
+            )}
             <div className="mt-4 space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>

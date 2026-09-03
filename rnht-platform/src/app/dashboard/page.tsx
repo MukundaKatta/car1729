@@ -570,7 +570,12 @@ function OverviewTab() {
   startOfToday.setHours(0, 0, 0, 0);
   const upcomingBookings = bookings.filter((b) => {
     if (b.status !== "confirmed" && b.status !== "pending") return false;
-    const t = new Date(b.date).getTime();
+    // A DATE column arrives as 'YYYY-MM-DD'; new Date() would read that as UTC
+    // midnight, which is the previous evening in US zones and hid TODAY's booking.
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(b.date);
+    const t = m
+      ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime()
+      : new Date(b.date).getTime();
     return Number.isNaN(t) || t >= startOfToday.getTime();
   });
   // Match the Donations tab's "Recurring total", which counts completed
@@ -959,7 +964,8 @@ function DonationsTab() {
     const eligibility = yearEndReceiptEligibility({
       year: yr,
       currentYear: donationTaxYear(new Date().toISOString()),
-      yearTotal: yearDonations.reduce((s, d) => s + d.amount, 0),
+      // Sum in cents: 249.99999999999997 must not fail the $250 rule.
+      yearTotal: Math.round(yearDonations.reduce((s, d) => s + d.amount, 0) * 100) / 100,
       formatCurrency,
     });
     if (!eligibility.ok) {

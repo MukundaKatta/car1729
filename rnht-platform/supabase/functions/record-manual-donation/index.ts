@@ -135,8 +135,10 @@ Deno.serve(async (req) => {
         headers: jsonHeaders,
       });
     }
-    if (!donorEmail || !EMAIL_RE.test(donorEmail)) {
-      return new Response(JSON.stringify({ error: "A valid donor email is required" }), {
+    // Email is optional (cash/check donors often have none): the gift is still
+    // filed and the PDF generated; only the emailed copy is skipped.
+    if (donorEmail && !EMAIL_RE.test(donorEmail)) {
+      return new Response(JSON.stringify({ error: "Enter a valid donor email, or leave it blank" }), {
         status: 400,
         headers: jsonHeaders,
       });
@@ -186,7 +188,7 @@ Deno.serve(async (req) => {
     // best-effort: if the profiles table has no email column or the lookup
     // errors, we fall back to an unlinked gift (still recorded + receipted).
     let linkedUserId: string | null = null;
-    try {
+    if (donorEmail) try {
       // profiles.email is stored lowercased (migration 009 trigger); match on
       // the normalized form so "Ramesh@Gmail.com" still links (gap I).
       const { data: prof } = await admin
@@ -205,7 +207,7 @@ Deno.serve(async (req) => {
       id,
       user_id: linkedUserId,
       donor_name: donorName,
-      donor_email: donorEmail,
+      donor_email: donorEmail || null,
       amount: cleanAmount,
       fund_type: fundType,
       payment_method: "cash",
@@ -269,7 +271,9 @@ Deno.serve(async (req) => {
       const comma = pdf.indexOf(",");
       if (comma !== -1) pdf = pdf.slice(comma + 1);
     }
-    if (pdf && pdf.length <= 10_000_000) {
+    if (!donorEmail) {
+      console.log("[manual-donation] no donor email; receipt not emailed", { receiptId });
+    } else if (pdf && pdf.length <= 10_000_000) {
       const filename =
         typeof body.filename === "string" && body.filename.trim()
           ? body.filename.trim()

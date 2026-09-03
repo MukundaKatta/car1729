@@ -46,10 +46,11 @@ export default function AdminVolunteersPage() {
   async function refresh() {
     if (!supabase) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data, error: loadErr } = await supabase
       .from("volunteer_opportunities")
       .select("*")
       .order("sort_order");
+    if (loadErr) setError(`Could not load volunteer opportunities: ${loadErr.message}`);
     setItems((data ?? []) as unknown as VolunteerOpportunity[]);
     setLoading(false);
   }
@@ -149,6 +150,9 @@ export default function AdminVolunteersPage() {
           <HeartHandshake className="h-7 w-7 text-temple-red" />
           Volunteer Opportunities
         </h1>
+        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Heads up: entries here are saved, but the public website does not display this section yet. Ask IT support before relying on it.
+        </p>
         <button onClick={startNew} className="btn-primary flex items-center gap-2">
           <Plus className="h-4 w-4" />
           New Opportunity

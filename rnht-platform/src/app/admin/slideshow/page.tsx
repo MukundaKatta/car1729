@@ -501,6 +501,9 @@ export default function AdminSlideshowPage() {
             <ImageIcon className="h-7 w-7 text-temple-red" aria-hidden="true" />
             Hero Slideshow
           </h1>
+        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Heads up: entries here are saved, but the public website does not display this section yet. Ask IT support before relying on it.
+        </p>
           <p className="mt-1 text-gray-600">
             Upload photos & videos, add text, and manage homepage slides
           </p>

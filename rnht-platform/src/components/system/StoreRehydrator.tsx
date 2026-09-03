@@ -41,9 +41,12 @@ export function StoreRehydrator() {
   // Keep <html lang> in sync with the selected language so screen readers /
   // TTS / "translate this page" use the correct language (layout renders the
   // static lang="en" default; this updates it after rehydrate + on switch).
+  // Only ~5% of the UI is translated today, so <html lang> stays "en": marking
+  // an English page as Telugu/Hindi makes screen readers and auto-translate
+  // mangle it. Flip this back to `locale` once the pages are actually localised.
   useEffect(() => {
     if (typeof document !== "undefined" && locale) {
-      document.documentElement.lang = locale;
+      document.documentElement.lang = "en";
     }
   }, [locale]);
 

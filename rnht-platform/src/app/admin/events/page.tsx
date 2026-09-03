@@ -71,6 +71,9 @@ export default function AdminEventsPage() {
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="section-heading">Manage Events</h1>
+        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Heads up: entries here are saved, but the public website does not display this section yet. Ask IT support before relying on it.
+        </p>
         <button
           className="btn-primary flex items-center gap-2"
           onClick={() => {

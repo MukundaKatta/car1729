@@ -25,8 +25,11 @@ export default function AuthCallbackPage() {
       router.replace("/dashboard");
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // supabase-js emits INITIAL_SESSION (with the session) to a listener that
+      // subscribes after the URL tokens were already consumed; waiting only for
+      // SIGNED_IN left the devotee on the spinner for the full 5 s fallback.
+      if (event === "SIGNED_IN" || (event === "INITIAL_SESSION" && session)) {
         goToDashboard();
       } else if (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
         // Ignore these events

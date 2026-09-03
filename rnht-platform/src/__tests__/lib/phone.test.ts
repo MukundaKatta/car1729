@@ -41,4 +41,9 @@ describe("normalizePhone", () => {
     expect(normalizePhone("abc")).toBeNull();
     expect(normalizePhone("+")).toBeNull();
   });
+  it("ignores invisible bidi/format marks (iOS Contacts paste, U+200E prefix)", () => {
+    expect(normalizePhone("\u202a+1 (512) 555-0123\u202c")).toBe("+15125550123");
+    expect(normalizePhone("\u200e+15125550123")).toBe("+15125550123");
+    expect(normalizePhone("\u200b5125550123")).toBe("+15125550123");
+  });
 });

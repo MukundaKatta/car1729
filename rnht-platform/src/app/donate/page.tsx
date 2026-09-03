@@ -211,11 +211,14 @@ function DonateContent() {
     const provider = searchParams.get("provider");
     const sessionId = searchParams.get("session_id");
 
-    // Strip ?success/&session_id up front (after capturing them) so a refresh or
-    // native re-focus can't re-run verification against an already-consumed session.
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
+    // Strip ?success/&session_id only once the confirmation is on screen: a
+    // refresh mid-verification used to land on a blank form with no thank-you
+    // and no error. Re-running verify is safe (the receipt claim is guarded).
+    const stripReturnParams = () => {
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    };
 
     async function verifyDonation() {
       setVerifyingPayment(true);
@@ -240,6 +243,7 @@ function DonateContent() {
             data.fundLabel || (data.fundType ? donationFundLabel(data.fundType) : null),
           );
           setSubmitted(true);
+          stripReturnParams();
           return;
         }
 
@@ -259,6 +263,7 @@ function DonateContent() {
         setConfirmedAmount(Number(data.amount) > 0 ? Number(data.amount) : null);
         setConfirmedFundName(data.fundLabel || null);
         setSubmitted(true);
+        stripReturnParams();
       } catch {
         setVerifyError("We couldn't verify your donation yet. Please contact the temple before trying again.");
       } finally {

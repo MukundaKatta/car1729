@@ -33,10 +33,13 @@ export function ServiceDetailModal({
   // Match the card's resolution exactly: gallery first, then the category
   // fallback. Without the fallback, the 14 services that only have a category
   // image showed a photo on the card but a bare emoji in this modal.
+  // Same precedence as ServiceCard: an admin-uploaded image_url first.
   const galleryImages = serviceGallery(service.slug);
-  const modalImages = galleryImages.length
-    ? galleryImages
-    : serviceCategoryFallback(service.slug);
+  const modalImages = service.image_url
+    ? [service.image_url, ...galleryImages.filter((g) => g !== service.image_url)]
+    : galleryImages.length
+      ? galleryImages
+      : serviceCategoryFallback(service.slug);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -82,17 +85,25 @@ export function ServiceDetailModal({
     };
   }, [onClose]);
 
-  const whatsappMessage = encodeURIComponent(
-    `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`
-  );
+  const whatsappMessageRaw = `Namaste! I would like to enquire about ${service.name}. Please share the details and availability.`;
+  const whatsappMessage = encodeURIComponent(whatsappMessageRaw);
   // whatsappUrl is admin-controlled (panditji_routing). Validate its scheme
   // before it becomes an href so a stored `javascript:`/`data:` value can't
   // execute in a visitor's browser (stored XSS). safeHref returns undefined for
   // a disallowed scheme -> render no link.
+  // Append `text` with the URL API: a routed base that already carries a query
+  // (api.whatsapp.com/send?phone=…) used to get a second '?' and a dead link.
   const safeWhatsappBase = safeHref(whatsappUrl);
-  const whatsappHref = safeWhatsappBase
-    ? `${safeWhatsappBase}?text=${whatsappMessage}`
-    : undefined;
+  let whatsappHref: string | undefined;
+  if (safeWhatsappBase) {
+    try {
+      const u = new URL(safeWhatsappBase);
+      u.searchParams.set("text", whatsappMessageRaw);
+      whatsappHref = u.toString();
+    } catch {
+      whatsappHref = `${safeWhatsappBase}${safeWhatsappBase.includes("?") ? "&" : "?"}text=${whatsappMessage}`;
+    }
+  }
   const categoryIcon = categoryEmoji(service.category_id);
 
   return (

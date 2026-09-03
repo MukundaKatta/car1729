@@ -177,7 +177,9 @@ export interface TaxReceiptOptions {
  * (jsPDF); stamp/signature render as placeholders until the PNGs arrive.
  */
 function buildTaxAcknowledgmentDoc(opts: TaxReceiptOptions): jsPDF {
-  const { donorName, donorEmail, donorAddress, year, donations } = opts;
+  const { donorEmail, year, donations } = opts;
+  const donorName = pdfSafeText(opts.donorName);
+  const donorAddress = pdfSafeText(opts.donorAddress);
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   // Document metadata — title/subject/author for accessibility + file identity.
@@ -364,6 +366,20 @@ function buildTaxAcknowledgmentDoc(opts: TaxReceiptOptions): jsPDF {
  * Downloads the year-end acknowledgment in the browser (on-demand admin/devotee
  * use). Client-side only.
  */
+/**
+ * jsPDF's built-in Helvetica only encodes Latin-1; any other character makes it
+ * switch encodings and garble the WHOLE line ("Rāma Śarmā" -> "R m a  Z a r m").
+ * Strip accents (Śrī -> Sri) and replace anything still outside Latin-1.
+ */
+export function pdfSafeText(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\u0009\u000a\u000d\u0020-\u00ff]/g, "?")
+    .replace(/\?{2,}/g, "?");
+}
+
 export function generateTaxReceiptPdf(opts: TaxReceiptOptions): void {
   buildTaxAcknowledgmentDoc(opts).save(
     `RNHT-Donation-Acknowledgment-${opts.year}.pdf`,
@@ -421,7 +437,11 @@ export interface DonationReceiptArtifacts {
 export function generateDonationReceiptPdf(
   opts: DonationReceiptOptions,
 ): DonationReceiptArtifacts {
-  const { donorName, donorEmail, donorAddress, amount, fundLabel, receiptId, note } = opts;
+  const { donorEmail, amount, receiptId } = opts;
+  const donorName = pdfSafeText(opts.donorName);
+  const donorAddress = pdfSafeText(opts.donorAddress);
+  const fundLabel = pdfSafeText(opts.fundLabel);
+  const note = pdfSafeText(opts.note);
   const date = opts.date ?? new Date();
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });

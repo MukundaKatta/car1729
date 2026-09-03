@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useSensitiveAdminApproval } from "@/lib/admin-approval";
 import { supabase } from "@/lib/supabase";
+import { nativePlatform } from "@/lib/capacitor";
 import { formatCurrency } from "@/lib/utils";
 import { STANDARD_FUNDS, FUND_LABELS, prettyFund } from "@/lib/fund";
 import { useAuthStore } from "@/store/auth";
@@ -1028,8 +1029,14 @@ const emptyRecordForm: RecordForm = {
   amount: "",
   fundType: STANDARD_FUNDS[0]?.slug ?? "general",
   note: "",
-  receivedOn: todayInTempleTz(),
+  // Filled in per form instance (see freshRecordForm): a module-load default
+  // froze at the date the page was first opened, wrong after midnight.
+  receivedOn: "",
 };
+
+function freshRecordForm(): RecordForm {
+  return { ...emptyRecordForm, receivedOn: todayInTempleTz() };
+}
 
 type RecordResult = {
   kind: "success" | "partial";
@@ -1091,7 +1098,7 @@ function makeUuid(): string {
 
 function RecordDonationTab() {
   const [funds, setFunds] = useState<FundOption[]>(STANDARD_FUNDS);
-  const [form, setForm] = useState<RecordForm>(emptyRecordForm);
+  const [form, setForm] = useState<RecordForm>(freshRecordForm);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<RecordResult | null>(null);
@@ -1157,7 +1164,7 @@ function RecordDonationTab() {
     revokeUrl();
     sessionIdRef.current = null;
     payloadRef.current = null;
-    setForm(emptyRecordForm);
+    setForm(freshRecordForm());
     setFieldError(null);
     setResult(null);
   }
@@ -1217,7 +1224,9 @@ function RecordDonationTab() {
         title: emailed ? `Receipt emailed to ${donorEmail}` : "Donation saved to history",
         detail: emailed
           ? `${formatCurrency(amount)} recorded and the receipt (${receiptId}) was emailed to the donor.`
-          : `${formatCurrency(amount)} recorded (${receiptId}). The receipt couldn't be emailed automatically — download it below and send it to the donor.`,
+          : donorEmail
+            ? `${formatCurrency(amount)} recorded (${receiptId}). The receipt couldn't be emailed automatically — download it below and send it to the donor.`
+            : `${formatCurrency(amount)} recorded (${receiptId}). No email was given, so download the receipt below and hand or mail it to the donor.`,
         downloadUrl,
         filename,
       });
@@ -1249,7 +1258,10 @@ function RecordDonationTab() {
     const donorName = form.donorName.trim();
     const donorEmail = form.donorEmail.trim();
     const address = form.address.trim();
-    const amount = Number(form.amount);
+    // Whole cents only: the receipt/PDF and the ledger must show the same number
+    // (1.005 printed as $1.01 but was stored as $1.00).
+    const amountText = form.amount.trim();
+    const amount = Math.round(Number(amountText) * 100) / 100;
     const fundType = form.fundType;
     const note = form.note.trim();
     const receivedOn = form.receivedOn.trim();
@@ -1270,12 +1282,18 @@ function RecordDonationTab() {
       setFieldError("Donor name is required.");
       return;
     }
-    if (!donorEmail || !EMAIL_RE.test(donorEmail)) {
-      setFieldError("Enter a valid donor email address.");
+    // Email is optional: many cash/check donors have none. Without it the PDF
+    // is still generated; only the emailed copy is skipped.
+    if (donorEmail && !EMAIL_RE.test(donorEmail)) {
+      setFieldError("Enter a valid donor email address, or leave it blank.");
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
       setFieldError("Enter a donation amount greater than $0.");
+      return;
+    }
+    if (!/^\d+(\.\d{1,2})?$/.test(amountText)) {
+      setFieldError("Enter the amount in dollars and cents (at most two decimals).");
       return;
     }
     if (amount > 100000) {
@@ -1381,14 +1399,21 @@ function RecordDonationTab() {
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <a
-              href={result.downloadUrl}
-              download={result.filename}
-              className="btn-outline flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Download receipt PDF
-            </a>
+            {nativePlatform() === "web" ? (
+              <a
+                href={result.downloadUrl}
+                download={result.filename}
+                className="btn-outline flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download receipt PDF
+              </a>
+            ) : (
+              // The app WebViews cannot download a blob: URL (see dashboard saveBlob).
+              <p className="text-sm text-gray-600">
+                To download the PDF, open Admin → Donations on the website; the emailed copy (if any) is already on its way.
+              </p>
+            )}
             {!success && (
               <button
                 onClick={retrySend}

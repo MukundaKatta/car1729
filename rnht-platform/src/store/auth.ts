@@ -116,6 +116,18 @@ function normalizeAuthError(message: string, channel: "email" | "phone"): AuthRe
     };
   }
 
+  // shouldCreateUser:false sign-in for an identity that has no account: Supabase
+  // answers 'Signups not allowed for otp' (otp_disabled), which reads like a
+  // server outage to a devotee. Say what actually happened and what to do.
+  if (lower.includes("signups not allowed") || lower.includes("otp_disabled")) {
+    return {
+      error:
+        channel === "email"
+          ? "We couldn't find an account for that email. Check the address, or choose Create account to sign up."
+          : "We couldn't find an account for that phone number. Check the number, or choose Create account to sign up.",
+    };
+  }
+
   if (channel === "phone" && lower.includes("rate limit")) {
     return {
       error:

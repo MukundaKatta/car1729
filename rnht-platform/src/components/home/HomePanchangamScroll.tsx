@@ -17,38 +17,41 @@ import {
 } from "@/lib/panchangam";
 import { usePanchangamStore } from "@/store/panchangam";
 
-function formatHeaderDate(date: string, timeZone: string) {
+// `date` is already the calendar day in the panchangam location's zone, so it is
+// formatted as a UTC noon instant in UTC: parsing it as viewer-local noon and
+// re-zoning showed "yesterday" for visitors east of UTC+7 (Singapore, Sydney).
+function formatHeaderDate(date: string) {
   if (!date) return "";
-  const value = new Date(`${date}T12:00:00`);
+  const value = new Date(`${date}T12:00:00Z`);
   if (Number.isNaN(value.getTime())) return "";
   return new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric",
-    timeZone,
+    timeZone: "UTC",
   }).format(value);
 }
 
-function getDisplayDateParts(date: string, timeZone: string) {
+function getDisplayDateParts(date: string) {
   if (!date) return { weekday: "", month: "", day: "", year: "" };
-  const value = new Date(`${date}T12:00:00`);
+  const value = new Date(`${date}T12:00:00Z`);
   if (Number.isNaN(value.getTime())) return { weekday: "", month: "", day: "", year: "" };
   const weekday = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
-    timeZone,
+    timeZone: "UTC",
   }).format(value);
   const month = new Intl.DateTimeFormat("en-US", {
     month: "long",
-    timeZone,
+    timeZone: "UTC",
   }).format(value);
   const day = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
-    timeZone,
+    timeZone: "UTC",
   }).format(value);
   const year = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
-    timeZone,
+    timeZone: "UTC",
   }).format(value);
 
   return { weekday, month, day, year };
@@ -75,8 +78,8 @@ export function HomePanchangamScroll() {
   // opens via the in-app browser instead.
   const calendarPdfHref = `/downloads/${calendarYear}-rnht.pdf`;
   const calendarPreviewHref = `/downloads/preview/${calendarYear}-rnht-preview.jpg`;
-  const formattedDate = formatHeaderDate(p.date, location.timeZone);
-  const dateParts = getDisplayDateParts(p.date, location.timeZone);
+  const formattedDate = formatHeaderDate(p.date);
+  const dateParts = getDisplayDateParts(p.date);
 
   // Panchangam defaults to the temple's location (Austin). We intentionally do
   // NOT auto-request geolocation on the home page — prompting for location on
